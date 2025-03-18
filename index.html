@@ -28,7 +28,7 @@
 </head>
 <body>
     <canvas id="myCanvas"></canvas>
-    <div id="infoText">Zoomed into the black hole.<br>Protoplanetary disk visible.<br>Press Esc to return.</div>
+    <div id="infoText">This is a black hole simulation.<br>Press Esc to return.</div>
     <script>
         const canvas = document.getElementById('myCanvas');
         const ctx = canvas.getContext('2d');
@@ -72,10 +72,18 @@
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             stars = [];
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
             for (let i = 0; i < 100; i++) {
+                let x, y, distance;
+                do {
+                    x = Math.random() * canvas.width;
+                    y = Math.random() * canvas.height;
+                    distance = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
+                } while (distance < bh_radius*2); // Regenerate if inside black hole
                 stars.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
+                    x: x,
+                    y: y,
                     phase: Math.random() * 2 * Math.PI,
                     frequency: 0.01 + Math.random() * 0.02
                 });
@@ -92,7 +100,7 @@
             const cy = canvas.height / 2;
             const end_radius = Math.max(canvas.width, canvas.height) / 8;
 
-            // Accretion disk gradient (background)
+            // Accretion disk gradient
             let gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, end_radius);
             gradient.addColorStop(0, '#000');
             gradient.addColorStop(0.35, '#000');
@@ -101,20 +109,6 @@
             gradient.addColorStop(1, '#000');
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Protoplanetary disk (visible when zoomed)
-            if (isZoomed) {
-                let protoGradient = ctx.createRadialGradient(cx, cy, bh_radius, cx, cy, bh_radius * 3);
-                protoGradient.addColorStop(0, 'rgba(0, 0, 0, 0)'); // Transparent near black hole
-                protoGradient.addColorStop(0.2, 'rgba(100, 50, 0, 0.8)'); // Dusty brown
-                protoGradient.addColorStop(0.5, 'rgba(150, 100, 50, 0.6)'); // Lighter ring
-                protoGradient.addColorStop(0.8, 'rgba(100, 50, 0, 0.3)'); // Fading outer edge
-                protoGradient.addColorStop(1, 'rgba(0, 0, 0, 0)'); // Transparent outer
-                ctx.fillStyle = protoGradient;
-                ctx.beginPath();
-                ctx.arc(cx, cy, bh_radius * 3, 0, 2 * Math.PI);
-                ctx.fill();
-            }
 
             // Black hole
             ctx.fillStyle = 'black';
@@ -157,7 +151,7 @@
                 return Math.sqrt(dx * dx + dy * dy) > bh_radius;
             });
 
-            // Draw asteroids (2D)
+            // Draw asteroids (2D, no 3D shading)
             asteroids.forEach(asteroid => {
                 let dx = cx - asteroid.x;
                 let dy = cy - asteroid.y;
@@ -179,7 +173,7 @@
                         ctx.lineTo(rotatedPoints[i].x, rotatedPoints[i].y);
                     }
                     ctx.closePath();
-                    ctx.fillStyle = 'gray';
+                    ctx.fillStyle = 'gray'; // Flat 2D fill
                     ctx.fill();
                 }
             });
@@ -209,7 +203,7 @@
                 const sinA = Math.sin(random_angle);
                 const new_dir_x = dir_x * cosA - dir_y * sinA;
                 const new_dir_y = dir_x * sinA + dir_y * cosA;
-                const speed = 2;
+                const speed = 0.5;
                 const vx = speed * new_dir_x;
                 const vy = speed * new_dir_y;
 
@@ -221,7 +215,7 @@
                     omega: 0.05 * (Math.random() - 0.5),
                     angle: 0,
                     initial_r: r,
-                    shape: generateAsteroidShape(6, 10, 20)
+                    shape: generateAsteroidShape(10, 5, 10)
                 });
             }
         });
@@ -261,23 +255,30 @@
         // Key event handling for zoom
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Enter' && !isZoomed) {
-                // Zoom into black hole
+                // Zoom in: black hole diameter = 1/3 screen height, stays in frame
                 const screenHeight = window.innerHeight;
-                const screenWidth = window.innerWidth;
-                const bh_diameter = bh_radius * 2; // Black hole diameter
-                const targetHeight = screenHeight * 0.8; // Black hole fills 80% of height
-                const scaleFactor = targetHeight / bh_diameter; // Scale to fit
-                // Center the black hole in the screen
-                const bh_center_x = canvas.width / 2;
-                const bh_center_y = canvas.height / 2;
-                const scaled_bh_center_x = bh_center_x * scaleFactor;
-                const scaled_bh_center_y = bh_center_y * scaleFactor;
-                const translateX = (screenWidth / 2 - scaled_bh_center_x) / scaleFactor;
-                const translateY = (screenHeight / 2 - scaled_bh_center_y) / scaleFactor;
+                const bh_diameter = bh_radius * 2; // Black hole diameter in canvas pixels
+                const targetHeight = screenHeight / 3; // Target height for black hole
+                const scaleFactor = 15; // Scale to make bh 1/3 height
+                // Move black hole top to near screen top (e.g., 10px padding)
+                const bh_center_y = canvas.height / 2; // Original center y
+                const scaled_bh_top = (bh_center_y - bh_radius) * scaleFactor; // Top of black hole after scaling
+                const translateY = (0); // Shift to align top near screen top
 
-                canvas.style.transform = `scale(${scaleFactor}) translate(${translateX}px, ${translateY}px)`;
+                canvas.style.transform = `scale(${scaleFactor}) translateY(${translateY}px)`;
                 infoText.style.opacity = '1';
                 isZoomed = true;
+
+                // // Zoom in: black hole diameter = 1/3 screen height, center above screen
+                // const screenHeight = window.innerHeight;
+                // const bh_diameter = bh_radius * 2; // Black hole diameter in canvas pixels
+                // const targetHeight = screenHeight / 3; // Target height for black hole
+                // const scaleFactor = targetHeight / bh_diameter; // Scale to make bh 1/3 height
+                // const translateY = -(canvas.height / 2 + bh_radius * scaleFactor); // Move center above screen
+
+                // canvas.style.transform = `scale(${scaleFactor}) translateY(${translateY}px)`;
+                // infoText.style.opacity = '1';
+                // isZoomed = true;
             } else if (event.key === 'Escape' && isZoomed) {
                 // Reset to original view
                 canvas.style.transform = 'none';
