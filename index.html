@@ -9,7 +9,7 @@
             position: fixed;
             top: 0;
             left: 0;
-            transition: transform 2s ease-in-out; /* Smooth zoom animation */
+            transition: transform 2s ease-in-out;
         }
         #infoText {
             position: fixed;
@@ -18,21 +18,41 @@
             transform: translate(-50%, -50%);
             color: white;
             font-family: Arial, sans-serif;
-            font-size: 24px;
+            font-size: 30px;
             text-align: center;
             opacity: 0;
-            transition: opacity 1s ease-in-out; /* Smooth text fade */
+            transition: opacity 1s ease-in-out;
             pointer-events: none;
+        }
+        #enterButton {
+            position: fixed;
+            color: rgb(255, 187, 70);
+            background-color: rgba(0, 0, 0, 0.3); /* Fainter default state */
+            border: 2px solid rgba(255, 255, 255, 0.5); /* Fainter border */
+            border-radius: 5px;
+            padding: 5px 10px;
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 16px;
+            cursor: pointer;
+            opacity: 0; /* Start fully transparent */
+            transition: opacity 2s ease, background-color 2s ease; /* Slow transitions */
+        }
+        #enterButton.illuminated {
+            opacity: 0.8; /* Faintly visible when illuminated */
+            background-color: rgba(255, 165, 0, 0.5); /* Faint orange glow */
+            border-color: rgba(255, 165, 0, 0.7);
         }
     </style>
 </head>
 <body>
     <canvas id="myCanvas"></canvas>
-    <div id="infoText">This is a black hole simulation.<br>Press Esc to return.</div>
+    <div id="infoText">Zoomed into the black hole.<br>Press Esc to return.</div>
+    <button id="enterButton">Enter</button>
     <script>
         const canvas = document.getElementById('myCanvas');
         const ctx = canvas.getContext('2d');
         const infoText = document.getElementById('infoText');
+        const enterButton = document.getElementById('enterButton');
         let stars = [];
         let asteroids = [];
         const bh_radius = 50;  // Black hole radius
@@ -67,6 +87,14 @@
             return null;
         }
 
+        // Position button over black hole center
+        function positionButton() {
+            const cx = window.innerWidth / 2;
+            const cy = window.innerHeight / 2;
+            enterButton.style.left = `${cx - enterButton.offsetWidth / 2}px`;
+            enterButton.style.top = `${cy - enterButton.offsetHeight / 2}px`;
+        }
+
         // Resize canvas and initialize stars
         function resizeCanvas() {
             canvas.width = window.innerWidth;
@@ -80,7 +108,7 @@
                     x = Math.random() * canvas.width;
                     y = Math.random() * canvas.height;
                     distance = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
-                } while (distance < bh_radius*2); // Regenerate if inside black hole
+                } while (distance < bh_radius * 2);
                 stars.push({
                     x: x,
                     y: y,
@@ -88,6 +116,7 @@
                     frequency: 0.01 + Math.random() * 0.02
                 });
             }
+            positionButton();
         }
 
         window.addEventListener('resize', resizeCanvas);
@@ -100,7 +129,7 @@
             const cy = canvas.height / 2;
             const end_radius = Math.max(canvas.width, canvas.height) / 8;
 
-            // Accretion disk gradient
+            // Accretion disk gradient (background)
             let gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, end_radius);
             gradient.addColorStop(0, '#000');
             gradient.addColorStop(0.35, '#000');
@@ -125,7 +154,8 @@
                 ctx.fill();
             });
 
-            // Update asteroids
+            // Update asteroids and check for falling in
+            let asteroidCountBefore = asteroids.length;
             asteroids.forEach(asteroid => {
                 if (asteroid !== selectedAsteroid) {
                     let dx = cx - asteroid.x;
@@ -144,14 +174,20 @@
                 asteroid.angle += asteroid.omega;
             });
 
-            // Remove asteroids inside black hole
+            // Remove asteroids and trigger button illumination
             asteroids = asteroids.filter(asteroid => {
                 let dx = cx - asteroid.x;
                 let dy = cy - asteroid.y;
                 return Math.sqrt(dx * dx + dy * dy) > bh_radius;
             });
+            if (!isZoomed && asteroidCountBefore > asteroids.length) {
+                enterButton.classList.add('illuminated'); // Start illumination
+                setTimeout(() => {
+                    enterButton.classList.remove('illuminated'); // Start fading
+                }, 2000); // Illuminate for 2 seconds
+            }
 
-            // Draw asteroids (2D, no 3D shading)
+            // Draw asteroids (2D)
             asteroids.forEach(asteroid => {
                 let dx = cx - asteroid.x;
                 let dy = cy - asteroid.y;
@@ -173,7 +209,7 @@
                         ctx.lineTo(rotatedPoints[i].x, rotatedPoints[i].y);
                     }
                     ctx.closePath();
-                    ctx.fillStyle = 'gray'; // Flat 2D fill
+                    ctx.fillStyle = 'gray';
                     ctx.fill();
                 }
             });
@@ -203,7 +239,7 @@
                 const sinA = Math.sin(random_angle);
                 const new_dir_x = dir_x * cosA - dir_y * sinA;
                 const new_dir_y = dir_x * sinA + dir_y * cosA;
-                const speed = 0.5;
+                const speed = 1;
                 const vx = speed * new_dir_x;
                 const vy = speed * new_dir_y;
 
@@ -215,7 +251,7 @@
                     omega: 0.05 * (Math.random() - 0.5),
                     angle: 0,
                     initial_r: r,
-                    shape: generateAsteroidShape(10, 5, 10)
+                    shape: generateAsteroidShape(10,5, 10)
                 });
             }
         });
