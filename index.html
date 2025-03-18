@@ -3,25 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>teenie black hole</title>
+    <title>Teenie Black Hole</title>
     <style>
         #myCanvas {
             position: fixed;
             top: 0;
             left: 0;
+            transition: transform 2s ease-in-out; /* Smooth zoom animation */
+        }
+        #infoText {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 1s ease-in-out; /* Smooth text fade */
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
     <canvas id="myCanvas"></canvas>
+    <div id="infoText">Zoomed into the black hole.<br>Protoplanetary disk visible.<br>Press Esc to return.</div>
     <script>
         const canvas = document.getElementById('myCanvas');
         const ctx = canvas.getContext('2d');
+        const infoText = document.getElementById('infoText');
         let stars = [];
         let asteroids = [];
         const bh_radius = 50;  // Black hole radius
-        const k = 1000;        // Gravitational constant for asteroid motion
+        const k = 2000;        // Gravitational constant
+        const damping = 0.995; // Damping factor
         let time = 0;
+        let selectedAsteroid = null;
+        let isZoomed = false;
 
         // Generate irregular asteroid shape
         function generateAsteroidShape(numPoints, minRadius, maxRadius) {
@@ -35,6 +54,17 @@
                 });
             }
             return points;
+        }
+
+        // Check if there's an asteroid at position (x, y)
+        function getAsteroidAtPosition(x, y) {
+            for (let asteroid of asteroids) {
+                const dx = x - asteroid.x;
+                const dy = y - asteroid.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < 20) return asteroid;
+            }
+            return null;
         }
 
         // Resize canvas and initialize stars
@@ -58,14 +88,11 @@
         // Animation loop
         function animate() {
             time += 0.01;
-            //?? EDIT HERE
-            // const cx = canvas.width / 2;
-            // const cy = canvas.height / 2;
             const cx = canvas.width / 2;
             const cy = canvas.height / 2;
             const end_radius = Math.max(canvas.width, canvas.height) / 8;
 
-            // Accretion disk gradient
+            // Accretion disk gradient (background)
             let gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, end_radius);
             gradient.addColorStop(0, '#000');
             gradient.addColorStop(0.35, '#000');
@@ -75,24 +102,25 @@
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+            // Protoplanetary disk (visible when zoomed)
+            if (isZoomed) {
+                let protoGradient = ctx.createRadialGradient(cx, cy, bh_radius, cx, cy, bh_radius * 3);
+                protoGradient.addColorStop(0, 'rgba(0, 0, 0, 0)'); // Transparent near black hole
+                protoGradient.addColorStop(0.2, 'rgba(100, 50, 0, 0.8)'); // Dusty brown
+                protoGradient.addColorStop(0.5, 'rgba(150, 100, 50, 0.6)'); // Lighter ring
+                protoGradient.addColorStop(0.8, 'rgba(100, 50, 0, 0.3)'); // Fading outer edge
+                protoGradient.addColorStop(1, 'rgba(0, 0, 0, 0)'); // Transparent outer
+                ctx.fillStyle = protoGradient;
+                ctx.beginPath();
+                ctx.arc(cx, cy, bh_radius * 3, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+
             // Black hole
             ctx.fillStyle = 'black';
             ctx.beginPath();
             ctx.arc(cx, cy, bh_radius, 0, 2 * Math.PI);
             ctx.fill();
-
-            // Blurred photon sphere
-            // ctx.strokeStyle = 'white';
-            // ctx.lineWidth = 2;
-            // for (let i = -5; i <= 5; i++) {
-            //     let r = 1.5 * bh_radius + i * 2;
-            //     let alpha = 0.2 * Math.exp(-(i * i) / 4); // Gaussian blur effect
-            //     ctx.globalAlpha = alpha;
-            //     ctx.beginPath();
-            //     ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-            //     ctx.stroke();
-            // }
-            // ctx.globalAlpha = 1;
 
             // Twinkling stars
             ctx.fillStyle = 'white';
@@ -103,40 +131,52 @@
                 ctx.fill();
             });
 
-            // Update and draw asteroids
+            // Update asteroids
             asteroids.forEach(asteroid => {
-                let dx = cx - asteroid.x;
-                let dy = cy - asteroid.y;
-                let r = Math.sqrt(dx * dx + dy * dy);
-                if (r > 0) {
-                    let a = k / (r * r);
-                    asteroid.vx += a * (dx / r);
-                    asteroid.vy += a * (dy / r);
+                if (asteroid !== selectedAsteroid) {
+                    let dx = cx - asteroid.x;
+                    let dy = cy - asteroid.y;
+                    let r = Math.sqrt(dx * dx + dy * dy);
+                    if (r > 0) {
+                        let a = k / (r * r);
+                        asteroid.vx += a * (dx / r);
+                        asteroid.vy += a * (dy / r);
+                    }
+                    asteroid.vx *= damping;
+                    asteroid.vy *= damping;
+                    asteroid.x += asteroid.vx;
+                    asteroid.y += asteroid.vy;
                 }
-                asteroid.x += asteroid.vx;
-                asteroid.y += asteroid.vy;
+                asteroid.angle += asteroid.omega;
             });
 
+            // Remove asteroids inside black hole
             asteroids = asteroids.filter(asteroid => {
                 let dx = cx - asteroid.x;
                 let dy = cy - asteroid.y;
                 return Math.sqrt(dx * dx + dy * dy) > bh_radius;
             });
 
+            // Draw asteroids (2D)
             asteroids.forEach(asteroid => {
                 let dx = cx - asteroid.x;
                 let dy = cy - asteroid.y;
                 let distance = Math.sqrt(dx * dx + dy * dy);
-                let scale = distance <= bh_radius ? 0 : distance < 2 * bh_radius ? (distance - bh_radius) / bh_radius : 1;
+                let scale = distance <= bh_radius ? 0 : distance / asteroid.initial_r;
                 if (scale > 0) {
-                    let scaledPoints = asteroid.shape.map(p => ({
-                        x: asteroid.x + p.x * scale,
-                        y: asteroid.y + p.y * scale
-                    }));
+                    let rotatedPoints = asteroid.shape.map(p => {
+                        const cosA = Math.cos(asteroid.angle);
+                        const sinA = Math.sin(asteroid.angle);
+                        return {
+                            x: asteroid.x + (p.x * cosA - p.y * sinA) * scale,
+                            y: asteroid.y + (p.x * sinA + p.y * cosA) * scale
+                        };
+                    });
+
                     ctx.beginPath();
-                    ctx.moveTo(scaledPoints[0].x, scaledPoints[0].y);
-                    for (let i = 1; i < scaledPoints.length; i++) {
-                        ctx.lineTo(scaledPoints[i].x, scaledPoints[i].y);
+                    ctx.moveTo(rotatedPoints[0].x, rotatedPoints[0].y);
+                    for (let i = 1; i < rotatedPoints.length; i++) {
+                        ctx.lineTo(rotatedPoints[i].x, rotatedPoints[i].y);
                     }
                     ctx.closePath();
                     ctx.fillStyle = 'gray';
@@ -151,16 +191,99 @@
 
         // Add asteroid on click
         canvas.addEventListener('click', (event) => {
-            let rect = canvas.getBoundingClientRect();
-            let x = event.clientX - rect.left;
-            let y = event.clientY - rect.top;
-            asteroids.push({
-                x: x,
-                y: y,
-                vx: 0,
-                vy: 0,
-                shape: generateAsteroidShape(6, 5, 10)
-            });
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            if (getAsteroidAtPosition(x, y)) return;
+
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+            const dx = cx - x;
+            const dy = cy - y;
+            const r = Math.sqrt(dx * dx + dy * dy);
+            if (r > bh_radius) {
+                const dir_x = dx / r;
+                const dir_y = dy / r;
+                const random_angle = (Math.random() - 0.5) * (Math.PI / 3);
+                const cosA = Math.cos(random_angle);
+                const sinA = Math.sin(random_angle);
+                const new_dir_x = dir_x * cosA - dir_y * sinA;
+                const new_dir_y = dir_x * sinA + dir_y * cosA;
+                const speed = 2;
+                const vx = speed * new_dir_x;
+                const vy = speed * new_dir_y;
+
+                asteroids.push({
+                    x: x,
+                    y: y,
+                    vx: vx,
+                    vy: vy,
+                    omega: 0.05 * (Math.random() - 0.5),
+                    angle: 0,
+                    initial_r: r,
+                    shape: generateAsteroidShape(6, 10, 20)
+                });
+            }
+        });
+
+        // Drag functionality
+        canvas.addEventListener('mousedown', (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = event.clientX - rect.left;
+            const mouseY = event.clientY - rect.top;
+            selectedAsteroid = getAsteroidAtPosition(mouseX, mouseY);
+            if (selectedAsteroid) {
+                const dx = canvas.width / 2 - selectedAsteroid.x;
+                const dy = canvas.height / 2 - selectedAsteroid.y;
+                selectedAsteroid.initial_r = Math.sqrt(dx * dx + dy * dy);
+            }
+        });
+
+        canvas.addEventListener('mousemove', (event) => {
+            if (selectedAsteroid) {
+                const rect = canvas.getBoundingClientRect();
+                selectedAsteroid.x = event.clientX - rect.left;
+                selectedAsteroid.y = event.clientY - rect.top;
+                selectedAsteroid.vx = 0;
+                selectedAsteroid.vy = 0;
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            if (selectedAsteroid) {
+                const dx = canvas.width / 2 - selectedAsteroid.x;
+                const dy = canvas.height / 2 - selectedAsteroid.y;
+                selectedAsteroid.initial_r = Math.sqrt(dx * dx + dy * dy);
+            }
+            selectedAsteroid = null;
+        });
+
+        // Key event handling for zoom
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && !isZoomed) {
+                // Zoom into black hole
+                const screenHeight = window.innerHeight;
+                const screenWidth = window.innerWidth;
+                const bh_diameter = bh_radius * 2; // Black hole diameter
+                const targetHeight = screenHeight * 0.8; // Black hole fills 80% of height
+                const scaleFactor = targetHeight / bh_diameter; // Scale to fit
+                // Center the black hole in the screen
+                const bh_center_x = canvas.width / 2;
+                const bh_center_y = canvas.height / 2;
+                const scaled_bh_center_x = bh_center_x * scaleFactor;
+                const scaled_bh_center_y = bh_center_y * scaleFactor;
+                const translateX = (screenWidth / 2 - scaled_bh_center_x) / scaleFactor;
+                const translateY = (screenHeight / 2 - scaled_bh_center_y) / scaleFactor;
+
+                canvas.style.transform = `scale(${scaleFactor}) translate(${translateX}px, ${translateY}px)`;
+                infoText.style.opacity = '1';
+                isZoomed = true;
+            } else if (event.key === 'Escape' && isZoomed) {
+                // Reset to original view
+                canvas.style.transform = 'none';
+                infoText.style.opacity = '0';
+                isZoomed = false;
+            }
         });
     </script>
 </body>
