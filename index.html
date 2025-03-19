@@ -5,6 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teenie Black Hole</title>
     <style>
+        header {
+            position: fixed;
+            top: 0;
+            width: 0;
+            background-color: rgba(255, 255, 255, 0); /* Transparent background */
+            margin-left: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        a {
+            padding-top: 20px;
+            margin-right: 20px;
+            margin-left: 20px;
+            position: relative;
+            color: #934710;
+            transition: color 1s;
+        }
+
+        a::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 1px;
+            bottom: 0;
+            left: 0;
+            background-color: #ffca7b;
+            transition: width 1s;
+        }
+
+        a:hover {
+            text-decoration: none;
+            color: #ffca7b;
+        }
+
+        a:hover::before {
+            width: 100%;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-menu a {
+            text-decoration: none;
+            font-size: 18px;
+        }
+
         #myCanvas {
             position: fixed;
             top: 0;
@@ -46,6 +96,14 @@
 </head>
 <body>
     <canvas id="myCanvas"></canvas>
+    <header>
+        <nav class="nav-menu">
+            <a href="./HenryHoughtonResume2025.pdf" download="henry's resume">RESUME</a>
+            <a href="https://www.github.com/hph45/">GITHUB</a>
+            <a href="https://open.spotify.com/show/71Bv9G1UubMUaYdqxQ6I0X">PODCAST</a>
+            <a href="mailto:hph45@cornell.edu">CONTACT</a>
+        </nav>
+    </header>
     <div id="infoText">Content coming shortly.<br>Press Esc to return.</div>
     <button id="enterButton">Enter</button>
     <script>
