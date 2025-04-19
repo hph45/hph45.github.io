@@ -1,16 +1,9 @@
-<!--
-Henry Houghton
-LectureLink
-April 19, 2025
-#104F00, #001CAF
--->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LectureLink</title>
+  <title>Terms of Service</title>
   <link rel="icon" href="favicon.ico" type="image/x-icon">
   <style>
     html, body {
@@ -21,13 +14,10 @@ April 19, 2025
     body {
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      align-items: center;
       background: linear-gradient(to bottom right, #104F00, #001CAF);
       font-family: Arial, sans-serif;
       position: relative;
       color: white;
-      text-align: center;
     }
     .topbar {
       position: absolute;
@@ -38,7 +28,10 @@ April 19, 2025
       justify-content: space-between;
       align-items: center;
     }
-    .logo {
+    .logo-link {
+      display: inline-block;
+    }
+    .logo-link img {
       height: 60px;
       width: auto;
       border-radius: 10px;
@@ -47,7 +40,6 @@ April 19, 2025
       color: white;
       text-decoration: none;
       margin-left: 20px;
-      font-size: medium;
       font-weight: bold;
       position: relative;
       display: inline-block;
@@ -66,16 +58,23 @@ April 19, 2025
     nav a:hover::before {
       width: 100%;
     }
-    h1 {
-      font-weight: 900;
-      font-size: clamp(2.5rem, 10vw, 6rem);
-      margin: 0;
-      line-height: 1;
+    .content {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+      margin-top: 100px;
     }
-    h2, h3 {
-      font-size: clamp(1rem, 5vw, 2rem);
-      margin-top: 0.5rem;
-      font-weight: 600;
+    .pdf-container {
+      width: 100%;
+      height: 100%;
+      max-height: calc(100vh - 140px);
+    }
+    .pdf-container embed {
+      width: 100%;
+      height: 100%;
+      border: none;
     }
   </style>
 </head>
@@ -85,12 +84,16 @@ April 19, 2025
       <img src="logo.png" alt="Logo">
     </a>
     <nav>
-      <a href="privacy.html">Privacy Policy</a>
-      <a href="terms.html">Terms of Service</a>
+      <a href="privacy-policy.html">Privacy Policy</a>
+      <a href="terms-of-service.html">Terms of Service</a>
       <a href="mailto:lecturelinkteam@gmail.com">Contact Us</a>
     </nav>
   </div>
-  <h1>LectureLink</h1>
-  <h3>Coming soon to the App Store.</h3>
+
+  <div class="content">
+    <div class="pdf-container">
+      <embed src="LectureLinkPrivacyPolicy.pdf" type="application/pdf">
+    </div>
+  </div>
 </body>
 </html>
