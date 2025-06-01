@@ -1,19 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terms of Service</title>
+    <title>Team - LectureLink</title>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <style>
-        html,
-        body {
+        html, body {
             margin: 0;
             padding: 0;
-            height: 100%;
         }
-
         body {
             display: flex;
             flex-direction: column;
@@ -22,7 +18,6 @@
             position: relative;
             color: white;
         }
-
         .topbar {
             position: absolute;
             top: 20px;
@@ -32,27 +27,27 @@
             justify-content: space-between;
             align-items: center;
         }
-
         .logo-link {
             display: inline-block;
         }
-
         .logo-link img {
             height: 60px;
             width: auto;
             border-radius: 10px;
         }
-
+        nav {
+            display: flex;
+            align-items: center;
+        }
         nav a {
             color: white;
             text-decoration: none;
-            margin-left: 20px;
-            font-weight: bold;
+            margin: 0 20px;
             position: relative;
             display: inline-block;
             padding-bottom: 4px;
+            font-size: medium;
         }
-
         nav a::before {
             content: '';
             position: absolute;
@@ -63,13 +58,89 @@
             background-color: #ffffff;
             transition: width 0.3s ease;
         }
-
         nav a:hover::before {
             width: 100%;
         }
+        nav .separator {
+            color: white;
+            margin: 0 10px;
+            font-size: medium;
+        }
+        .team-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 150px 20px 100px 0px;
+            box-sizing: border-box;
+            /* padding-bottom: 200px; */
+        }
+        h1 {
+            font-weight: 900;
+            font-size: clamp(2rem, 8vw, 4rem);
+            margin: 0 0 2rem;
+            text-align: center;
+        }
+        .profiles {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            max-width: 1200px;
+        }
+        .profile {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1.5rem;
+            width: 300px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        .profile:hover {
+            transform: translateY(-5px);
+        }
+        .profile img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 1rem;
+        }
+        .profile h3 {
+            font-size: 1.5rem;
+            margin: 0.5rem 0;
+        }
+        .profile p {
+            font-size: 1rem;
+            margin: 0.5rem 0;
+            color: #ddd;
+        }
+        .profile a {
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid #ffffff;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .profile a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        @media (max-width: 768px) {
+            .profiles {
+                flex-direction: column;
+                align-items: center;
+            }
+            .profile {
+                width: 80%;
+            }
+        }
     </style>
 </head>
-
 <body>
     <div class="topbar">
         <a href="index.html" class="logo-link">
@@ -77,11 +148,39 @@
         </a>
         <nav>
             <a href="team.html">Team</a>
+            <span class="separator">|</span>
             <a href="privacy.html">Privacy Policy</a>
+            <span class="separator">|</span>
             <a href="terms.html">Terms of Service</a>
+            <span class="separator">|</span>
             <a href="join.html">Join Us</a>
         </nav>
     </div>
+    <div class="team-container">
+        <h1>Meet Our Team</h1>
+        <div class="profiles">
+            <div class="profile">
+                <img src="profile.jpg" alt="Founder Image">
+                <h3>Henry Houghton</h3>
+                <p>Founder & CEO</p>
+                <p>With years of experience writing scalable, high performance code and a degree from Cornell University in Data Science, Henry leads the development and business operations of LectureLink.</p>
+                <a href="https://www.linkedin.com/in/henry-houghton-779211162/" target="_blank">LinkedIn</a>
+            </div>
+            <div class="profile">
+                <img src="founder2.jpg" alt="Image Coming Soon">
+                <h3>Sumner Roberts</h3>
+                <p>Co-Founder</p>
+                <p>With experience on presidential campaigns and a semester working in the White House, Sumner spearheads LectureLink's growth and marketing with respect to the social and political environment.</p>
+                <a href="https://www.linkedin.com/in/sumnerroberts/" target="_blank">LinkedIn</a>
+            </div>
+            <div class="profile">
+                <img src="coo.jpg" alt="Image Coming Soon">
+                <h3>India Houghton</h3>
+                <p>Chief Design Officer</p>
+                <p>With a degree in Science, Technology, and Society from Stanford University, India leverages current market trends to bring cutting edge deisngs to LectureLink and its platforms. India currently also plays professional tennis.</p>
+                <a href="https://www.linkedin.com/in/india-houghton/" target="_blank">LinkedIn</a>
+            </div>
+        </div>
+    </div>
 </body>
-
 </html>

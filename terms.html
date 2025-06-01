@@ -46,11 +46,16 @@
     nav a {
       color: white;
       text-decoration: none;
-      margin-left: 20px;
-      font-weight: bold;
+      margin: 20px;
       position: relative;
       display: inline-block;
       padding-bottom: 4px;
+    }
+
+    nav .separator {
+      color: white;
+      margin: 0 10px;
+      font-size: medium;
     }
 
     nav a::before {
@@ -98,8 +103,11 @@
     </a>
     <nav>
       <a href="team.html">Team</a>
+      <span class="separator">|</span>
       <a href="privacy.html">Privacy Policy</a>
+      <span class="separator">|</span>
       <a href="terms.html">Terms of Service</a>
+      <span class="separator">|</span>
       <a href="join.html">Join Us</a>
     </nav>
   </div>
