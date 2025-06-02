@@ -1,19 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terms of Service</title>
+    <title>Join Us - LectureLink</title>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <style>
-        html,
-        body {
+        html, body {
             margin: 0;
             padding: 0;
-            height: 100%;
         }
-
         body {
             display: flex;
             flex-direction: column;
@@ -22,7 +18,6 @@
             position: relative;
             color: white;
         }
-
         .topbar {
             position: absolute;
             top: 20px;
@@ -32,26 +27,22 @@
             justify-content: space-between;
             align-items: center;
         }
-
         .logo-link {
             display: inline-block;
         }
-
         .logo-link img {
             height: 60px;
             width: auto;
             border-radius: 10px;
         }
-
         nav a {
             color: white;
             text-decoration: none;
-            margin: 20px;
+            margin: 0 20px;
             position: relative;
             display: inline-block;
             padding-bottom: 4px;
         }
-
         nav a::before {
             content: '';
             position: absolute;
@@ -62,40 +53,56 @@
             background-color: #ffffff;
             transition: width 0.3s ease;
         }
-
+        nav a:hover::before {
+            width: 100%;
+        }
         nav .separator {
             color: white;
             margin: 0 10px;
             font-size: medium;
         }
-
-        nav a:hover::before {
-            width: 100%;
-        }
-
-        .content {
-            flex: 1;
+        .join-container {
             display: flex;
+            flex-direction: column;
+            align-items: center;
             justify-content: center;
-            align-items: flex-start;
-            padding: 20px;
-            margin-top: 100px;
+            min-height: 100vh;
+            padding: 150px 20px 100px 20px;
+            box-sizing: border-box;
+            text-align: center;
         }
-
-        .pdf-container {
-            width: 100%;
-            height: 100%;
-            max-height: calc(100vh - 140px);
+        h1 {
+            font-weight: 900;
+            font-size: clamp(2rem, 8vw, 4rem);
+            margin: 0 0 2rem;
         }
-
-        .pdf-container embed {
-            width: 100%;
-            height: 100%;
-            border: none;
+        p {
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 0 2rem;
+            color: #ddd;
+        }
+        .email-button {
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-block;
+            padding: 0.75rem 2rem;
+            border: 1px solid #ffffff;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .email-button:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        @media (max-width: 768px) {
+            p {
+                font-size: 1rem;
+                padding: 0 20px;
+            }
         }
     </style>
 </head>
-
 <body>
     <div class="topbar">
         <a href="index.html" class="logo-link">
@@ -111,12 +118,10 @@
             <a href="join.html">Join Us</a>
         </nav>
     </div>
-
-    <div class="content">
-        <div class="pdf-container">
-            <embed src="LectureLinkPrivacyPolicy.pdf" type="application/pdf">
-        </div>
+    <div class="join-container">
+        <h1>Join Our Team</h1>
+        <p>LectureLink is a dynamic technology company passionate about innovation. We are always seeking talented innovators to join our team. Available positions: Full-time and Internships for <b>Backend Software Development</b>, <b>Marketing</b>, and <b>Client Relations</b>.</p>
+        <a href="mailto:lecturelinkteam@gmail.com" class="email-button">Contact Us</a>
     </div>
 </body>
-
 </html>
