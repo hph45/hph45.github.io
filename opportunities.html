@@ -160,11 +160,18 @@
     }
     
     .position-list li {
-      padding: 0.5rem 0;
+      padding: 0.75rem 0;
       color: #333;
       font-weight: 500;
       position: relative;
       padding-left: 1.5rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .position-list li:hover {
+      color: #000;
+      transform: translateX(4px);
     }
     
     .position-list li::before {
@@ -172,6 +179,11 @@
       position: absolute;
       left: 0;
       color: #000;
+      transition: transform 0.2s ease;
+    }
+    
+    .position-list li:hover::before {
+      transform: translateX(4px);
     }
     
     .internship-section {
@@ -210,6 +222,161 @@
     .apply-button:hover {
       transform: translateY(-2px);
       box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(5px);
+      z-index: 2000;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .modal.show {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 1;
+    }
+    
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    .modal.show .modal-content {
+      transform: scale(1);
+    }
+    
+    .modal-header {
+      padding: 2rem;
+      border-bottom: 1px solid #f0f0f0;
+      position: relative;
+    }
+    
+    .modal-header h2 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #000;
+      margin: 0;
+    }
+    
+    .modal-department {
+      display: inline-block;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-top: 0.5rem;
+    }
+    
+    .close-modal {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: #f0f0f0;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: #666;
+      transition: all 0.2s ease;
+    }
+    
+    .close-modal:hover {
+      background: #e0e0e0;
+      color: #000;
+      transform: rotate(90deg);
+    }
+    
+    .modal-body {
+      padding: 2rem;
+    }
+    
+    .modal-section {
+      margin-bottom: 2rem;
+    }
+    
+    .modal-section:last-child {
+      margin-bottom: 0;
+    }
+    
+    .modal-section h3 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 0.8rem;
+      color: #000;
+    }
+    
+    .modal-section p {
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 0.5rem;
+    }
+    
+    .modal-section ul {
+      list-style: none;
+      padding: 0;
+    }
+    
+    .modal-section ul li {
+      position: relative;
+      padding-left: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: #666;
+      line-height: 1.6;
+    }
+    
+    .modal-section ul li::before {
+      content: '•';
+      position: absolute;
+      left: 0;
+      color: #667eea;
+      font-weight: bold;
+    }
+    
+    .modal-footer {
+      padding: 2rem;
+      border-top: 1px solid #f0f0f0;
+      text-align: center;
+    }
+    
+    .modal-apply-button {
+      display: inline-block;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 0.8rem 2rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .modal-apply-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
     }
     
     footer {
@@ -263,6 +430,11 @@
         padding: 2rem 1.5rem;
       }
       
+      .modal-content {
+        width: 95%;
+        max-height: 90vh;
+      }
+      
       .footer-links {
         flex-wrap: wrap;
         gap: 1rem;
@@ -297,9 +469,9 @@
         <div class="positions">
           <h3>Open Positions</h3>
           <ul class="position-list">
-            <li>Full-Stack Software Engineer</li>
-            <li>Mobile Developer (iOS/Android)</li>
-            <li>Backend Engineer</li>
+            <li onclick="openModal('fullstack')">Full-Stack Software Engineer</li>
+            <li onclick="openModal('mobile')">Mobile Developer (iOS/Android)</li>
+            <li onclick="openModal('backend')">Backend Engineer</li>
           </ul>
         </div>
       </div>
@@ -310,9 +482,9 @@
         <div class="positions">
           <h3>Open Positions</h3>
           <ul class="position-list">
-            <li>Product Designer</li>
-            <li>UX/UI Designer</li>
-            <li>Visual Designer</li>
+            <li onclick="openModal('product-designer')">Product Designer</li>
+            <li onclick="openModal('ux-ui')">UX/UI Designer</li>
+            <li onclick="openModal('visual')">Visual Designer</li>
           </ul>
         </div>
       </div>
@@ -323,9 +495,9 @@
         <div class="positions">
           <h3>Open Positions</h3>
           <ul class="position-list">
-            <li>Growth Marketing Manager</li>
-            <li>Content Strategist</li>
-            <li>Community Manager</li>
+            <li onclick="openModal('growth')">Growth Marketing Manager</li>
+            <li onclick="openModal('content')">Content Strategist</li>
+            <li onclick="openModal('community')">Community Manager</li>
           </ul>
         </div>
       </div>
@@ -345,6 +517,25 @@
     </div>
   </main>
   
+  <!-- Modal -->
+  <div id="roleModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button class="close-modal" onclick="closeModal()">×</button>
+        <h2 id="modalTitle">Role Title</h2>
+        <span id="modalDepartment" class="modal-department">Department</span>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- Content will be dynamically inserted here -->
+      </div>
+      <div class="modal-footer">
+        <a href="mailto:lecturelinkteam@gmail.com?subject=Application for [Position]" id="modalApplyButton" class="modal-apply-button">
+          Apply for this Position
+        </a>
+      </div>
+    </div>
+  </div>
+  
   <footer>
     <div class="footer-links">
       <a href="privacy.html">Privacy Policy</a>
@@ -355,5 +546,322 @@
       © 2025 LectureLink. All rights reserved.
     </div>
   </footer>
+  
+  <script>
+    const roles = {
+      'fullstack': {
+        title: 'Full-Stack Software Engineer',
+        department: 'Engineering',
+        content: `
+          <div class="modal-section">
+            <h3>About the Role</h3>
+            <p>We're looking for a talented Full-Stack Engineer to help build and scale our collaborative learning platform. You'll work on both frontend and backend systems, creating features that directly impact thousands of students.</p>
+          </div>
+          <div class="modal-section">
+            <h3>What You'll Do</h3>
+            <ul>
+              <li>Design and implement new features across our web and mobile platforms</li>
+              <li>Build scalable APIs and microservices</li>
+              <li>Optimize application performance and user experience</li>
+              <li>Collaborate with designers and product managers</li>
+              <li>Mentor junior developers and contribute to technical decisions</li>
+            </ul>
+          </div>
+          <div class="modal-section">
+            <h3>What We're Looking For</h3>
+            <ul>
+              <li>3+ years of experience in full-stack development</li>
+              <li>Proficiency in React, Node.js, and modern JavaScript</li>
+              <li>Experience with cloud platforms (AWS, GCP, or Azure)</li>
+              <li>Strong understanding of database design and optimization</li>
+              <li>Passion for education technology and collaborative learning</li>
+            </ul>
+          </div>
+        `
+      },
+      'mobile': {
+        title: 'Mobile Developer (iOS/Android)',
+        department: 'Engineering',
+        content: `
+          <div class="modal-section">
+            <h3>About the Role</h3>
+            <p>Join our mobile team to create exceptional native experiences for students on iOS and Android. You'll be responsible for developing and maintaining our mobile applications that make learning collaborative and accessible anywhere.</p>
+          </div>
+          <div class="modal-section">
+            <h3>What You'll Do</h3>
+            <ul>
+              <li>Develop and maintain native iOS and/or Android applications</li>
+              <li>Implement real-time collaboration features</li>
+              <li>Optimize app performance and battery usage</li>
+              <li>Work closely with backend engineers on API integration</li>
+              <li>Participate in code reviews and technical architecture decisions</li>
+            </ul>
+          </div>
+          <div class="modal-section">
+            <h3>What We're Looking For</h3>
+            <ul>
+              <li>2+ years of mobile development experience</li>
+              <li>Expertise in Swift/SwiftUI or Kotlin/Jetpack Compose</li>
+              <li>Experience with real-time communication protocols</li>
+              <li>Understanding of mobile app security best practices</li>
+              <li>Published apps on App Store or Google Play</li>
+            </ul>
+          </div>
+        `
+      },
+      'backend': {
+        title: 'Backend Engineer',
+        department: 'Engineering',
+        content: `
+          <div class="modal-section">
+            <h3>About the Role</h3>
+            <p>We're seeking a Backend Engineer to architect and build the infrastructure that powers collaborative learning for thousands of students. You'll design scalable systems that handle real-time collaboration, data processing, and analytics.</p>
+          </div>
+          <div class="modal-section">
+            <h3>What You'll Do</h3>
+            <ul>
+              <li>Design and implement scalable backend services and APIs</li>
+              <li>Build real-time collaboration infrastructure</li>
+              <li>Optimize database performance and data pipelines</li>
+              <li>Implement security and privacy best practices</li>
+              <li>Monitor and improve system reliability and performance</li>
+            </ul>
+          </div>
+          <div class="modal-section">
+            <h3>What We're Looking For</h3>
+            <ul>
+              <li>3+ years of backend development experience</li>
+              <li>Strong experience with Python, Go, or Java</li>
+              <li>Expertise in distributed systems and microservices</li>
+              <li>Experience with PostgreSQL, Redis, and message queues</li>
+              <li>Knowledge of DevOps practices and cloud infrastructure</li>
+            </ul>
+          </div>
+        `
+      },
+      'product-designer': {
+        title: 'Product Designer',
+        department: 'Design',
+        content: `
+          <div class="modal-section">
+            <h3>About the Role</h3>
+            <p>As a Product Designer, you'll shape how students interact with our platform. You'll lead the design process from concept to implementation, creating intuitive experiences that make collaborative learning effortless and engaging.</p>
+          </div>
+          <div class="modal-section">
+            <h3>What You'll Do</h3>
+            <ul>
+              <li>Lead end-to-end design for new features and products</li>
+              <li>Conduct user research and usability testing</li>
+              <li>Create wireframes, prototypes, and high-fidelity designs</li>
+              <li>Develop and maintain our design system</li>
+              <li>Collaborate closely with engineers and product managers</li>
+            </ul>
+          </div>
+          <div class="modal-section">
+            <h3>What We're Looking For</h3>
+            <ul>
+              <li>3+ years of product design experience</li>
+              <li>Strong portfolio demonstrating user-centered design</li>
+              <li>Proficiency in Figma, Sketch, or similar tools</li>
+              <li>Experience with design systems and component libraries</li>
+              <li>Understanding of accessibility and inclusive design</li>
+            </ul>
+          </div>
+        `
+      },
+      'ux-ui': {
+        title: 'UX/UI Designer',
+        department: 'Design',
+        content: `
+          <div class="modal-section">
+            <h3>About the Role</h3>
+            <p>We're looking for a UX/UI Designer to create beautiful, functional interfaces that delight our users. You'll focus on crafting pixel-perfect designs while ensuring an exceptional user experience across all touchpoints.</p>
+          </div>
+          <div class="modal-section">
+            <h3>What You'll Do</h3>
+            <ul>
+              <li>Design intuitive user interfaces for web and mobile</li>
+              <li>Create user flows, wireframes, and interactive prototypes</li>
+              <li>Conduct user research and translate insights into designs</li>
+              <li>Collaborate with developers to ensure design implementation</li>
+              <li>Maintain consistency across all product touchpoints</li>
+            </ul>
+          </div>
+          <div class="modal-section">
+            <h3>What We're Looking For</h3>
+            <ul>
+              <li>2+ years of UX/UI design experience</li>
+              <li>Strong visual design skills and attention to detail</li>
+              <li>Experience with responsive and mobile-first design</li>
+              <li>Knowledge of front-end development principles</li>
+              <li>Portfolio showcasing strong UX process and UI execution</li>
+            </ul>
+          </div>
+        `
+      },
+      'visual': {
+        title: 'Visual Designer',
+        department: 'Design',
+        content: `
+          <div class="modal-section">
+            <h3>About the Role</h3>
+            <p>As our Visual Designer, you'll define and evolve LectureLink's visual identity. You'll create compelling visuals that communicate our brand values and enhance the user experience across all platforms.</p>
+          </div>
+          <div class="modal-section">
+            <h3>What You'll Do</h3>
+            <ul>
+              <li>Develop and maintain brand visual guidelines</li>
+              <li>Create illustrations, icons, and graphic elements</li>
+              <li>Design marketing materials and social media content</li>
+              <li>Collaborate on product UI visual elements</li>
+              <li>Ensure visual consistency across all touchpoints</li>
+            </ul>
+          </div>
+          <div class="modal-section">
+            <h3>What We're Looking For</h3>
+            <ul>
+              <li>2+ years of visual design experience</li>
+              <li>Exceptional portfolio demonstrating visual creativity</li>
+              <li>Proficiency in Adobe Creative Suite and Figma</li>
+              <li>Strong typography and color theory knowledge</li>
+              <li>Experience with motion design is a plus</li>
+            </ul>
+          </div>
+        `
+      },
+      'growth': {
+        title: 'Growth Marketing Manager',
+        department: 'Marketing',
+        content: `
+          <div class="modal-section">
+            <h3>About the Role</h3>
+            <p>Lead our growth efforts to expand LectureLink's reach to students worldwide. You'll develop and execute strategies to acquire, activate, and retain users while building a strong community of collaborative learners.</p>
+          </div>
+          <div class="modal-section">
+            <h3>What You'll Do</h3>
+            <ul>
+              <li>Develop and execute growth marketing strategies</li>
+              <li>Manage paid acquisition channels and optimize CAC</li>
+              <li>Run A/B tests and analyze user behavior</li>
+              <li>Build referral and viral growth mechanisms</li>
+              <li>Collaborate with product team on growth features</li>
+            </ul>
+          </div>
+          <div class="modal-section">
+            <h3>What We're Looking For</h3>
+            <ul>
+              <li>3+ years of growth marketing experience</li>
+              <li>Proven track record of scaling user acquisition</li>
+              <li>Strong analytical skills and data-driven mindset</li>
+              <li>Experience with marketing automation tools</li>
+              <li>Understanding of the education or EdTech market</li>
+            </ul>
+          </div>
+        `
+      },
+      'content': {
+        title: 'Content Strategist',
+        department: 'Marketing',
+        content: `
+          <div class="modal-section">
+            <h3>About the Role</h3>
+            <p>Shape LectureLink's content strategy to engage and inspire our student community. You'll create compelling content that educates users, drives engagement, and establishes us as thought leaders in collaborative learning.</p>
+          </div>
+          <div class="modal-section">
+            <h3>What You'll Do</h3>
+            <ul>
+              <li>Develop and execute content marketing strategy</li>
+              <li>Create engaging blog posts, guides, and resources</li>
+              <li>Manage social media content and engagement</li>
+              <li>Collaborate with users to create success stories</li>
+              <li>Optimize content for SEO and user engagement</li>
+            </ul>
+          </div>
+          <div class="modal-section">
+            <h3>What We're Looking For</h3>
+            <ul>
+              <li>2+ years of content strategy experience</li>
+              <li>Excellent writing and storytelling skills</li>
+              <li>Experience with SEO and content optimization</li>
+              <li>Understanding of student and education audiences</li>
+              <li>Ability to translate complex topics into engaging content</li>
+            </ul>
+          </div>
+        `
+      },
+      'community': {
+        title: 'Community Manager',
+        department: 'Marketing',
+        content: `
+          <div class="modal-section">
+            <h3>About the Role</h3>
+            <p>Build and nurture a thriving community of students who support each other's learning journey. You'll be the voice of LectureLink, fostering engagement and creating spaces where students connect and collaborate.</p>
+          </div>
+          <div class="modal-section">
+            <h3>What You'll Do</h3>
+            <ul>
+              <li>Manage and grow our online community platforms</li>
+              <li>Develop community engagement programs and events</li>
+              <li>Respond to user feedback and support requests</li>
+              <li>Create community guidelines and moderation strategies</li>
+              <li>Identify and empower community ambassadors</li>
+            </ul>
+          </div>
+          <div class="modal-section">
+            <h3>What We're Looking For</h3>
+            <ul>
+              <li>2+ years of community management experience</li>
+              <li>Excellent communication and interpersonal skills</li>
+              <li>Experience with community platforms and tools</li>
+              <li>Ability to handle difficult situations with empathy</li>
+              <li>Passion for education and student success</li>
+            </ul>
+          </div>
+        `
+      }
+    };
+    
+    function openModal(roleId) {
+      const modal = document.getElementById('roleModal');
+      const role = roles[roleId];
+      
+      if (role) {
+        document.getElementById('modalTitle').textContent = role.title;
+        document.getElementById('modalDepartment').textContent = role.department;
+        document.getElementById('modalBody').innerHTML = role.content;
+        
+        const applyButton = document.getElementById('modalApplyButton');
+        applyButton.href = `mailto:lecturelinkteam@gmail.com?subject=Application for ${role.title}`;
+        
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('show'), 10);
+        
+        document.body.style.overflow = 'hidden';
+      }
+    }
+    
+    function closeModal() {
+      const modal = document.getElementById('roleModal');
+      modal.classList.remove('show');
+      setTimeout(() => {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+      }, 300);
+    }
+    
+    // Close modal when clicking outside
+    document.getElementById('roleModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeModal();
+      }
+    });
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeModal();
+      }
+    });
+  </script>
 </body>
 </html>
