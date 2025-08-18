@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Opportunities - LectureLink</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #ffffff;
+      color: #000000;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    nav {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      height: 40px;
+      width: auto;
+      border-radius: 8px;
+    }
+    
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+    }
+    
+    .nav-links a {
+      text-decoration: none;
+      color: #666;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: color 0.3s ease;
+      position: relative;
+    }
+    
+    .nav-links a:hover,
+    .nav-links a.active {
+      color: #000;
+    }
+    
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: #000;
+      transition: width 0.3s ease;
+    }
+    
+    .nav-links a:hover::after,
+    .nav-links a.active::after {
+      width: 100%;
+    }
+    
+    main {
+      flex: 1;
+      padding: 120px 2rem 4rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    
+    .page-header {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+    
+    h1 {
+      font-size: clamp(2.5rem, 5vw, 3.5rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+    
+    .subtitle {
+      font-size: 1.2rem;
+      color: #666;
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    
+    .opportunities-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-bottom: 4rem;
+    }
+    
+    .opportunity-card {
+      background: #f8f8f8;
+      border-radius: 12px;
+      padding: 2rem;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .opportunity-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .opportunity-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      color: #000;
+    }
+    
+    .opportunity-card p {
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+    
+    .positions {
+      margin-top: 1rem;
+    }
+    
+    .positions h3 {
+      font-size: 1rem;
+      color: #999;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .position-list {
+      list-style: none;
+    }
+    
+    .position-list li {
+      padding: 0.5rem 0;
+      color: #333;
+      font-weight: 500;
+      position: relative;
+      padding-left: 1.5rem;
+    }
+    
+    .position-list li::before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      color: #000;
+    }
+    
+    .internship-section {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 16px;
+      padding: 3rem;
+      color: white;
+      text-align: center;
+    }
+    
+    .internship-section h2 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    
+    .internship-section p {
+      font-size: 1.1rem;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    .apply-button {
+      display: inline-block;
+      background: white;
+      color: #667eea;
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .apply-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    footer {
+      padding: 2rem;
+      text-align: center;
+      border-top: 1px solid #f0f0f0;
+    }
+    
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-bottom: 1rem;
+    }
+    
+    .footer-links a {
+      text-decoration: none;
+      color: #666;
+      font-size: 0.9rem;
+      transition: color 0.3s ease;
+    }
+    
+    .footer-links a:hover {
+      color: #000;
+    }
+    
+    .copyright {
+      color: #999;
+      font-size: 0.85rem;
+      margin-top: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+      .nav-links {
+        gap: 1rem;
+      }
+      
+      .nav-links a {
+        font-size: 0.9rem;
+      }
+      
+      main {
+        padding: 100px 1.5rem 3rem;
+      }
+      
+      .opportunities-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .internship-section {
+        padding: 2rem 1.5rem;
+      }
+      
+      .footer-links {
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="index.html">
+        <img src="logo.png" alt="LectureLink" class="logo">
+      </a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="opportunities.html" class="active">Opportunities</a>
+        <a href="team.html">Team</a>
+      </div>
+    </nav>
+  </header>
+  
+  <main>
+    <div class="page-header">
+      <h1>Join Our Team</h1>
+      <p class="subtitle">We're building the future of collaborative learning and looking for passionate individuals to join our mission</p>
+    </div>
+    
+    <div class="opportunities-grid">
+      <div class="opportunity-card">
+        <h2>Engineering</h2>
+        <p>Build scalable systems and innovative features that empower students worldwide to learn more effectively together.</p>
+        <div class="positions">
+          <h3>Open Positions</h3>
+          <ul class="position-list">
+            <li>Full-Stack Software Engineer</li>
+            <li>Mobile Developer (iOS/Android)</li>
+            <li>Backend Engineer</li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="opportunity-card">
+        <h2>Design</h2>
+        <p>Create intuitive, beautiful experiences that make collaborative learning accessible and enjoyable for everyone.</p>
+        <div class="positions">
+          <h3>Open Positions</h3>
+          <ul class="position-list">
+            <li>Product Designer</li>
+            <li>UX/UI Designer</li>
+            <li>Visual Designer</li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="opportunity-card">
+        <h2>Marketing</h2>
+        <p>Help us reach students globally and build a community of learners who support and inspire each other.</p>
+        <div class="positions">
+          <h3>Open Positions</h3>
+          <ul class="position-list">
+            <li>Growth Marketing Manager</li>
+            <li>Content Strategist</li>
+            <li>Community Manager</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    
+    <div class="internship-section">
+      <h2>Internship Program</h2>
+      <p>
+        Are you passionate about education technology and eager to make an impact? We offer internship opportunities across all departments for motivated individuals who want to contribute to our mission while gaining valuable experience.
+      </p>
+      <p>
+        To apply, send us your resume along with a brief introduction about your background and how you can contribute to LectureLink's vision.
+      </p>
+      <a href="mailto:lecturelinkteam@gmail.com?subject=Internship Application" class="apply-button">
+        Apply Now
+      </a>
+    </div>
+  </main>
+  
+  <footer>
+    <div class="footer-links">
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Terms of Service</a>
+      <a href="mailto:lecturelinkteam@gmail.com">Contact</a>
+    </div>
+    <div class="copyright">
+      © 2025 LectureLink. All rights reserved.
+    </div>
+  </footer>
+</body>
+</html>
