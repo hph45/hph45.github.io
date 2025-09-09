@@ -157,6 +157,84 @@
       margin-top: 1rem;
     }
     
+    .partners-section {
+      padding: 4rem 0;
+      background: #fafafa;
+      overflow: hidden;
+    }
+    
+    .partners-title {
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #999;
+      margin-bottom: 3rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    
+    .slider-container {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+    
+    .slider-track {
+      display: flex;
+      animation: scroll 40s linear infinite;
+      width: fit-content;
+    }
+    
+    .slider-track:hover {
+      animation-play-state: paused;
+    }
+    
+    .logo-item {
+      flex: 0 0 auto;
+      margin: 0 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 60px;
+      opacity: 0.4;
+      filter: grayscale(100%);
+      transition: all 0.3s ease;
+    }
+    
+    .logo-item:hover {
+      opacity: 0.7;
+      filter: grayscale(50%);
+    }
+    
+    .logo-item img {
+      max-height: 100%;
+      max-width: 150px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+    }
+    
+    .logo-text {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #666;
+      white-space: nowrap;
+    }
+    
+    @keyframes scroll {
+      0% {
+        transform: translateX(0);
+      }
+      100% {
+        transform: translateX(-50%);
+      }
+    }
+    
+    .schools-slider {
+      margin-bottom: 3rem;
+    }
+    
     @media (max-width: 768px) {
       .nav-links {
         gap: 1rem;
@@ -169,6 +247,14 @@
       .footer-links {
         flex-wrap: wrap;
         gap: 1rem;
+      }
+      
+      .logo-item {
+        margin: 0 2rem;
+      }
+      
+      .logo-item img {
+        max-width: 120px;
       }
     }
   </style>
@@ -194,6 +280,134 @@
       </a>
     </div>
   </main>
+  
+  <section class="partners-section">
+    <h2 class="partners-title">Trusted by Students and Educators</h2>
+    
+    <div class="slider-container schools-slider">
+      <div class="slider-track">
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Cornell_University_seal.svg/1200px-Cornell_University_seal.svg.png" alt="Cornell University">
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/en/thumb/0/0c/University_of_Florida_seal.svg/1200px-University_of_Florida_seal.svg.png" alt="University of Florida">
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Auburn_University_seal.svg/1200px-Auburn_University_seal.svg.png" alt="Auburn University">
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/en/thumb/b/bf/Santa_Clara_U_Seal.svg/1200px-Santa_Clara_U_Seal.svg.png" alt="Santa Clara University">
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/en/thumb/e/ef/Chapman_University_seal.svg/1200px-Chapman_University_seal.svg.png" alt="Chapman University">
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Texas_A%26M_University_seal.svg/1200px-Texas_A%26M_University_seal.svg.png" alt="Texas A&M University">
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/en/thumb/6/6b/Syracuse_University_seal.svg/1200px-Syracuse_University_seal.svg.png" alt="Syracuse University">
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Duke_University_Crest.svg/1200px-Duke_University_Crest.svg.png" alt="Duke University">
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Ohio_State_University_seal.svg/1200px-Ohio_State_University_seal.svg.png" alt="Ohio State University">
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/University_of_Michigan_seal.svg/1200px-University_of_Michigan_seal.svg.png" alt="University of Michigan">
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Northwestern_University_Seal.svg/1200px-Northwestern_University_Seal.svg.png" alt="Northwestern University">
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/University_of_Alabama_seal.svg/1200px-University_of_Alabama_seal.svg.png" alt="University of Alabama">
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/LSU_Athletics_logo.svg/1200px-LSU_Athletics_logo.svg.png" alt="LSU">
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Cornell_University_seal.svg/1200px-Cornell_University_seal.svg.png" alt="Cornell University">
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/en/thumb/0/0c/University_of_Florida_seal.svg/1200px-University_of_Florida_seal.svg.png" alt="University of Florida">
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Auburn_University_seal.svg/1200px-Auburn_University_seal.svg.png" alt="Auburn University">
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/en/thumb/b/bf/Santa_Clara_U_Seal.svg/1200px-Santa_Clara_U_Seal.svg.png" alt="Santa Clara University">
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/en/thumb/e/ef/Chapman_University_seal.svg/1200px-Chapman_University_seal.svg.png" alt="Chapman University">
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Texas_A%26M_University_seal.svg/1200px-Texas_A%26M_University_seal.svg.png" alt="Texas A&M University">
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/en/thumb/6/6b/Syracuse_University_seal.svg/1200px-Syracuse_University_seal.svg.png" alt="Syracuse University">
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Duke_University_Crest.svg/1200px-Duke_University_Crest.svg.png" alt="Duke University">
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Ohio_State_University_seal.svg/1200px-Ohio_State_University_seal.svg.png" alt="Ohio State University">
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/University_of_Michigan_seal.svg/1200px-University_of_Michigan_seal.svg.png" alt="University of Michigan">
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Northwestern_University_Seal.svg/1200px-Northwestern_University_Seal.svg.png" alt="Northwestern University">
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/University_of_Alabama_seal.svg/1200px-University_of_Alabama_seal.svg.png" alt="University of Alabama">
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/LSU_Athletics_logo.svg/1200px-LSU_Athletics_logo.svg.png" alt="LSU">
+        </div>
+      </div>
+    </div>
+    
+    <div class="slider-container">
+      <div class="slider-track">
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/MIT_logo.svg/2560px-MIT_logo.svg.png" alt="MIT OpenCourseWare">
+        </div>
+        <div class="logo-item">
+          <span class="logo-text">MIT OpenCourseWare</span>
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Khan_Academy_Logo_%28new_2018%29.svg/2560px-Khan_Academy_Logo_%28new_2018%29.svg.png" alt="Khan Academy">
+        </div>
+        <div class="logo-item">
+          <span class="logo-text">Khan Academy</span>
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Coursera_logo.svg/2560px-Coursera_logo.svg.png" alt="Coursera">
+        </div>
+        <div class="logo-item">
+          <span class="logo-text">Coursera</span>
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/MIT_logo.svg/2560px-MIT_logo.svg.png" alt="MIT OpenCourseWare">
+        </div>
+        <div class="logo-item">
+          <span class="logo-text">MIT OpenCourseWare</span>
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Khan_Academy_Logo_%28new_2018%29.svg/2560px-Khan_Academy_Logo_%28new_2018%29.svg.png" alt="Khan Academy">
+        </div>
+        <div class="logo-item">
+          <span class="logo-text">Khan Academy</span>
+        </div>
+        <div class="logo-item">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Coursera_logo.svg/2560px-Coursera_logo.svg.png" alt="Coursera">
+        </div>
+        <div class="logo-item">
+          <span class="logo-text">Coursera</span>
+        </div>
+      </div>
+    </div>
+  </section>
   
   <footer>
     <div class="footer-links">
