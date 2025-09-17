@@ -88,6 +88,16 @@
       width: 100%;
     }
     
+    #backgroundCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      background: #ffffff;
+    }
+
     main {
       flex: 1;
       display: flex;
@@ -97,6 +107,8 @@
       padding-top: 200px;
       margin-top: 60px;
       margin-bottom: 80px;
+      position: relative;
+      z-index: 1;
     }
     
     .hero {
@@ -140,6 +152,9 @@
       padding: 2rem;
       text-align: center;
       border-top: 1px solid #f0f0f0;
+      position: relative;
+      z-index: 1;
+      background: #ffffff;
     }
     
     .footer-links {
@@ -170,6 +185,8 @@
       padding: 6rem 0 4rem;
       background: #fafafa;
       overflow: hidden;
+      position: relative;
+      z-index: 1;
     }
     
     .partners-title {
@@ -307,7 +324,9 @@
       </div>
     </nav>
   </header>
-  
+
+  <canvas id="backgroundCanvas"></canvas>
+
   <main>
     <div class="hero">
       <h1>LectureLink</h1>
@@ -352,7 +371,286 @@
       © 2025 LectureLink. All rights reserved.
     </div>
   </footer>
-  
+
+  <script>
+    // Node animation for graduation cap
+    const canvas = document.getElementById('backgroundCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let width, height;
+    let nodes = [];
+    let animationComplete = false;
+    let frame = 0;
+
+    function resizeCanvas() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    class Node {
+      constructor(targetX, targetY, delay) {
+        // Random starting position from edges
+        const edge = Math.floor(Math.random() * 4);
+        switch(edge) {
+          case 0: // Top
+            this.x = Math.random() * width;
+            this.y = -20;
+            break;
+          case 1: // Right
+            this.x = width + 20;
+            this.y = Math.random() * height;
+            break;
+          case 2: // Bottom
+            this.x = Math.random() * width;
+            this.y = height + 20;
+            break;
+          case 3: // Left
+            this.x = -20;
+            this.y = Math.random() * height;
+            break;
+        }
+
+        this.targetX = targetX;
+        this.targetY = targetY;
+        this.delay = delay;
+        this.radius = 2 + Math.random() * 2;
+        this.opacity = 0;
+        this.arrived = false;
+        this.speed = 0.02 + Math.random() * 0.02;
+
+        // Random initial velocity for organic movement
+        this.vx = (Math.random() - 0.5) * 2;
+        this.vy = (Math.random() - 0.5) * 2;
+
+        // Connection properties
+        this.connections = [];
+      }
+
+      update() {
+        if (frame < this.delay) {
+          return;
+        }
+
+        // Fade in
+        if (this.opacity < 1) {
+          this.opacity += 0.03;
+        }
+
+        if (!this.arrived) {
+          // Smooth movement towards target
+          const dx = this.targetX - this.x;
+          const dy = this.targetY - this.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance > 3) {
+            this.vx += dx * this.speed * 0.5;
+            this.vy += dy * this.speed * 0.5;
+
+            // Damping
+            this.vx *= 0.92;
+            this.vy *= 0.92;
+
+            this.x += this.vx;
+            this.y += this.vy;
+          } else {
+            this.arrived = true;
+            this.x = this.targetX;
+            this.y = this.targetY;
+          }
+        } else {
+          // Gentle floating motion when arrived
+          this.x = this.targetX + Math.sin(frame * 0.01 + this.delay) * 0.5;
+          this.y = this.targetY + Math.cos(frame * 0.01 + this.delay) * 0.5;
+        }
+      }
+
+      draw() {
+        if (frame < this.delay) return;
+
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(102, 126, 234, ${this.opacity * 0.8})`;
+        ctx.fill();
+
+        // Glow effect
+        const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius * 3);
+        gradient.addColorStop(0, `rgba(102, 126, 234, ${this.opacity * 0.3})`);
+        gradient.addColorStop(1, 'rgba(102, 126, 234, 0)');
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius * 3, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+      }
+    }
+
+    function createGraduationCapShape() {
+      nodes = [];
+      const centerX = width / 2;
+      const centerY = height / 2 - 50;
+      const scale = Math.min(width, height) * 0.3;
+
+      // Create graduation cap shape points
+      const capPoints = [];
+
+      // Top square (mortarboard)
+      const squareSize = scale * 0.8;
+      const squareTop = centerY - scale * 0.3;
+      const numPerSide = 12;
+
+      // Top edge
+      for (let i = 0; i <= numPerSide; i++) {
+        capPoints.push({
+          x: centerX - squareSize/2 + (squareSize * i/numPerSide),
+          y: squareTop
+        });
+      }
+
+      // Right edge
+      for (let i = 1; i <= numPerSide; i++) {
+        capPoints.push({
+          x: centerX + squareSize/2,
+          y: squareTop + (squareSize * 0.3 * i/numPerSide)
+        });
+      }
+
+      // Bottom edge
+      for (let i = numPerSide - 1; i >= 0; i--) {
+        capPoints.push({
+          x: centerX - squareSize/2 + (squareSize * i/numPerSide),
+          y: squareTop + squareSize * 0.3
+        });
+      }
+
+      // Left edge
+      for (let i = numPerSide - 1; i >= 1; i--) {
+        capPoints.push({
+          x: centerX - squareSize/2,
+          y: squareTop + (squareSize * 0.3 * i/numPerSide)
+        });
+      }
+
+      // Bottom part (the cap base)
+      const baseWidth = scale * 0.6;
+      const baseTop = centerY;
+      const baseHeight = scale * 0.25;
+
+      // Create trapezoid shape for cap base
+      for (let i = 0; i <= 8; i++) {
+        const t = i / 8;
+        capPoints.push({
+          x: centerX - baseWidth/2 + baseWidth * t,
+          y: baseTop + baseHeight
+        });
+      }
+
+      // Connecting lines from square to base
+      capPoints.push({
+        x: centerX - baseWidth/2,
+        y: baseTop
+      });
+      capPoints.push({
+        x: centerX + baseWidth/2,
+        y: baseTop
+      });
+
+      // Tassel
+      const tasselX = centerX + squareSize/2;
+      const tasselY = squareTop + squareSize * 0.15;
+
+      // Tassel string
+      for (let i = 0; i <= 6; i++) {
+        capPoints.push({
+          x: tasselX + Math.sin(i * 0.3) * 3,
+          y: tasselY + i * 8
+        });
+      }
+
+      // Tassel end (bunch of nodes)
+      for (let i = 0; i < 8; i++) {
+        const angle = (Math.PI * 2 * i) / 8;
+        capPoints.push({
+          x: tasselX + Math.cos(angle) * 8,
+          y: tasselY + 50 + Math.sin(angle) * 8
+        });
+      }
+
+      // Add some fill nodes for density
+      for (let i = 0; i < 20; i++) {
+        capPoints.push({
+          x: centerX + (Math.random() - 0.5) * squareSize * 0.8,
+          y: squareTop + Math.random() * squareSize * 0.25
+        });
+      }
+
+      // Create nodes with staggered delays
+      capPoints.forEach((point, index) => {
+        const delay = index * 2; // Stagger arrival
+        nodes.push(new Node(point.x, point.y, delay));
+      });
+    }
+
+    function drawConnections() {
+      // Draw connections between nearby nodes
+      for (let i = 0; i < nodes.length; i++) {
+        const nodeA = nodes[i];
+        if (frame < nodeA.delay) continue;
+
+        for (let j = i + 1; j < nodes.length; j++) {
+          const nodeB = nodes[j];
+          if (frame < nodeB.delay) continue;
+
+          const dx = nodeA.x - nodeB.x;
+          const dy = nodeA.y - nodeB.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < 50) {
+            const opacity = (1 - distance / 50) * 0.2 * nodeA.opacity * nodeB.opacity;
+            ctx.beginPath();
+            ctx.moveTo(nodeA.x, nodeA.y);
+            ctx.lineTo(nodeB.x, nodeB.y);
+            ctx.strokeStyle = `rgba(102, 126, 234, ${opacity})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, width, height);
+
+      // Update and draw connections
+      drawConnections();
+
+      // Update and draw nodes
+      nodes.forEach(node => {
+        node.update();
+        node.draw();
+      });
+
+      frame++;
+
+      // Check if animation is complete
+      if (!animationComplete && nodes.length > 0) {
+        animationComplete = nodes.every(node => node.arrived && node.opacity >= 0.9);
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    // Initialize
+    createGraduationCapShape();
+    animate();
+
+    // Recreate on resize
+    window.addEventListener('resize', () => {
+      createGraduationCapShape();
+    });
+  </script>
+
   <script>
     const schools = [
       { img: "images/georgiatech.png", alt: "Georgia Tech" },
