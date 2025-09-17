@@ -88,16 +88,6 @@
       width: 100%;
     }
     
-    #backgroundCanvas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
-      background: #ffffff;
-    }
-
     main {
       flex: 1;
       display: flex;
@@ -107,8 +97,6 @@
       padding-top: 200px;
       margin-top: 60px;
       margin-bottom: 80px;
-      position: relative;
-      z-index: 1;
     }
     
     .hero {
@@ -152,9 +140,6 @@
       padding: 2rem;
       text-align: center;
       border-top: 1px solid #f0f0f0;
-      position: relative;
-      z-index: 1;
-      background: #ffffff;
     }
     
     .footer-links {
@@ -185,8 +170,6 @@
       padding: 6rem 0 4rem;
       background: #fafafa;
       overflow: hidden;
-      position: relative;
-      z-index: 1;
     }
     
     .partners-title {
@@ -325,8 +308,6 @@
     </nav>
   </header>
 
-  <canvas id="backgroundCanvas"></canvas>
-
   <main>
     <div class="hero">
       <h1>LectureLink</h1>
@@ -371,281 +352,6 @@
       © 2025 LectureLink. All rights reserved.
     </div>
   </footer>
-
-  <script>
-    // 3D Graduation Cap Animation (jingzhukov style)
-    const canvas = document.getElementById('backgroundCanvas');
-    const ctx = canvas.getContext('2d');
-
-    let width, height;
-    let particles = [];
-    let frame = 0;
-    let rotationX = -1.0; // Rotated down by ~60 degrees
-    let rotationY = 0.2;  // Slight Y rotation for better 3D effect
-    let targetRotationX = -1.0;
-    let targetRotationY = 0.2;
-
-    function resizeCanvas() {
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
-    }
-
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    // Mouse interaction for rotation
-    window.addEventListener('mousemove', (e) => {
-      const x = (e.clientX / width - 0.5) * 2;
-      const y = (e.clientY / height - 0.5) * 2;
-      targetRotationY = 0.2 + x * 0.5;
-      targetRotationX = -1.0 + y * 0.3;
-    });
-
-    class Particle {
-      constructor(x, y, z) {
-        // Initial position in 3D space
-        this.x = x;
-        this.y = y;
-        this.z = z;
-
-        // Random initial position for animation
-        this.currentX = (Math.random() - 0.5) * width * 2;
-        this.currentY = (Math.random() - 0.5) * height * 2;
-        this.currentZ = (Math.random() - 0.5) * 500;
-
-        this.size = 2;
-        this.opacity = 0;
-
-        // Color - subtle gray variations
-        const shade = 100 + Math.random() * 50;
-        this.color = `rgba(${shade}, ${shade}, ${shade + 10},`;
-      }
-
-      update() {
-        // Smooth movement to target position
-        this.currentX += (this.x - this.currentX) * 0.05;
-        this.currentY += (this.y - this.currentY) * 0.05;
-        this.currentZ += (this.z - this.currentZ) * 0.05;
-
-        // Fade in
-        if (this.opacity < 0.8) {
-          this.opacity += 0.02;
-        }
-      }
-
-      project() {
-        // Smooth rotation
-        rotationX += (targetRotationX - rotationX) * 0.05;
-        rotationY += (targetRotationY - rotationY) * 0.05;
-
-        // Apply rotation transformations
-        let x = this.currentX;
-        let y = this.currentY;
-        let z = this.currentZ;
-
-        // Rotate around Y axis
-        const cosY = Math.cos(rotationY);
-        const sinY = Math.sin(rotationY);
-        const x1 = x * cosY - z * sinY;
-        const z1 = x * sinY + z * cosY;
-
-        // Rotate around X axis
-        const cosX = Math.cos(rotationX);
-        const sinX = Math.sin(rotationX);
-        const y1 = y * cosX - z1 * sinX;
-        const z2 = y * sinX + z1 * cosX;
-
-        // Perspective projection
-        const perspective = 500;
-        const scale = perspective / (perspective + z2);
-
-        return {
-          x: width / 2 + x1 * scale,
-          y: height / 2 + y1 * scale,
-          scale: scale,
-          opacity: this.opacity * (0.5 + scale * 0.5)
-        };
-      }
-
-      draw() {
-        const p = this.project();
-
-        ctx.fillStyle = this.color + p.opacity + ')';
-        ctx.fillRect(
-          p.x - this.size * p.scale / 2,
-          p.y - this.size * p.scale / 2,
-          this.size * p.scale,
-          this.size * p.scale
-        );
-      }
-    }
-
-    function createGraduationCap() {
-      particles = [];
-      const size = 150; // Size of the shape
-      const yOffset = 30; // Move down further (positive moves down)
-
-      // SHORT BOX (Mortarboard) - reduced by 50%
-      const boxHeight = 25;  // Very short height for flat mortarboard
-      const spacing = 15;    // Increased spacing to reduce particles by 50%
-
-      // Top and bottom faces of the mortarboard
-      for (let x = -size; x <= size; x += spacing) {
-        for (let z = -size; z <= size; z += spacing) {
-          // Top face
-          particles.push(new Particle(x, -boxHeight/2 + yOffset, z));
-          // Bottom face (only some for less density)
-          if ((x + z) % 30 === 0) {
-            particles.push(new Particle(x, boxHeight/2 + yOffset, z));
-          }
-        }
-      }
-
-      // Edges of the mortarboard (sparse)
-      for (let x = -size; x <= size; x += spacing * 2) {
-        for (let y = -boxHeight/2 + yOffset; y <= boxHeight/2 + yOffset; y += spacing) {
-          // Front and back edges
-          particles.push(new Particle(x, y, -size));
-          particles.push(new Particle(x, y, size));
-        }
-      }
-
-      for (let z = -size; z <= size; z += spacing * 2) {
-        for (let y = -boxHeight/2 + yOffset; y <= boxHeight/2 + yOffset; y += spacing) {
-          // Left and right edges
-          particles.push(new Particle(-size, y, z));
-          particles.push(new Particle(size, y, z));
-        }
-      }
-
-      // CYLINDER (Cap base) below the mortarboard - reduced particles
-      const cylinderTop = boxHeight/2 + yOffset + 20;
-      const cylinderHeight = 50;
-      const cylinderRadius = 100;
-      const layers = 6;  // Reduced for fewer particles
-      const pointsPerCircle = 24;  // Reduced for fewer particles
-
-      for (let layer = 0; layer <= layers; layer++) {
-        const y = cylinderTop + (cylinderHeight * layer / layers);
-
-        // Create circle at this height
-        for (let i = 0; i <= pointsPerCircle; i++) {
-          const angle = (Math.PI * 2 * i) / pointsPerCircle;
-          const x = Math.cos(angle) * cylinderRadius;
-          const z = Math.sin(angle) * cylinderRadius;
-
-          particles.push(new Particle(x, y, z));
-
-          // Minimal internal structure
-          if (layer % 3 === 0 && i % 4 === 0) {
-            particles.push(new Particle(x * 0.5, y, z * 0.5));
-          }
-        }
-      }
-
-      // Add simple center button on top of mortarboard
-      for (let i = 0; i < 8; i++) {
-        const angle = (Math.PI * 2 * i) / 8;
-        particles.push(new Particle(
-          Math.cos(angle) * 10,
-          -boxHeight/2 + yOffset - 5,
-          Math.sin(angle) * 10
-        ));
-      }
-
-      // Simple tassel - just two hanging lines
-      const tasselX = size * 0.6;
-      const tasselY = -boxHeight/2 + yOffset;
-
-      // First tassel string
-      for (let i = 0; i <= 8; i++) {
-        const t = i / 8;
-        const sag = Math.sin(t * Math.PI) * 5; // slight sag
-        particles.push(new Particle(
-          tasselX + t * 25,
-          tasselY + t * 40 + sag,
-          0
-        ));
-      }
-
-      // Second tassel string (slightly offset)
-      for (let i = 0; i <= 8; i++) {
-        const t = i / 8;
-        const sag = Math.sin(t * Math.PI) * 5;
-        particles.push(new Particle(
-          tasselX + 5 + t * 25,
-          tasselY + t * 40 + sag,
-          5
-        ));
-      }
-
-      // Small tassel end cluster
-      for (let i = 0; i < 6; i++) {
-        const rx = (Math.random() - 0.5) * 8;
-        const ry = Math.random() * 8;
-        particles.push(new Particle(
-          tasselX + 25 + rx,
-          tasselY + 45 + ry,
-          2.5
-        ));
-      }
-    }
-
-    function drawConnections() {
-      // Draw subtle connections between nearby particles
-      ctx.strokeStyle = 'rgba(150, 150, 160, 0.15)';
-      ctx.lineWidth = 0.5;
-
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const p1 = particles[i].project();
-          const p2 = particles[j].project();
-
-          const dx = p1.x - p2.x;
-          const dy = p1.y - p2.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          if (distance < 20) {
-            ctx.globalAlpha = (1 - distance / 20) * 0.1 * p1.opacity * p2.opacity;
-            ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
-            ctx.stroke();
-          }
-        }
-      }
-      ctx.globalAlpha = 1;
-    }
-
-    function animate() {
-      // Clear the canvas completely (no trail effect)
-      ctx.clearRect(0, 0, width, height);
-
-      // Update and draw particles
-      particles.forEach(particle => {
-        particle.update();
-        particle.draw();
-      });
-
-      // Draw connections
-      if (frame > 60) {
-        drawConnections();
-      }
-
-      frame++;
-      requestAnimationFrame(animate);
-    }
-
-    // Initialize
-    createGraduationCap();
-    animate();
-
-    // Handle resize
-    window.addEventListener('resize', () => {
-      resizeCanvas();
-      createGraduationCap();
-    });
-  </script>
 
   <script>
     const schools = [
