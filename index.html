@@ -373,60 +373,63 @@
   </footer>
 
   <script>
-    // Node animation for graduation cap
+    // Particle animation for 3D graduation cap
     const canvas = document.getElementById('backgroundCanvas');
     const ctx = canvas.getContext('2d');
 
     let width, height;
-    let nodes = [];
-    let animationComplete = false;
+    let particles = [];
+    let animationStarted = false;
     let frame = 0;
+    let mouseX = 0;
+    let mouseY = 0;
 
     function resizeCanvas() {
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
+      width = canvas.width = window.innerWidth * window.devicePixelRatio;
+      height = canvas.height = window.innerHeight * window.devicePixelRatio;
+      canvas.style.width = window.innerWidth + 'px';
+      canvas.style.height = window.innerHeight + 'px';
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
     }
 
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    class Node {
-      constructor(targetX, targetY, delay) {
-        // Random starting position from edges
-        const edge = Math.floor(Math.random() * 4);
-        switch(edge) {
-          case 0: // Top
-            this.x = Math.random() * width;
-            this.y = -20;
-            break;
-          case 1: // Right
-            this.x = width + 20;
-            this.y = Math.random() * height;
-            break;
-          case 2: // Bottom
-            this.x = Math.random() * width;
-            this.y = height + 20;
-            break;
-          case 3: // Left
-            this.x = -20;
-            this.y = Math.random() * height;
-            break;
-        }
+    // Smooth mouse tracking
+    let targetMouseX = 0;
+    let targetMouseY = 0;
+    window.addEventListener('mousemove', (e) => {
+      targetMouseX = (e.clientX / window.innerWidth - 0.5) * 30;
+      targetMouseY = (e.clientY / window.innerHeight - 0.5) * 30;
+    });
+
+    class Particle {
+      constructor(targetX, targetY, targetZ, delay) {
+        // Start from random position outside viewport
+        const angle = Math.random() * Math.PI * 2;
+        const distance = Math.max(window.innerWidth, window.innerHeight);
+        this.x = window.innerWidth / 2 + Math.cos(angle) * distance;
+        this.y = window.innerHeight / 2 + Math.sin(angle) * distance;
+        this.z = (Math.random() - 0.5) * 200;
 
         this.targetX = targetX;
         this.targetY = targetY;
+        this.targetZ = targetZ;
         this.delay = delay;
-        this.radius = 2 + Math.random() * 2;
+        this.radius = 0.8 + Math.random() * 0.4;
         this.opacity = 0;
         this.arrived = false;
-        this.speed = 0.02 + Math.random() * 0.02;
+        this.arrivalTime = 0;
 
-        // Random initial velocity for organic movement
-        this.vx = (Math.random() - 0.5) * 2;
-        this.vy = (Math.random() - 0.5) * 2;
+        // Physics properties
+        this.vx = 0;
+        this.vy = 0;
+        this.vz = 0;
+        this.speed = 0.008 + Math.random() * 0.004;
 
-        // Connection properties
-        this.connections = [];
+        // Gray color with slight variation
+        const gray = 140 + Math.random() * 40;
+        this.color = `rgba(${gray}, ${gray}, ${gray + 5},`;
       }
 
       update() {
@@ -434,220 +437,355 @@
           return;
         }
 
-        // Fade in
-        if (this.opacity < 1) {
-          this.opacity += 0.03;
+        // Smooth fade in
+        if (this.opacity < 0.6) {
+          this.opacity += 0.01;
         }
 
+        // Smooth mouse movement
+        mouseX += (targetMouseX - mouseX) * 0.05;
+        mouseY += (targetMouseY - mouseY) * 0.05;
+
         if (!this.arrived) {
-          // Smooth movement towards target
+          // Physics-based movement
           const dx = this.targetX - this.x;
           const dy = this.targetY - this.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
+          const dz = this.targetZ - this.z;
+          const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-          if (distance > 3) {
-            this.vx += dx * this.speed * 0.5;
-            this.vy += dy * this.speed * 0.5;
+          if (distance > 1) {
+            this.vx += dx * this.speed;
+            this.vy += dy * this.speed;
+            this.vz += dz * this.speed;
 
-            // Damping
-            this.vx *= 0.92;
-            this.vy *= 0.92;
+            // Higher damping for smoother motion
+            this.vx *= 0.96;
+            this.vy *= 0.96;
+            this.vz *= 0.96;
 
             this.x += this.vx;
             this.y += this.vy;
+            this.z += this.vz;
           } else {
             this.arrived = true;
-            this.x = this.targetX;
-            this.y = this.targetY;
+            this.arrivalTime = frame;
           }
         } else {
-          // Gentle floating motion when arrived
-          this.x = this.targetX + Math.sin(frame * 0.01 + this.delay) * 0.5;
-          this.y = this.targetY + Math.cos(frame * 0.01 + this.delay) * 0.5;
+          // Gentle breathing animation after arrival
+          const breathe = frame * 0.002 + this.delay * 0.01;
+          const parallaxFactor = (this.z + 100) / 200;
+
+          this.x = this.targetX + Math.sin(breathe) * 0.2 + mouseX * parallaxFactor * 0.3;
+          this.y = this.targetY + Math.cos(breathe * 1.2) * 0.2 + mouseY * parallaxFactor * 0.3;
         }
+      }
+
+      getProjected() {
+        const perspective = 1000;
+        const scale = perspective / (perspective + this.z);
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+
+        return {
+          x: (this.x - centerX) * scale + centerX,
+          y: (this.y - centerY) * scale + centerY,
+          scale: scale,
+          opacity: this.opacity
+        };
       }
 
       draw() {
         if (frame < this.delay) return;
 
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(102, 126, 234, ${this.opacity * 0.8})`;
-        ctx.fill();
-
-        // Glow effect
-        const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius * 3);
-        gradient.addColorStop(0, `rgba(102, 126, 234, ${this.opacity * 0.3})`);
-        gradient.addColorStop(1, 'rgba(102, 126, 234, 0)');
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius * 3, 0, Math.PI * 2);
-        ctx.fillStyle = gradient;
-        ctx.fill();
+        const p = this.getProjected();
+        ctx.fillStyle = this.color + p.opacity + ')';
+        ctx.fillRect(p.x - this.radius * p.scale, p.y - this.radius * p.scale,
+                     this.radius * p.scale * 2, this.radius * p.scale * 2);
       }
     }
 
-    function createGraduationCapShape() {
-      nodes = [];
-      const centerX = width / 2;
-      const centerY = height / 2 - 50;
-      const scale = Math.min(width, height) * 0.3;
+    function create3DGraduationCap() {
+      particles = [];
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2 - 40;
+      const scale = Math.min(window.innerWidth, window.innerHeight) * 0.28;
 
-      // Create graduation cap shape points
-      const capPoints = [];
+      // 3D transformation with perspective
+      function transform3D(x, y, z, rotX = -0.4, rotY = 0.25) {
+        // Apply rotations
+        let x1 = x * Math.cos(rotY) - z * Math.sin(rotY);
+        let z1 = x * Math.sin(rotY) + z * Math.cos(rotY);
+        let y1 = y * Math.cos(rotX) - z1 * Math.sin(rotX);
+        let z2 = y * Math.sin(rotX) + z1 * Math.cos(rotX);
 
-      // Top square (mortarboard)
-      const squareSize = scale * 0.8;
-      const squareTop = centerY - scale * 0.3;
-      const numPerSide = 12;
-
-      // Top edge
-      for (let i = 0; i <= numPerSide; i++) {
-        capPoints.push({
-          x: centerX - squareSize/2 + (squareSize * i/numPerSide),
-          y: squareTop
-        });
+        return {
+          x: centerX + x1,
+          y: centerY + y1,
+          z: z2
+        };
       }
 
-      // Right edge
-      for (let i = 1; i <= numPerSide; i++) {
-        capPoints.push({
-          x: centerX + squareSize/2,
-          y: squareTop + (squareSize * 0.3 * i/numPerSide)
-        });
+      const points = [];
+
+      // MORTARBOARD - Very dense point cloud
+      const boardSize = scale;
+      const boardY = -scale * 0.5;
+      const density = 35;
+
+      // Top surface grid
+      for (let i = 0; i <= density; i++) {
+        for (let j = 0; j <= density; j++) {
+          const x = (i / density - 0.5) * boardSize;
+          const z = (j / density - 0.5) * boardSize;
+          points.push(transform3D(x, boardY, z));
+        }
       }
 
-      // Bottom edge
-      for (let i = numPerSide - 1; i >= 0; i--) {
-        capPoints.push({
-          x: centerX - squareSize/2 + (squareSize * i/numPerSide),
-          y: squareTop + squareSize * 0.3
-        });
+      // Mortarboard thickness - sides
+      const thickness = 8;
+      for (let layer = 0; layer < 3; layer++) {
+        const y = boardY + layer * thickness;
+        for (let i = 0; i <= density * 2; i++) {
+          const t = i / (density * 2);
+          // Four edges
+          points.push(transform3D(-boardSize/2 + boardSize * t, y, -boardSize/2));
+          points.push(transform3D(-boardSize/2 + boardSize * t, y, boardSize/2));
+          points.push(transform3D(-boardSize/2, y, -boardSize/2 + boardSize * t));
+          points.push(transform3D(boardSize/2, y, -boardSize/2 + boardSize * t));
+        }
       }
 
-      // Left edge
-      for (let i = numPerSide - 1; i >= 1; i--) {
-        capPoints.push({
-          x: centerX - squareSize/2,
-          y: squareTop + (squareSize * 0.3 * i/numPerSide)
-        });
+      // Center button
+      const buttonRadius = scale * 0.06;
+      for (let ring = 0; ring < 3; ring++) {
+        const r = buttonRadius * (ring / 3);
+        for (let i = 0; i < 20; i++) {
+          const angle = (Math.PI * 2 * i) / 20;
+          points.push(transform3D(
+            Math.cos(angle) * r,
+            boardY - 8,
+            Math.sin(angle) * r
+          ));
+        }
       }
 
-      // Bottom part (the cap base)
-      const baseWidth = scale * 0.6;
-      const baseTop = centerY;
-      const baseHeight = scale * 0.25;
+      // CAP BASE - Cylindrical with taper
+      const baseTop = boardY + scale * 0.15;
+      const baseHeight = scale * 0.35;
+      const baseRadiusTop = scale * 0.4;
+      const baseRadiusBottom = scale * 0.32;
 
-      // Create trapezoid shape for cap base
-      for (let i = 0; i <= 8; i++) {
-        const t = i / 8;
-        capPoints.push({
-          x: centerX - baseWidth/2 + baseWidth * t,
-          y: baseTop + baseHeight
-        });
+      // Multiple layers for the cap base
+      for (let layer = 0; layer < 20; layer++) {
+        const t = layer / 19;
+        const y = baseTop + baseHeight * t;
+        const radius = baseRadiusTop + (baseRadiusBottom - baseRadiusTop) * t;
+        const circumference = Math.floor(40 - t * 5); // Fewer points at bottom
+
+        for (let i = 0; i <= circumference; i++) {
+          const angle = (Math.PI * 2 * i) / circumference;
+          // Main surface
+          points.push(transform3D(
+            Math.cos(angle) * radius,
+            y,
+            Math.sin(angle) * radius
+          ));
+
+          // Add some interior points for depth
+          if (layer % 3 === 0 && i % 2 === 0) {
+            points.push(transform3D(
+              Math.cos(angle) * radius * 0.9,
+              y,
+              Math.sin(angle) * radius * 0.9
+            ));
+          }
+        }
       }
 
-      // Connecting lines from square to base
-      capPoints.push({
-        x: centerX - baseWidth/2,
-        y: baseTop
+      // TASSEL
+      const tasselX = boardSize * 0.35;
+      const tasselY = boardY;
+
+      // Tassel attachment point
+      for (let i = 0; i < 15; i++) {
+        const angle = (Math.PI * 2 * i) / 15;
+        points.push(transform3D(
+          tasselX + Math.cos(angle) * 5,
+          tasselY,
+          Math.sin(angle) * 5
+        ));
+      }
+
+      // Tassel cord - hanging naturally
+      for (let i = 0; i <= 25; i++) {
+        const t = i / 25;
+        const sag = Math.sin(t * Math.PI) * 15;
+        const swing = Math.sin(t * Math.PI * 2) * 3;
+        points.push(transform3D(
+          tasselX + t * 35 + swing,
+          tasselY + t * 70 + sag,
+          Math.sin(t * 8) * 2
+        ));
+      }
+
+      // Tassel fringe - dense cluster
+      const fringeX = tasselX + 35;
+      const fringeY = tasselY + 85;
+
+      for (let i = 0; i < 80; i++) {
+        // Spherical distribution
+        const r = Math.random() * 18 + Math.random() * 5;
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.random() * Math.PI;
+
+        points.push(transform3D(
+          fringeX + r * Math.sin(phi) * Math.cos(theta),
+          fringeY + r * Math.cos(phi) * 0.7, // Slightly flattened
+          r * Math.sin(phi) * Math.sin(theta)
+        ));
+      }
+
+      // Additional detail points
+      const extraPoints = 300;
+      for (let i = 0; i < extraPoints; i++) {
+        const zone = Math.random();
+
+        if (zone < 0.4) {
+          // More points on mortarboard surface
+          const x = (Math.random() - 0.5) * boardSize * 0.95;
+          const z = (Math.random() - 0.5) * boardSize * 0.95;
+          const y = boardY + (Math.random() - 0.5) * 4;
+          points.push(transform3D(x, y, z));
+
+        } else if (zone < 0.7) {
+          // Points around cap base
+          const layer = Math.random();
+          const y = baseTop + baseHeight * layer;
+          const angle = Math.random() * Math.PI * 2;
+          const r = (baseRadiusTop + (baseRadiusBottom - baseRadiusTop) * layer) * (0.85 + Math.random() * 0.3);
+          points.push(transform3D(
+            Math.cos(angle) * r,
+            y,
+            Math.sin(angle) * r
+          ));
+
+        } else if (zone < 0.9) {
+          // More tassel points
+          const offset = Math.random() * 25 - 12;
+          points.push(transform3D(
+            fringeX + offset * 0.8,
+            fringeY + offset,
+            offset * 0.3
+          ));
+
+        } else {
+          // Random fill points for overall density
+          const x = (Math.random() - 0.5) * scale * 1.5;
+          const y = boardY + Math.random() * scale;
+          const z = (Math.random() - 0.5) * scale;
+          points.push(transform3D(x, y, z));
+        }
+      }
+
+      // Create particles with wave-like delay based on distance
+      points.forEach((point, index) => {
+        const dx = point.x - centerX;
+        const dy = point.y - centerY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Wave effect from center
+        const delay = Math.floor(distance * 0.05) + (index % 20) * 0.5;
+
+        particles.push(new Particle(point.x, point.y, point.z, delay));
       });
-      capPoints.push({
-        x: centerX + baseWidth/2,
-        y: baseTop
-      });
 
-      // Tassel
-      const tasselX = centerX + squareSize/2;
-      const tasselY = squareTop + squareSize * 0.15;
-
-      // Tassel string
-      for (let i = 0; i <= 6; i++) {
-        capPoints.push({
-          x: tasselX + Math.sin(i * 0.3) * 3,
-          y: tasselY + i * 8
-        });
-      }
-
-      // Tassel end (bunch of nodes)
-      for (let i = 0; i < 8; i++) {
-        const angle = (Math.PI * 2 * i) / 8;
-        capPoints.push({
-          x: tasselX + Math.cos(angle) * 8,
-          y: tasselY + 50 + Math.sin(angle) * 8
-        });
-      }
-
-      // Add some fill nodes for density
-      for (let i = 0; i < 20; i++) {
-        capPoints.push({
-          x: centerX + (Math.random() - 0.5) * squareSize * 0.8,
-          y: squareTop + Math.random() * squareSize * 0.25
-        });
-      }
-
-      // Create nodes with staggered delays
-      capPoints.forEach((point, index) => {
-        const delay = index * 2; // Stagger arrival
-        nodes.push(new Node(point.x, point.y, delay));
-      });
+      // Sort by z-depth initially
+      particles.sort((a, b) => a.targetZ - b.targetZ);
     }
 
     function drawConnections() {
-      // Draw connections between nearby nodes
-      for (let i = 0; i < nodes.length; i++) {
-        const nodeA = nodes[i];
-        if (frame < nodeA.delay) continue;
+      // Subtle mesh connections
+      const connectionDistance = 15;
+      ctx.strokeStyle = 'rgba(180, 180, 185, 0.08)';
+      ctx.lineWidth = 0.3;
 
-        for (let j = i + 1; j < nodes.length; j++) {
-          const nodeB = nodes[j];
-          if (frame < nodeB.delay) continue;
+      for (let i = 0; i < particles.length - 1; i++) {
+        const p1 = particles[i];
+        if (!p1.arrived || p1.opacity < 0.2) continue;
 
-          const dx = nodeA.x - nodeB.x;
-          const dy = nodeA.y - nodeB.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
+        const proj1 = p1.getProjected();
 
-          if (distance < 50) {
-            const opacity = (1 - distance / 50) * 0.2 * nodeA.opacity * nodeB.opacity;
+        // Only check next few particles for performance
+        for (let j = i + 1; j < Math.min(i + 8, particles.length); j++) {
+          const p2 = particles[j];
+          if (!p2.arrived || p2.opacity < 0.2) continue;
+
+          const proj2 = p2.getProjected();
+          const dx = proj1.x - proj2.x;
+          const dy = proj1.y - proj2.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < connectionDistance && Math.abs(p1.z - p2.z) < 20) {
+            const opacity = (1 - dist / connectionDistance) * 0.12;
+            ctx.globalAlpha = opacity * Math.min(proj1.opacity, proj2.opacity);
             ctx.beginPath();
-            ctx.moveTo(nodeA.x, nodeA.y);
-            ctx.lineTo(nodeB.x, nodeB.y);
-            ctx.strokeStyle = `rgba(102, 126, 234, ${opacity})`;
-            ctx.lineWidth = 0.5;
+            ctx.moveTo(proj1.x, proj1.y);
+            ctx.lineTo(proj2.x, proj2.y);
             ctx.stroke();
           }
         }
       }
+      ctx.globalAlpha = 1;
     }
 
     function animate() {
-      ctx.clearRect(0, 0, width, height);
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
-      // Update and draw connections
-      drawConnections();
+      // Sort by depth for correct rendering order
+      if (frame % 10 === 0) {
+        particles.sort((a, b) => a.z - b.z);
+      }
 
-      // Update and draw nodes
-      nodes.forEach(node => {
-        node.update();
-        node.draw();
+      // Draw connections after initial formation
+      if (frame > 150 && animationStarted) {
+        drawConnections();
+      }
+
+      // Update and draw particles
+      particles.forEach(particle => {
+        particle.update();
+        particle.draw();
       });
 
       frame++;
 
-      // Check if animation is complete
-      if (!animationComplete && nodes.length > 0) {
-        animationComplete = nodes.every(node => node.arrived && node.opacity >= 0.9);
+      // Check animation progress
+      if (!animationStarted && frame > 100) {
+        const arrivedCount = particles.filter(p => p.arrived).length;
+        if (arrivedCount > particles.length * 0.9) {
+          animationStarted = true;
+        }
       }
 
       requestAnimationFrame(animate);
     }
 
-    // Initialize
-    createGraduationCapShape();
-    animate();
+    // Start animation
+    setTimeout(() => {
+      create3DGraduationCap();
+      animate();
+    }, 100);
 
-    // Recreate on resize
+    // Handle resize
+    let resizeTimer;
     window.addEventListener('resize', () => {
-      createGraduationCapShape();
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        resizeCanvas();
+        create3DGraduationCap();
+        frame = 0;
+        animationStarted = false;
+      }, 300);
     });
   </script>
 
