@@ -483,44 +483,47 @@
     function createGraduationCap() {
       particles = [];
       const size = 150; // Size of the shape
+      const yOffset = -180; // Move the whole shape up to be less centered
 
-      // SHORT BOX (Mortarboard) - like jingzhukov but shorter
-      const boxHeight = 30;  // Very short height for flat mortarboard
-      const spacing = 8;     // Space between particles
+      // SHORT BOX (Mortarboard) - with reduced particles
+      const boxHeight = 25;  // Very short height for flat mortarboard
+      const spacing = 20;    // Increased spacing to reduce particle count by 60%
 
       // Top and bottom faces of the mortarboard
       for (let x = -size; x <= size; x += spacing) {
         for (let z = -size; z <= size; z += spacing) {
           // Top face
-          particles.push(new Particle(x, -boxHeight/2 - 50, z));
-          // Bottom face
-          particles.push(new Particle(x, boxHeight/2 - 50, z));
+          particles.push(new Particle(x, -boxHeight/2 + yOffset, z));
+          // Bottom face (skip some for less density)
+          if ((x + z) % (spacing * 2) === 0) {
+            particles.push(new Particle(x, boxHeight/2 + yOffset, z));
+          }
         }
       }
 
-      // Edges of the mortarboard
-      for (let x = -size; x <= size; x += spacing) {
-        for (let y = -boxHeight/2 - 50; y <= boxHeight/2 - 50; y += spacing) {
+      // Edges of the mortarboard (reduced)
+      for (let x = -size; x <= size; x += spacing * 2) {
+        for (let y = -boxHeight/2 + yOffset; y <= boxHeight/2 + yOffset; y += spacing) {
           // Front and back edges
           particles.push(new Particle(x, y, -size));
           particles.push(new Particle(x, y, size));
         }
       }
 
-      for (let z = -size; z <= size; z += spacing) {
-        for (let y = -boxHeight/2 - 50; y <= boxHeight/2 - 50; y += spacing) {
+      for (let z = -size; z <= size; z += spacing * 2) {
+        for (let y = -boxHeight/2 + yOffset; y <= boxHeight/2 + yOffset; y += spacing) {
           // Left and right edges
           particles.push(new Particle(-size, y, z));
           particles.push(new Particle(size, y, z));
         }
       }
 
-      // CYLINDER (Cap base) below the mortarboard
-      const cylinderTop = boxHeight/2 - 30;
+      // CYLINDER (Cap base) below the mortarboard - reduced particles
+      const cylinderTop = boxHeight/2 + yOffset + 20;
       const cylinderHeight = 80;
       const cylinderRadius = 100;
-      const layers = 12;
-      const pointsPerCircle = 40;
+      const layers = 8;  // Reduced from 12
+      const pointsPerCircle = 24;  // Reduced from 40
 
       for (let layer = 0; layer <= layers; layer++) {
         const y = cylinderTop + (cylinderHeight * layer / layers);
@@ -533,33 +536,30 @@
 
           particles.push(new Particle(x, y, z));
 
-          // Add some internal structure
-          if (layer % 3 === 0) {
-            particles.push(new Particle(x * 0.7, y, z * 0.7));
-            particles.push(new Particle(x * 0.4, y, z * 0.4));
+          // Add minimal internal structure (reduced)
+          if (layer % 4 === 0 && i % 3 === 0) {
+            particles.push(new Particle(x * 0.5, y, z * 0.5));
           }
         }
       }
 
-      // Add center button on top of mortarboard
-      for (let r = 0; r <= 20; r += 10) {
-        for (let i = 0; i < 12; i++) {
-          const angle = (Math.PI * 2 * i) / 12;
-          particles.push(new Particle(
-            Math.cos(angle) * r,
-            -boxHeight/2 - 55,
-            Math.sin(angle) * r
-          ));
-        }
+      // Add center button on top of mortarboard (reduced)
+      for (let i = 0; i < 8; i++) {
+        const angle = (Math.PI * 2 * i) / 8;
+        particles.push(new Particle(
+          Math.cos(angle) * 15,
+          -boxHeight/2 + yOffset - 5,
+          Math.sin(angle) * 15
+        ));
       }
 
-      // Simple tassel
+      // Simple tassel (reduced)
       const tasselX = size * 0.7;
-      const tasselY = -boxHeight/2 - 50;
+      const tasselY = -boxHeight/2 + yOffset;
 
-      // Tassel string
-      for (let i = 0; i <= 10; i++) {
-        const t = i / 10;
+      // Tassel string (reduced points)
+      for (let i = 0; i <= 6; i++) {
+        const t = i / 6;
         particles.push(new Particle(
           tasselX + t * 30,
           tasselY + t * 60,
@@ -567,11 +567,11 @@
         ));
       }
 
-      // Tassel end
-      for (let i = 0; i < 20; i++) {
-        const rx = (Math.random() - 0.5) * 20;
-        const ry = Math.random() * 20;
-        const rz = (Math.random() - 0.5) * 20;
+      // Tassel end (reduced)
+      for (let i = 0; i < 10; i++) {
+        const rx = (Math.random() - 0.5) * 15;
+        const ry = Math.random() * 15;
+        const rz = (Math.random() - 0.5) * 15;
         particles.push(new Particle(
           tasselX + 30 + rx,
           tasselY + 60 + ry,
@@ -607,8 +607,8 @@
     }
 
     function animate() {
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-      ctx.fillRect(0, 0, width, height);
+      // Clear the canvas completely (no trail effect)
+      ctx.clearRect(0, 0, width, height);
 
       // Update and draw particles
       particles.forEach(particle => {
