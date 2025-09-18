@@ -23,19 +23,22 @@
     
     header {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      background: rgba(255, 255, 255, 0.98);
-      backdrop-filter: blur(10px);
+      top: 1rem;
+      left: 1rem;
+      right: 1rem;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
       z-index: 1000;
-      border-bottom: 1px solid #f0f0f0;
+      border-radius: 16px;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+      border: 1px solid #c0c0c078;
     }
-    
+
     nav {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 1.5rem 2rem;
+      padding: 1rem 2rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -94,9 +97,11 @@
       align-items: center;
       justify-content: center;
       padding: 2rem;
-      padding-top: 150px;
-      margin-top: 60px;
-      margin-bottom: 80px;
+      padding-top: 140px;
+      margin-top: 40px;
+      margin-bottom: 0;
+      position: relative;
+      overflow: visible;
     }
 
     .hero {
@@ -111,11 +116,12 @@
       letter-spacing: -0.03em;
       margin-bottom: 1rem;
       line-height: 1.1;
+      color: #000000;
     }
 
     .tagline {
       font-size: clamp(1.1rem, 2.5vw, 1.4rem);
-      color: #666;
+      color: #8f0e14;
       margin-bottom: 3rem;
       font-weight: 400;
     }
@@ -134,6 +140,20 @@
       height: 60px;
       width: auto;
       border-radius: 8px;
+    }
+
+    .app-preview {
+      margin-top: 1.5rem;
+      perspective: 1200px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .app-preview img {
+      width: 100%;
+      max-width: 350px;
+      height: auto;
+      transform: rotateX(25deg) rotateY(0deg) translateZ(0);
     }
     
     footer {
@@ -170,6 +190,8 @@
       padding: 6rem 0 4rem;
       background: #fafafa;
       overflow: hidden;
+      position: relative;
+      z-index: 20;
     }
     
     .partners-title {
@@ -315,6 +337,9 @@
       <a href="https://apps.apple.com/us/app/lecturelink/id6744894821" class="app-store-link">
         <img src="onappstore.png" alt="Download on the App Store" class="app-store-img">
       </a>
+      <div class="app-preview">
+        <img src="images/homepage.png" alt="LectureLink App Screenshot">
+      </div>
     </div>
   </main>
   
