@@ -42,19 +42,38 @@
       <p class="section-label">Reviews</p>
       <h2>Reading notes and club recommendations will live here.</h2>
       <p class="section-copy">
-        Expect short reviews, staff favorites, and a rotating list of books shaping the
-        next Zebra conversations.
+        Recent picks from the Zebra Book Club review archive, published directly from the
+        club sheet.
       </p>
+      <div class="reviews-shell">
+        <div class="reviews-grid" id="reviews-grid" aria-live="polite">
+          <article class="review-card review-card--placeholder">
+            <p class="review-meta">Loading reviews</p>
+            <h3>Fetching the latest Zebra ratings.</h3>
+          </article>
+        </div>
+        <button class="show-more-button" id="reviews-toggle" type="button" hidden>
+          Show more
+        </button>
+      </div>
     </section>
 
     <section class="section reveal" id="socials">
       <p class="section-label">Socials</p>
       <h2>Follow the opening as it takes shape.</h2>
       <p class="section-copy">
-        Instagram, events, and announcements will be added here as the launch gets closer.
+        Follow Zebra Book Club on
+        <a class="inline-link" href="https://www.instagram.com/zebrabookclub/" target="_blank" rel="noreferrer">
+          Instagram
+        </a>
+        for updates, events, and opening announcements.
       </p>
     </section>
   </main>
+  <footer class="site-footer">
+    <p>&copy; 2026 Zebra Book Club</p>
+  </footer>
+  <script src="reviews-data.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
