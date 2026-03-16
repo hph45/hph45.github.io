@@ -128,9 +128,51 @@ h2 {
   color: var(--muted);
 }
 
+.hero-actions {
+  display: none;
+}
+
+.hero-action {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .reviews-shell {
   width: 100%;
   margin-top: 40px;
+}
+
+.reviews-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(180px, 0.9fr);
+  gap: 14px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.reviews-search input,
+.reviews-filter select {
+  width: 100%;
+  min-height: 52px;
+  border: 1px solid var(--line-soft);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  padding: 0 16px;
+  border-radius: 0;
+  appearance: none;
 }
 
 .reviews-grid {
@@ -288,30 +330,40 @@ h2 {
 
 @media (max-width: 640px) {
   body {
-    padding: 0 16px 48px;
+    padding: 0 16px 40px;
   }
 
   .site-header {
-    align-items: center;
+    position: static;
+    width: 100%;
     justify-content: center;
-    gap: 12px;
-    padding: 16px 0;
+    padding: 18px 0 8px;
+    border-bottom: 0;
+    background: transparent;
+    backdrop-filter: none;
+    animation: none;
   }
 
   .site-nav {
-    width: 100%;
-    justify-content: center;
-    gap: 18px;
+    display: none;
+  }
+
+  .brand {
+    font-size: 0.92rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
   }
 
   .section {
     padding-block: 52px;
-    scroll-margin-top: 104px;
+    scroll-margin-top: 24px;
   }
 
   .hero {
-    min-height: auto;
-    padding-top: 64px;
+    min-height: calc(100vh - 56px);
+    justify-content: flex-start;
+    padding-top: 40px;
+    padding-bottom: 12px;
   }
 
   .eyebrow,
@@ -325,6 +377,13 @@ h2 {
     max-width: 8.5ch;
     font-size: clamp(3.2rem, 15vw, 4.8rem);
     line-height: 0.98;
+  }
+
+  .hero h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 400;
+    line-height: 1.1;
   }
 
   h2 {
@@ -341,8 +400,37 @@ h2 {
     line-height: 1.55;
   }
 
+  .copy {
+    max-width: 24ch;
+  }
+
+  .hero-actions {
+    display: grid;
+    gap: 12px;
+    width: 100%;
+    margin-top: auto;
+    padding-top: 28px;
+  }
+
+  .hero-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 56px;
+    width: 100%;
+    border: 1px solid var(--text);
+    background: var(--bg);
+    font-size: 1.05rem;
+  }
+
   .reviews-shell {
     margin-top: 28px;
+  }
+
+  .reviews-controls {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
   }
 
   .reviews-grid {
@@ -374,6 +462,10 @@ h2 {
 }
 
 @media (min-width: 641px) and (max-width: 960px) {
+  .reviews-controls {
+    grid-template-columns: minmax(0, 1.3fr) minmax(180px, 0.8fr);
+  }
+
   .reviews-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

@@ -10,6 +10,7 @@
   >
   <link rel="stylesheet" href="styles.css">
 </head>
+<!-- RAHHH ZEBRA BOOK CLUB, FOLLOW THE INSTA -->
 <body>
   <header class="site-header">
     <a class="brand" href="#top">Zebra Book Club</a>
@@ -22,11 +23,18 @@
 
   <main id="top">
     <section class="hero section reveal is-visible">
-      <p class="eyebrow">San Francisco</p>
-      <h1>Zebra Book Store is opening soon.</h1>
+      <!-- <p class="eyebrow">San Francisco</p> -->
+      <h3>The</h3>
+      <h1>Zebra<br>Bookstore</h1>
+      <h3>is coming soon.</h3>
       <p class="copy">
-        A new independent book space from Zebra Book Club. Opening soon in San Francisco.
+        A new independent bookstore coming soon (relatively) to downtown San Francisco. 
       </p>
+      <div class="hero-actions" aria-label="Quick links">
+        <a class="hero-action" href="#bookstore">Bookstore</a>
+        <a class="hero-action" href="#reviews">Reviews</a>
+        <a class="hero-action" href="#socials">Socials</a>
+      </div>
     </section>
 
     <section class="section reveal" id="bookstore">
@@ -46,6 +54,28 @@
         club sheet.
       </p>
       <div class="reviews-shell">
+        <div class="reviews-controls" aria-label="Review filters">
+          <label class="reviews-search">
+            <span class="visually-hidden">Search reviews</span>
+            <input
+              id="reviews-search"
+              type="search"
+              name="reviews-search"
+              placeholder="Search title or author"
+            >
+          </label>
+          <label class="reviews-filter">
+            <span class="visually-hidden">Filter by zebra rating</span>
+            <select id="reviews-rating-filter" name="reviews-rating-filter">
+              <option value="all">All ratings</option>
+              <option value="5">5 zebras</option>
+              <option value="4">4 zebras</option>
+              <option value="3">3 zebras</option>
+              <option value="2">2 zebras</option>
+              <option value="1">1 zebra</option>
+            </select>
+          </label>
+        </div>
         <div class="reviews-grid" id="reviews-grid" aria-live="polite">
           <article class="review-card review-card--placeholder">
             <p class="review-meta">Loading reviews</p>

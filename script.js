@@ -1,6 +1,8 @@
 const revealItems = document.querySelectorAll(".reveal");
 const reviewsGrid = document.querySelector("#reviews-grid");
 const reviewsToggle = document.querySelector("#reviews-toggle");
+const reviewsSearch = document.querySelector("#reviews-search");
+const reviewsRatingFilter = document.querySelector("#reviews-rating-filter");
 const reviewsCsv = window.REVIEWS_CSV;
 const INITIAL_REVIEW_COUNT = 6;
 let allReviews = [];
@@ -75,6 +77,16 @@ function renderReviewCards(reviews) {
 
   reviewsGrid.innerHTML = "";
 
+  if (reviews.length === 0) {
+    reviewsGrid.innerHTML = `
+      <article class="review-card review-card--placeholder">
+        <p class="review-meta">No matching reviews</p>
+        <h3>Try a different search or zebra rating.</h3>
+      </article>
+    `;
+    return;
+  }
+
   reviews.forEach((review) => {
     const card = document.createElement("article");
     card.className = "review-card";
@@ -119,7 +131,9 @@ function syncReviewsToggle() {
     return;
   }
 
-  if (allReviews.length <= INITIAL_REVIEW_COUNT) {
+  const filteredCount = getFilteredReviews().length;
+
+  if (filteredCount <= INITIAL_REVIEW_COUNT) {
     reviewsToggle.hidden = true;
     return;
   }
@@ -129,12 +143,30 @@ function syncReviewsToggle() {
 }
 
 function renderVisibleReviews() {
+  const filteredReviews = getFilteredReviews();
   const visibleReviews = reviewsExpanded
-    ? allReviews
-    : allReviews.slice(0, INITIAL_REVIEW_COUNT);
+    ? filteredReviews
+    : filteredReviews.slice(0, INITIAL_REVIEW_COUNT);
 
   renderReviewCards(visibleReviews);
   syncReviewsToggle();
+}
+
+function getFilteredReviews() {
+  const searchValue = reviewsSearch?.value.trim().toLowerCase() ?? "";
+  const ratingValue = reviewsRatingFilter?.value ?? "all";
+
+  return allReviews.filter((review) => {
+    const matchesSearch =
+      searchValue === "" ||
+      review.title.toLowerCase().includes(searchValue) ||
+      review.author.toLowerCase().includes(searchValue);
+
+    const matchesRating =
+      ratingValue === "all" || String(review.ratingCount) === ratingValue;
+
+    return matchesSearch && matchesRating;
+  });
 }
 
 function renderReviewsError() {
@@ -178,6 +210,7 @@ async function loadReviews() {
         author: row[1]?.trim(),
         title: row[2]?.trim(),
         rating: row[3]?.trim(),
+        ratingCount: row[4]?.trim(),
         date: row[5]?.trim(),
         link: row[6]?.trim(),
       }))
@@ -197,6 +230,20 @@ async function loadReviews() {
 if (reviewsToggle) {
   reviewsToggle.addEventListener("click", () => {
     reviewsExpanded = !reviewsExpanded;
+    renderVisibleReviews();
+  });
+}
+
+if (reviewsSearch) {
+  reviewsSearch.addEventListener("input", () => {
+    reviewsExpanded = false;
+    renderVisibleReviews();
+  });
+}
+
+if (reviewsRatingFilter) {
+  reviewsRatingFilter.addEventListener("change", () => {
+    reviewsExpanded = false;
     renderVisibleReviews();
   });
 }
