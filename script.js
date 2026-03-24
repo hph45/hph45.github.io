@@ -1,4 +1,5 @@
 const revealItems = document.querySelectorAll(".reveal");
+const eventsBelt = document.querySelector(".events-belt");
 const eventsTrack = document.querySelector("#events-track");
 const eventsViewport = document.querySelector("#events-viewport");
 const eventsPrev = document.querySelector("#events-prev");
@@ -108,7 +109,7 @@ function stepEventsBelt() {
 
   const shouldPause =
     window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
-    eventsViewport.matches(":hover");
+    eventsBelt?.matches(":hover");
 
   if (!shouldPause) {
     const loopPoint = eventsTrack.scrollWidth / 2;
@@ -128,6 +129,45 @@ function startEventsBelt() {
   }
 
   eventsAutoScrollFrame = window.requestAnimationFrame(stepEventsBelt);
+}
+
+function getEventStepSize() {
+  const firstCard = eventsTrack?.querySelector(".event-card");
+
+  if (!firstCard) {
+    return 320;
+  }
+
+  const cardWidth = firstCard.getBoundingClientRect().width;
+  const trackStyles = window.getComputedStyle(eventsTrack);
+  const gap = Number.parseFloat(trackStyles.columnGap || trackStyles.gap || "16");
+
+  return cardWidth + gap;
+}
+
+function moveEvents(direction) {
+  if (!eventsViewport || !eventsTrack) {
+    return;
+  }
+
+  const loopPoint = eventsTrack.scrollWidth / 2;
+  const step = getEventStepSize() * direction;
+  let nextScrollLeft = eventsViewport.scrollLeft + step;
+
+  if (nextScrollLeft < 0) {
+    nextScrollLeft += loopPoint;
+    eventsViewport.scrollLeft = nextScrollLeft;
+    return;
+  }
+
+  if (nextScrollLeft >= loopPoint) {
+    nextScrollLeft -= loopPoint;
+  }
+
+  eventsViewport.scrollTo({
+    left: nextScrollLeft,
+    behavior: "smooth",
+  });
 }
 
 function parseCsv(text) {
@@ -359,12 +399,12 @@ startEventsBelt();
 
 if (eventsPrev && eventsViewport) {
   eventsPrev.addEventListener("click", () => {
-    eventsViewport.scrollBy({ left: -320, behavior: "smooth" });
+    moveEvents(-1);
   });
 }
 
 if (eventsNext && eventsViewport) {
   eventsNext.addEventListener("click", () => {
-    eventsViewport.scrollBy({ left: 320, behavior: "smooth" });
+    moveEvents(1);
   });
 }

@@ -92,6 +92,7 @@ main {
   justify-content: center;
   align-items: center;
   max-width: none;
+  padding-top: 16px;
 }
 
 .eyebrow,
@@ -137,6 +138,13 @@ h2 {
   text-decoration: none;
 }
 
+.info-link {
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px solid var(--text);
+  padding-bottom: 2px;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -159,6 +167,33 @@ h2 {
   margin-top: 42px;
 }
 
+.bookstore-info {
+  display: grid;
+  gap: 18px;
+  justify-items: center;
+  width: 100%;
+  margin-top: 28px;
+}
+
+.hours-card {
+  display: grid;
+  gap: 8px;
+  width: min(420px, 100%);
+  padding: 20px;
+  border: 1px solid var(--line-soft);
+  text-align: left;
+}
+
+.hours-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.hours-title {
+  color: var(--text) !important;
+  font-weight: 700;
+}
+
 .events-label {
   margin: 0 0 18px;
   font-size: 0.95rem;
@@ -178,7 +213,9 @@ h2 {
 
 .events-viewport {
   width: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
+  padding-block: 12px;
+  margin-block: -12px;
 }
 
 .events-track {
@@ -341,6 +378,7 @@ h2 {
 .site-nav a:hover,
 .brand:hover,
 .inline-link:hover,
+.info-link:hover,
 .show-more-button:hover,
 .events-arrow:hover {
   opacity: 0.65;
@@ -518,6 +556,15 @@ h2 {
     margin-top: 30px;
   }
 
+  .bookstore-info {
+    margin-top: 22px;
+    gap: 14px;
+  }
+
+  .hours-card {
+    padding: 18px;
+  }
+
   .events-label {
     margin-bottom: 14px;
     font-size: 0.78rem;
@@ -527,7 +574,7 @@ h2 {
   .events-belt {
     grid-template-columns: minmax(0, 1fr);
     gap: 10px;
-    padding: 6px 0;
+    padding: 10px 0;
   }
 
   .event-card {
