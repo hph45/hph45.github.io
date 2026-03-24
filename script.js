@@ -40,6 +40,40 @@ function formatEventDate(date) {
   }).format(date);
 }
 
+function normalizeDate(date) {
+  const normalized = new Date(date);
+  normalized.setHours(0, 0, 0, 0);
+  return normalized;
+}
+
+function parseWeekday(value) {
+  const weekdays = {
+    sunday: 0,
+    monday: 1,
+    tuesday: 2,
+    wednesday: 3,
+    thursday: 4,
+    friday: 5,
+    saturday: 6,
+  };
+
+  return weekdays[value?.trim().toLowerCase()] ?? null;
+}
+
+function matchesEventCadence(eventDate, schedule) {
+  if (schedule.frequency === "weekly") {
+    return true;
+  }
+
+  if (schedule.frequency !== "biweekly" || !schedule.startDate) {
+    return false;
+  }
+
+  const diffMs = normalizeDate(eventDate) - schedule.startDate;
+  const diffDays = Math.round(diffMs / 86400000);
+  return diffDays >= 0 && diffDays % 14 === 0;
+}
+
 function renderEvents(events) {
   if (!eventsTrack || !eventsViewport) {
     return;
@@ -375,42 +409,60 @@ async function loadEvents() {
 
     const csv = await response.text();
     const rows = parseCsv(csv);
-    const headerIndex = rows.findIndex((row) => row[0]?.trim().toLowerCase() === "date");
+    const headerIndex = rows.findIndex(
+      (row) => row[0]?.trim().toLowerCase() === "title"
+    );
 
     if (headerIndex === -1) {
       throw new Error("Event header row not found");
     }
 
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const events = rows
+    const normalizedToday = normalizeDate(today);
+    const schedules = rows
       .slice(headerIndex + 1)
-      .map((row) => {
-        const rawDate = row[0]?.trim();
-        const eventDate = rawDate ? new Date(`${rawDate}T00:00:00`) : null;
-
-        return {
-          rawDate,
-          eventDate,
-          name: row[1]?.trim(),
-          detail: row[2]?.trim() || "TBD",
-        };
-      })
+      .map((row) => ({
+        name: row[0]?.trim(),
+        weekday: parseWeekday(row[1]),
+        frequency: row[2]?.trim().toLowerCase(),
+        startDate: row[3]?.trim()
+          ? normalizeDate(new Date(`${row[3].trim()}T00:00:00`))
+          : null,
+        detail: row[4]?.trim() || "TBD",
+      }))
       .filter(
-        (event) =>
-          event.rawDate &&
-          event.name &&
-          event.eventDate instanceof Date &&
-          !Number.isNaN(event.eventDate.valueOf()) &&
-          event.eventDate >= today
-      )
-      .sort((left, right) => left.eventDate - right.eventDate)
-      .map((event) => ({
-        dateLabel: formatEventDate(event.eventDate),
-        name: event.name,
-        detail: event.detail,
-      }));
+        (schedule) =>
+          schedule.name &&
+          schedule.weekday !== null &&
+          (schedule.frequency === "weekly" || schedule.frequency === "biweekly") &&
+          (schedule.frequency === "weekly" || schedule.startDate)
+      );
+
+    const events = [];
+
+    for (let offset = 0; offset < 14; offset += 1) {
+      const eventDate = new Date(normalizedToday);
+      eventDate.setDate(normalizedToday.getDate() + offset);
+
+      schedules.forEach((schedule) => {
+        if (eventDate.getDay() !== schedule.weekday) {
+          return;
+        }
+
+        if (!matchesEventCadence(eventDate, schedule)) {
+          return;
+        }
+
+        events.push({
+          dateValue: normalizeDate(eventDate),
+          dateLabel: formatEventDate(eventDate),
+          name: schedule.name,
+          detail: schedule.detail,
+        });
+      });
+    }
+
+    events.sort((left, right) => left.dateValue - right.dateValue);
 
     renderEvents(events);
     startEventsBelt();
