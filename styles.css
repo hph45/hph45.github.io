@@ -201,7 +201,7 @@ h2 {
 }
 
 .map-frame {
-  display: none;
+  display: block;
   width: 100%;
   min-height: 320px;
   border: 1px solid var(--line-soft);
@@ -576,10 +576,6 @@ h2 {
 
   .hours-card {
     padding: 18px;
-  }
-
-  .map-frame {
-    display: none;
   }
 
   .events-label {

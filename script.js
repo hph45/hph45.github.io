@@ -8,14 +8,9 @@ const reviewsGrid = document.querySelector("#reviews-grid");
 const reviewsToggle = document.querySelector("#reviews-toggle");
 const reviewsSearch = document.querySelector("#reviews-search");
 const reviewsRatingFilter = document.querySelector("#reviews-rating-filter");
-const reviewsCsv = window.REVIEWS_CSV;
 const INITIAL_REVIEW_COUNT = 6;
-const EVENT_SCHEDULE = {
-  1: "Chess Night",
-  2: "Book Reading",
-  4: "Game Night",
-  5: "Wine Tasting",
-};
+const REVIEWS_CSV_URL = "./reviews.csv";
+const EVENTS_CSV_URL = "./events.csv";
 let allReviews = [];
 let reviewsExpanded = false;
 let eventsAutoScrollFrame = null;
@@ -45,34 +40,10 @@ function formatEventDate(date) {
   }).format(date);
 }
 
-function buildUpcomingEvents() {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const events = [];
-
-  for (let offset = 0; offset < 14; offset += 1) {
-    const eventDate = new Date(today);
-    eventDate.setDate(today.getDate() + offset);
-    const eventName = EVENT_SCHEDULE[eventDate.getDay()];
-
-    if (eventName) {
-      events.push({
-        dateLabel: formatEventDate(eventDate),
-        name: eventName,
-        detail: "TBD",
-      });
-    }
-  }
-
-  return events;
-}
-
-function renderEvents() {
+function renderEvents(events) {
   if (!eventsTrack || !eventsViewport) {
     return;
   }
-
-  const events = buildUpcomingEvents();
 
   if (events.length === 0) {
     eventsTrack.innerHTML = `
@@ -337,11 +308,13 @@ async function loadReviews() {
   }
 
   try {
-    if (!reviewsCsv) {
-      throw new Error("Reviews data missing");
+    const response = await fetch(REVIEWS_CSV_URL);
+    if (!response.ok) {
+      throw new Error(`Request failed with ${response.status}`);
     }
 
-    const rows = parseCsv(reviewsCsv);
+    const csv = await response.text();
+    const rows = parseCsv(csv);
     const headerIndex = rows.findIndex((row) => row[0] === "Ep. #");
 
     if (headerIndex === -1) {
@@ -372,6 +345,64 @@ async function loadReviews() {
   }
 }
 
+async function loadEvents() {
+  if (!eventsTrack || !eventsViewport) {
+    return;
+  }
+
+  try {
+    const response = await fetch(EVENTS_CSV_URL);
+    if (!response.ok) {
+      throw new Error(`Request failed with ${response.status}`);
+    }
+
+    const csv = await response.text();
+    const rows = parseCsv(csv);
+    const headerIndex = rows.findIndex((row) => row[0]?.trim().toLowerCase() === "date");
+
+    if (headerIndex === -1) {
+      throw new Error("Event header row not found");
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const events = rows
+      .slice(headerIndex + 1)
+      .map((row) => {
+        const rawDate = row[0]?.trim();
+        const eventDate = rawDate ? new Date(`${rawDate}T00:00:00`) : null;
+
+        return {
+          rawDate,
+          eventDate,
+          name: row[1]?.trim(),
+          detail: row[2]?.trim() || "TBD",
+        };
+      })
+      .filter(
+        (event) =>
+          event.rawDate &&
+          event.name &&
+          event.eventDate instanceof Date &&
+          !Number.isNaN(event.eventDate.valueOf()) &&
+          event.eventDate >= today
+      )
+      .sort((left, right) => left.eventDate - right.eventDate)
+      .map((event) => ({
+        dateLabel: formatEventDate(event.eventDate),
+        name: event.name,
+        detail: event.detail,
+      }));
+
+    renderEvents(events);
+    startEventsBelt();
+  } catch (error) {
+    renderEvents([]);
+    console.error(error);
+  }
+}
+
 if (reviewsToggle) {
   reviewsToggle.addEventListener("click", () => {
     reviewsExpanded = !reviewsExpanded;
@@ -394,8 +425,7 @@ if (reviewsRatingFilter) {
 }
 
 loadReviews();
-renderEvents();
-startEventsBelt();
+loadEvents();
 
 if (eventsPrev && eventsViewport) {
   eventsPrev.addEventListener("click", () => {
