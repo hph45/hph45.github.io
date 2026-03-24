@@ -170,15 +170,15 @@ h2 {
 .bookstore-info {
   display: grid;
   gap: 18px;
-  justify-items: center;
   width: 100%;
   margin-top: 28px;
+  align-items: start;
 }
 
 .hours-card {
   display: grid;
   gap: 8px;
-  width: min(420px, 100%);
+  width: 100%;
   padding: 20px;
   border: 1px solid var(--line-soft);
   text-align: left;
@@ -192,6 +192,19 @@ h2 {
 .hours-title {
   color: var(--text) !important;
   font-weight: 700;
+}
+
+.map-card {
+  display: grid;
+  gap: 12px;
+  width: min(420px, 100%);
+}
+
+.map-frame {
+  display: none;
+  width: 100%;
+  min-height: 320px;
+  border: 1px solid var(--line-soft);
 }
 
 .events-label {
@@ -565,6 +578,10 @@ h2 {
     padding: 18px;
   }
 
+  .map-frame {
+    display: none;
+  }
+
   .events-label {
     margin-bottom: 14px;
     font-size: 0.78rem;
@@ -622,11 +639,27 @@ h2 {
 }
 
 @media (min-width: 641px) and (max-width: 960px) {
+  .bookstore-info {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .reviews-controls {
     grid-template-columns: minmax(0, 1.3fr) minmax(180px, 0.8fr);
   }
 
   .reviews-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 961px) {
+  .bookstore-info {
+    grid-template-columns: minmax(280px, 420px) minmax(280px, 420px);
+    justify-content: center;
+    gap: 24px;
+  }
+
+  .map-frame {
+    display: block;
   }
 }
