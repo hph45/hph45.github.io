@@ -308,14 +308,16 @@ async function loadReviews() {
   }
 
   try {
-    const response = await fetch(REVIEWS_CSV_URL);
+    const response = await fetch(REVIEWS_CSV_URL, { cache: "no-store" });
     if (!response.ok) {
       throw new Error(`Request failed with ${response.status}`);
     }
 
     const csv = await response.text();
     const rows = parseCsv(csv);
-    const headerIndex = rows.findIndex((row) => row[0] === "Ep. #");
+    const headerIndex = rows.findIndex(
+      (row) => row[0]?.trim().toLowerCase() === "ep. #"
+    );
 
     if (headerIndex === -1) {
       throw new Error("Header row not found");
@@ -332,12 +334,27 @@ async function loadReviews() {
         date: row[5]?.trim(),
         link: row[6]?.trim(),
       }))
-      .filter((row) => row.episode && row.title);
+      .filter(
+        (row) =>
+          row.episode &&
+          /^\d+$/.test(row.episode) &&
+          row.title
+      )
+      .sort((left, right) => Number(right.episode) - Number(left.episode));
 
     if (allReviews.length === 0) {
       throw new Error("No review rows found");
     }
 
+    if (reviewsSearch) {
+      reviewsSearch.value = "";
+    }
+
+    if (reviewsRatingFilter) {
+      reviewsRatingFilter.value = "all";
+    }
+
+    reviewsExpanded = false;
     renderVisibleReviews();
   } catch (error) {
     renderReviewsError();
