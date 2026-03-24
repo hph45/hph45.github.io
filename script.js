@@ -1,10 +1,17 @@
 const revealItems = document.querySelectorAll(".reveal");
+const eventsTrack = document.querySelector("#events-track");
 const reviewsGrid = document.querySelector("#reviews-grid");
 const reviewsToggle = document.querySelector("#reviews-toggle");
 const reviewsSearch = document.querySelector("#reviews-search");
 const reviewsRatingFilter = document.querySelector("#reviews-rating-filter");
 const reviewsCsv = window.REVIEWS_CSV;
 const INITIAL_REVIEW_COUNT = 6;
+const EVENT_SCHEDULE = {
+  1: "Chess Night",
+  2: "Book Reading",
+  4: "Game Night",
+  5: "Wine Tasting",
+};
 let allReviews = [];
 let reviewsExpanded = false;
 
@@ -24,6 +31,69 @@ const observer = new IntersectionObserver(
 );
 
 revealItems.forEach((item) => observer.observe(item));
+
+function formatEventDate(date) {
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  }).format(date);
+}
+
+function buildUpcomingEvents() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const events = [];
+
+  for (let offset = 0; offset < 14; offset += 1) {
+    const eventDate = new Date(today);
+    eventDate.setDate(today.getDate() + offset);
+    const eventName = EVENT_SCHEDULE[eventDate.getDay()];
+
+    if (eventName) {
+      events.push({
+        dateLabel: formatEventDate(eventDate),
+        name: eventName,
+        detail: "TBD",
+      });
+    }
+  }
+
+  return events;
+}
+
+function renderEvents() {
+  if (!eventsTrack) {
+    return;
+  }
+
+  const events = buildUpcomingEvents();
+
+  if (events.length === 0) {
+    eventsTrack.innerHTML = `
+      <article class="event-card event-card--placeholder">
+        <p class="event-date">No events scheduled</p>
+        <h3>Check back soon.</h3>
+        <p class="event-detail">TBD</p>
+      </article>
+    `;
+    return;
+  }
+
+  const repeatedEvents = [...events, ...events];
+
+  eventsTrack.innerHTML = repeatedEvents
+    .map(
+      (event, index) => `
+        <article class="event-card"${index >= events.length ? ' aria-hidden="true"' : ""}>
+          <p class="event-date">${event.dateLabel}</p>
+          <h3>${event.name}</h3>
+          <p class="event-detail">${event.detail}</p>
+        </article>
+      `
+    )
+    .join("");
+}
 
 function parseCsv(text) {
   const rows = [];
@@ -249,3 +319,4 @@ if (reviewsRatingFilter) {
 }
 
 loadReviews();
+renderEvents();

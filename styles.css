@@ -154,6 +154,71 @@ h2 {
   margin-top: 40px;
 }
 
+.events-shell {
+  width: 100%;
+  margin-top: 42px;
+}
+
+.events-label {
+  margin: 0 0 18px;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.events-belt {
+  width: 100%;
+  overflow: hidden;
+  padding: 12px 0;
+}
+
+.events-track {
+  display: flex;
+  gap: 16px;
+  width: max-content;
+  animation: events-marquee 32s linear infinite;
+}
+
+.events-track:hover {
+  animation-play-state: paused;
+}
+
+.event-card {
+  width: min(260px, 72vw);
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 20px;
+  border: 1px solid var(--line-soft);
+  background: rgba(255, 255, 255, 0.92);
+  text-align: left;
+  transform-origin: center;
+  transition: transform 220ms ease, border-color 220ms ease;
+}
+
+.event-card:hover {
+  transform: scale(1.06);
+  border-color: rgba(0, 0, 0, 0.32);
+}
+
+.event-card h3 {
+  margin: 0;
+  max-width: none;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.event-date,
+.event-detail {
+  margin: 0;
+  color: var(--muted);
+}
+
+.event-card--placeholder {
+  width: 260px;
+}
+
 .reviews-controls {
   display: grid;
   grid-template-columns: minmax(0, 1.8fr) minmax(180px, 0.9fr);
@@ -311,6 +376,16 @@ h2 {
   }
 }
 
+@keyframes events-marquee {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(calc(-50% - 8px));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -325,6 +400,14 @@ h2 {
   .reveal {
     opacity: 1;
     transform: none;
+  }
+
+  .events-track {
+    animation: none;
+  }
+
+  .event-card {
+    transition: none;
   }
 }
 
@@ -362,7 +445,7 @@ h2 {
   .hero {
     min-height: calc(100vh - 56px);
     justify-content: flex-start;
-    padding-top: 40px;
+    padding-top: 20px;
     padding-bottom: 12px;
   }
 
@@ -425,6 +508,25 @@ h2 {
 
   .reviews-shell {
     margin-top: 28px;
+  }
+
+  .events-shell {
+    margin-top: 30px;
+  }
+
+  .events-label {
+    margin-bottom: 14px;
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+  }
+
+  .events-belt {
+    padding: 6px 0;
+  }
+
+  .event-card {
+    width: min(240px, 78vw);
+    padding: 18px;
   }
 
   .reviews-controls {
