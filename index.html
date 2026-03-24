@@ -47,14 +47,22 @@
       </p>
       <div class="events-shell">
         <p class="events-label">Upcoming events</p>
-        <div class="events-belt" id="events-belt" aria-live="polite">
-          <div class="events-track" id="events-track">
-            <article class="event-card event-card--placeholder">
-              <p class="event-date">Loading</p>
-              <h3>Building the events calendar.</h3>
-              <p class="event-detail">TBD</p>
-            </article>
+        <div class="events-belt" aria-label="Upcoming event schedule">
+          <button class="events-arrow" id="events-prev" type="button" aria-label="Previous events">
+            &#8592;
+          </button>
+          <div class="events-viewport" id="events-viewport" aria-live="polite">
+            <div class="events-track" id="events-track">
+              <article class="event-card event-card--placeholder">
+                <p class="event-date">Loading</p>
+                <h3>Building the events calendar.</h3>
+                <p class="event-detail">TBD</p>
+              </article>
+            </div>
           </div>
+          <button class="events-arrow" id="events-next" type="button" aria-label="Next events">
+            &#8594;
+          </button>
         </div>
       </div>
     </section>

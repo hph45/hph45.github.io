@@ -168,24 +168,28 @@ h2 {
 }
 
 .events-belt {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 0;
+}
+
+.events-viewport {
   width: 100%;
   overflow: hidden;
-  padding: 12px 0;
 }
 
 .events-track {
   display: flex;
   gap: 16px;
   width: max-content;
-  animation: events-marquee 32s linear infinite;
-}
-
-.events-track:hover {
-  animation-play-state: paused;
 }
 
 .event-card {
   width: min(260px, 72vw);
+  flex: 0 0 auto;
   display: grid;
   align-content: start;
   gap: 10px;
@@ -217,6 +221,19 @@ h2 {
 
 .event-card--placeholder {
   width: 260px;
+}
+
+.events-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--text);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
 }
 
 .reviews-controls {
@@ -324,7 +341,8 @@ h2 {
 .site-nav a:hover,
 .brand:hover,
 .inline-link:hover,
-.show-more-button:hover {
+.show-more-button:hover,
+.events-arrow:hover {
   opacity: 0.65;
 }
 
@@ -376,16 +394,6 @@ h2 {
   }
 }
 
-@keyframes events-marquee {
-  from {
-    transform: translateX(0);
-  }
-
-  to {
-    transform: translateX(calc(-50% - 8px));
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -400,10 +408,6 @@ h2 {
   .reveal {
     opacity: 1;
     transform: none;
-  }
-
-  .events-track {
-    animation: none;
   }
 
   .event-card {
@@ -521,12 +525,19 @@ h2 {
   }
 
   .events-belt {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
     padding: 6px 0;
   }
 
   .event-card {
     width: min(240px, 78vw);
     padding: 18px;
+  }
+
+  .events-arrow {
+    width: 100%;
+    height: 48px;
   }
 
   .reviews-controls {

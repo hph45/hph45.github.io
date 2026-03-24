@@ -1,5 +1,8 @@
 const revealItems = document.querySelectorAll(".reveal");
 const eventsTrack = document.querySelector("#events-track");
+const eventsViewport = document.querySelector("#events-viewport");
+const eventsPrev = document.querySelector("#events-prev");
+const eventsNext = document.querySelector("#events-next");
 const reviewsGrid = document.querySelector("#reviews-grid");
 const reviewsToggle = document.querySelector("#reviews-toggle");
 const reviewsSearch = document.querySelector("#reviews-search");
@@ -14,6 +17,7 @@ const EVENT_SCHEDULE = {
 };
 let allReviews = [];
 let reviewsExpanded = false;
+let eventsAutoScrollFrame = null;
 
 const observer = new IntersectionObserver(
   (entries) => {
@@ -63,7 +67,7 @@ function buildUpcomingEvents() {
 }
 
 function renderEvents() {
-  if (!eventsTrack) {
+  if (!eventsTrack || !eventsViewport) {
     return;
   }
 
@@ -93,6 +97,37 @@ function renderEvents() {
       `
     )
     .join("");
+
+  eventsViewport.scrollLeft = 0;
+}
+
+function stepEventsBelt() {
+  if (!eventsViewport || !eventsTrack) {
+    return;
+  }
+
+  const shouldPause =
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+    eventsViewport.matches(":hover");
+
+  if (!shouldPause) {
+    const loopPoint = eventsTrack.scrollWidth / 2;
+    eventsViewport.scrollLeft += 0.45;
+
+    if (eventsViewport.scrollLeft >= loopPoint) {
+      eventsViewport.scrollLeft -= loopPoint;
+    }
+  }
+
+  eventsAutoScrollFrame = window.requestAnimationFrame(stepEventsBelt);
+}
+
+function startEventsBelt() {
+  if (eventsAutoScrollFrame !== null) {
+    window.cancelAnimationFrame(eventsAutoScrollFrame);
+  }
+
+  eventsAutoScrollFrame = window.requestAnimationFrame(stepEventsBelt);
 }
 
 function parseCsv(text) {
@@ -320,3 +355,16 @@ if (reviewsRatingFilter) {
 
 loadReviews();
 renderEvents();
+startEventsBelt();
+
+if (eventsPrev && eventsViewport) {
+  eventsPrev.addEventListener("click", () => {
+    eventsViewport.scrollBy({ left: -320, behavior: "smooth" });
+  });
+}
+
+if (eventsNext && eventsViewport) {
+  eventsNext.addEventListener("click", () => {
+    eventsViewport.scrollBy({ left: 320, behavior: "smooth" });
+  });
+}
