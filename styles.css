@@ -115,6 +115,30 @@ h1 {
   font-size: clamp(4rem, 10vw, 7.5rem);
 }
 
+.hero-title {
+  margin: 0;
+  display: grid;
+  justify-items: center;
+  line-height: 0.92;
+}
+
+.hero-word {
+  display: block;
+  font-size: 0;
+}
+
+.hero-word > span {
+  display: inline-block;
+  font-size: clamp(4rem, 10vw, 7.5rem);
+}
+
+.hero-title--outline .hero-word > span {
+  color: transparent;
+  -webkit-text-stroke: 1px #000000;
+  animation: outline-letter 6600ms ease-in-out infinite;
+  animation-delay: calc(var(--letter-index) * 150ms);
+}
+
 h2 {
   max-width: 14ch;
   font-size: clamp(2.2rem, 5vw, 3.8rem);
@@ -445,6 +469,32 @@ h2 {
   }
 }
 
+@keyframes outline-letter {
+  0% {
+    color: transparent;
+    transform: scale(0.98);
+  }
+
+  24% {
+    color: transparent;
+  }
+
+  38%,
+  66% {
+    color: #000000;
+    transform: scale(1);
+  }
+
+  82% {
+    color: transparent;
+  }
+
+  100% {
+    color: transparent;
+    transform: scale(0.98);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -459,6 +509,11 @@ h2 {
   .reveal {
     opacity: 1;
     transform: none;
+  }
+
+  .hero-title--outline .hero-word > span {
+    animation: none;
+    color: #000000;
   }
 
   .event-card {
