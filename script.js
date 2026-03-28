@@ -8,11 +8,17 @@ const reviewsGrid = document.querySelector("#reviews-grid");
 const reviewsToggle = document.querySelector("#reviews-toggle");
 const reviewsSearch = document.querySelector("#reviews-search");
 const reviewsRatingFilter = document.querySelector("#reviews-rating-filter");
+const podcastsGrid = document.querySelector("#podcasts-grid");
+const podcastsToggle = document.querySelector("#podcasts-toggle");
 const INITIAL_REVIEW_COUNT = 6;
+const INITIAL_PODCAST_COUNT = 6;
 const REVIEWS_CSV_URL = "./reviews.csv";
 const EVENTS_CSV_URL = "./events.csv";
+const PODCASTS_CSV_URL = "./podcasts.csv";
 let allReviews = [];
 let reviewsExpanded = false;
+let allPodcasts = [];
+let podcastsExpanded = false;
 let eventsAutoScrollFrame = null;
 
 const observer = new IntersectionObserver(
@@ -276,6 +282,83 @@ function renderReviewCards(reviews) {
   });
 }
 
+function renderPodcastCards(podcasts) {
+  if (!podcastsGrid) {
+    return;
+  }
+
+  podcastsGrid.innerHTML = "";
+
+  if (podcasts.length === 0) {
+    podcastsGrid.innerHTML = `
+      <article class="podcast-card podcast-card--placeholder">
+        <p class="podcast-meta">No podcast episodes yet</p>
+        <h3>Check back soon for the archive.</h3>
+      </article>
+    `;
+    return;
+  }
+
+  podcasts.forEach((podcast) => {
+    const card = document.createElement("article");
+    card.className = "podcast-card";
+
+    const meta = document.createElement("p");
+    meta.className = "podcast-meta";
+    meta.textContent = `Episode ${podcast.episode}`;
+
+    const title = document.createElement("h3");
+    title.textContent = podcast.guest;
+
+    const date = document.createElement("p");
+    date.className = "podcast-meta";
+    date.textContent = podcast.date;
+
+    const book = document.createElement("p");
+    book.className = "podcast-book";
+    book.textContent = `Favorite book: ${podcast.favoriteBook}`;
+
+    const links = document.createElement("div");
+    links.className = "podcast-links";
+
+    if (podcast.spotifyLink) {
+      const spotify = document.createElement("a");
+      spotify.className = "podcast-link";
+      spotify.href = podcast.spotifyLink;
+      spotify.target = "_blank";
+      spotify.rel = "noreferrer";
+      spotify.textContent = "Spotify";
+      links.append(spotify);
+    }
+
+    if (podcast.youtubeLink) {
+      const youtube = document.createElement("a");
+      youtube.className = "podcast-link";
+      youtube.href = podcast.youtubeLink;
+      youtube.target = "_blank";
+      youtube.rel = "noreferrer";
+      youtube.textContent = "YouTube";
+      links.append(youtube);
+    }
+
+    if (podcast.bookLink) {
+      const bookLink = document.createElement("a");
+      bookLink.className = "podcast-link";
+      bookLink.href = podcast.bookLink;
+      bookLink.target = "_blank";
+      bookLink.rel = "noreferrer";
+      bookLink.textContent = "View book";
+      links.append(bookLink);
+    }
+
+    card.append(meta, title, date, book);
+    if (links.children.length > 0) {
+      card.append(links);
+    }
+    podcastsGrid.append(card);
+  });
+}
+
 function syncReviewsToggle() {
   if (!reviewsToggle) {
     return;
@@ -300,6 +383,29 @@ function renderVisibleReviews() {
 
   renderReviewCards(visibleReviews);
   syncReviewsToggle();
+}
+
+function syncPodcastsToggle() {
+  if (!podcastsToggle) {
+    return;
+  }
+
+  if (allPodcasts.length <= INITIAL_PODCAST_COUNT) {
+    podcastsToggle.hidden = true;
+    return;
+  }
+
+  podcastsToggle.hidden = false;
+  podcastsToggle.textContent = podcastsExpanded ? "Show less" : "Show more";
+}
+
+function renderVisiblePodcasts() {
+  const visiblePodcasts = podcastsExpanded
+    ? allPodcasts
+    : allPodcasts.slice(0, INITIAL_PODCAST_COUNT);
+
+  renderPodcastCards(visiblePodcasts);
+  syncPodcastsToggle();
 }
 
 function getFilteredReviews() {
@@ -472,6 +578,57 @@ async function loadEvents() {
   }
 }
 
+async function loadPodcasts() {
+  if (!podcastsGrid) {
+    return;
+  }
+
+  try {
+    const response = await fetch(PODCASTS_CSV_URL, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`Request failed with ${response.status}`);
+    }
+
+    const csv = await response.text();
+    const rows = parseCsv(csv);
+    const headerIndex = rows.findIndex(
+      (row) => row[0]?.trim().toLowerCase() === "episode"
+    );
+
+    if (headerIndex === -1) {
+      throw new Error("Podcast header row not found");
+    }
+
+    allPodcasts = rows
+      .slice(headerIndex + 1)
+      .map((row) => ({
+        episode: row[0]?.trim(),
+        guest: row[1]?.trim(),
+        favoriteBook: row[2]?.trim(),
+        date: row[3]?.trim(),
+        spotifyLink: row[4]?.trim(),
+        youtubeLink: row[5]?.trim(),
+        bookLink: row[6]?.trim(),
+      }))
+      .filter(
+        (podcast) =>
+          podcast.episode &&
+          /^\d+$/.test(podcast.episode) &&
+          podcast.guest
+      )
+      .sort((left, right) => Number(right.episode) - Number(left.episode));
+
+    podcastsExpanded = false;
+    renderVisiblePodcasts();
+  } catch (error) {
+    renderPodcastCards([]);
+    if (podcastsToggle) {
+      podcastsToggle.hidden = true;
+    }
+    console.error(error);
+  }
+}
+
 if (reviewsToggle) {
   reviewsToggle.addEventListener("click", () => {
     reviewsExpanded = !reviewsExpanded;
@@ -495,6 +652,7 @@ if (reviewsRatingFilter) {
 
 loadReviews();
 loadEvents();
+loadPodcasts();
 
 if (eventsPrev && eventsViewport) {
   eventsPrev.addEventListener("click", () => {
@@ -505,5 +663,12 @@ if (eventsPrev && eventsViewport) {
 if (eventsNext && eventsViewport) {
   eventsNext.addEventListener("click", () => {
     moveEvents(1);
+  });
+}
+
+if (podcastsToggle) {
+  podcastsToggle.addEventListener("click", () => {
+    podcastsExpanded = !podcastsExpanded;
+    renderVisiblePodcasts();
   });
 }
