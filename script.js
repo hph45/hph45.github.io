@@ -310,6 +310,10 @@ function renderPodcastCards(podcasts) {
     const title = document.createElement("h3");
     title.textContent = podcast.guest;
 
+    const description = document.createElement("p");
+    description.className = "podcast-description";
+    description.textContent = podcast.description;
+
     const date = document.createElement("p");
     date.className = "podcast-meta";
     date.textContent = podcast.date;
@@ -351,7 +355,7 @@ function renderPodcastCards(podcasts) {
       links.append(bookLink);
     }
 
-    card.append(meta, title, date, book);
+    card.append(meta, title, description, date, book);
     if (links.children.length > 0) {
       card.append(links);
     }
@@ -604,11 +608,12 @@ async function loadPodcasts() {
       .map((row) => ({
         episode: row[0]?.trim(),
         guest: row[1]?.trim(),
-        favoriteBook: row[2]?.trim(),
-        date: row[3]?.trim(),
-        spotifyLink: row[4]?.trim(),
-        youtubeLink: row[5]?.trim(),
-        bookLink: row[6]?.trim(),
+        description: row[2]?.trim(),
+        favoriteBook: row[3]?.trim(),
+        date: row[4]?.trim(),
+        spotifyLink: row[5]?.trim(),
+        youtubeLink: row[6]?.trim(),
+        bookLink: row[7]?.trim(),
       }))
       .filter(
         (podcast) =>
