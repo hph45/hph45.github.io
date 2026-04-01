@@ -410,6 +410,7 @@ h2 {
   padding: 22px;
   border: 1px solid var(--line-soft);
   background: rgba(255, 255, 255, 0.9);
+  text-align: left;
 }
 
 .review-card h3 {
@@ -447,6 +448,7 @@ h2 {
   justify-items: end;
   gap: 8px;
   margin-left: auto;
+  text-align: right;
 }
 
 .review-rating {
