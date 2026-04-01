@@ -405,7 +405,7 @@ h2 {
 .review-card {
   display: grid;
   align-content: start;
-  gap: 4px;
+  gap: 8px;
   min-height: 220px;
   padding: 14px 22px 22px;
   border: 1px solid var(--line-soft);
