@@ -403,11 +403,13 @@ h2 {
 }
 
 .review-card {
+  position: relative;
   display: grid;
   align-content: start;
   gap: 12px;
   min-height: 220px;
   padding: 22px;
+  padding-top: 64px;
   border: 1px solid var(--line-soft);
   background: rgba(255, 255, 255, 0.9);
   text-align: left;
@@ -444,11 +446,14 @@ h2 {
 }
 
 .review-recommended {
+  position: absolute;
+  top: 22px;
+  right: 22px;
   display: grid;
   justify-items: end;
   gap: 8px;
-  margin-left: auto;
   text-align: right;
+  max-width: min(180px, calc(100% - 44px));
 }
 
 .review-rating {
@@ -767,6 +772,7 @@ h2 {
   .review-card {
     min-height: 0;
     padding: 18px;
+    padding-top: 60px;
   }
 
   .podcast-card {
