@@ -403,16 +403,21 @@ h2 {
 }
 
 .review-card {
-  position: relative;
   display: grid;
   align-content: start;
   gap: 12px;
   min-height: 220px;
   padding: 22px;
-  padding-right: 124px;
   border: 1px solid var(--line-soft);
   background: rgba(255, 255, 255, 0.9);
   text-align: left;
+}
+
+.review-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .review-card h3 {
@@ -440,13 +445,7 @@ h2 {
 }
 
 .review-recommended {
-  position: absolute;
-  top: 22px;
-  right: 22px;
-  display: grid;
-  justify-items: end;
-  text-align: right;
-  max-width: min(120px, calc(100% - 44px));
+  flex: 0 0 auto;
 }
 
 .review-rating {

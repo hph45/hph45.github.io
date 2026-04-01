@@ -249,9 +249,13 @@ function renderReviewCards(reviews) {
     const card = document.createElement("article");
     card.className = "review-card";
 
+    const header = document.createElement("div");
+    header.className = "review-header";
+
     const meta = document.createElement("p");
     meta.className = "review-meta";
     meta.textContent = `Book #${review.episode}`;
+    header.append(meta);
 
     const title = document.createElement("h3");
     title.textContent = review.title;
@@ -259,8 +263,6 @@ function renderReviewCards(reviews) {
     const author = document.createElement("p");
     author.className = "review-meta";
     author.textContent = review.author;
-
-    card.append(meta);
 
     if (review.isRecommended) {
       const recommended = document.createElement("div");
@@ -271,10 +273,10 @@ function renderReviewCards(reviews) {
       tag.textContent = "Recommended";
       recommended.append(tag);
 
-      card.append(recommended);
+      header.append(recommended);
     }
 
-    card.append(title, author);
+    card.append(header, title, author);
 
     const rating = document.createElement("p");
     rating.className = "review-rating";
