@@ -271,13 +271,6 @@ function renderReviewCards(reviews) {
       tag.textContent = "Recommended";
       recommended.append(tag);
 
-      if (review.recommendationNote) {
-        const note = document.createElement("p");
-        note.className = "review-note";
-        note.textContent = review.recommendationNote;
-        recommended.append(note);
-      }
-
       card.append(recommended);
     }
 
