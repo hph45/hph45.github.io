@@ -13,9 +13,11 @@ const podcastsToggle = document.querySelector("#podcasts-toggle");
 const INITIAL_REVIEW_COUNT = 6;
 const INITIAL_PODCAST_COUNT = 6;
 const REVIEWS_CSV_URL = "./reviews.csv";
+const RECOMMENDED_REVIEWS_CSV_URL = "./recommended_reviews.csv";
 const EVENTS_CSV_URL = "./events.csv";
 const PODCASTS_CSV_URL = "./podcasts.csv";
 let allReviews = [];
+let recommendedReviewNotes = new Map();
 let reviewsExpanded = false;
 let allPodcasts = [];
 let podcastsExpanded = false;
@@ -258,6 +260,17 @@ function renderReviewCards(reviews) {
     author.className = "review-meta";
     author.textContent = review.author;
 
+    card.append(meta);
+
+    if (review.isRecommended) {
+      const tag = document.createElement("p");
+      tag.className = "review-tag";
+      tag.textContent = "Recommended";
+      card.append(tag);
+    }
+
+    card.append(title, author);
+
     const rating = document.createElement("p");
     rating.className = "review-rating";
     rating.textContent = review.rating;
@@ -266,7 +279,7 @@ function renderReviewCards(reviews) {
     date.className = "review-date";
     date.textContent = review.date;
 
-    card.append(meta, title, author, rating, date);
+    card.append(rating, date);
 
     if (review.link) {
       const link = document.createElement("a");
@@ -310,10 +323,6 @@ function renderPodcastCards(podcasts) {
     const title = document.createElement("h3");
     title.textContent = podcast.guest;
 
-    const description = document.createElement("p");
-    description.className = "podcast-description";
-    description.textContent = podcast.description;
-
     const date = document.createElement("p");
     date.className = "podcast-meta";
     date.textContent = podcast.date;
@@ -355,7 +364,7 @@ function renderPodcastCards(podcasts) {
       links.append(bookLink);
     }
 
-    card.append(meta, title, description, date, book);
+    card.append(meta, title, date, book);
     if (links.children.length > 0) {
       card.append(links);
     }
@@ -452,20 +461,49 @@ async function loadReviews() {
   }
 
   try {
-    const response = await fetch(REVIEWS_CSV_URL, { cache: "no-store" });
-    if (!response.ok) {
-      throw new Error(`Request failed with ${response.status}`);
+    const [reviewsResponse, recommendedResponse] = await Promise.all([
+      fetch(REVIEWS_CSV_URL, { cache: "no-store" }),
+      fetch(RECOMMENDED_REVIEWS_CSV_URL, { cache: "no-store" }),
+    ]);
+
+    if (!reviewsResponse.ok) {
+      throw new Error(`Request failed with ${reviewsResponse.status}`);
     }
 
-    const csv = await response.text();
+    if (!recommendedResponse.ok) {
+      throw new Error(`Request failed with ${recommendedResponse.status}`);
+    }
+
+    const [csv, recommendedCsv] = await Promise.all([
+      reviewsResponse.text(),
+      recommendedResponse.text(),
+    ]);
     const rows = parseCsv(csv);
+    const recommendedRows = parseCsv(recommendedCsv);
     const headerIndex = rows.findIndex(
       (row) => row[0]?.trim().toLowerCase() === "ep. #"
+    );
+    const recommendedHeaderIndex = recommendedRows.findIndex(
+      (row) => row[0]?.trim().toLowerCase() === "episode"
     );
 
     if (headerIndex === -1) {
       throw new Error("Header row not found");
     }
+
+    if (recommendedHeaderIndex === -1) {
+      throw new Error("Recommended reviews header row not found");
+    }
+
+    recommendedReviewNotes = new Map(
+      recommendedRows
+        .slice(recommendedHeaderIndex + 1)
+        .map((row, index) => [
+          row[0]?.trim(),
+          { order: index },
+        ])
+        .filter(([episode]) => episode)
+    );
 
     allReviews = rows
       .slice(headerIndex + 1)
@@ -477,6 +515,7 @@ async function loadReviews() {
         ratingCount: row[4]?.trim(),
         date: row[5]?.trim(),
         link: row[6]?.trim(),
+        isRecommended: recommendedReviewNotes.has(row[0]?.trim()),
       }))
       .filter(
         (row) =>
@@ -484,7 +523,24 @@ async function loadReviews() {
           /^\d+$/.test(row.episode) &&
           row.title
       )
-      .sort((left, right) => Number(right.episode) - Number(left.episode));
+      .sort((left, right) => {
+        const leftRecommended = recommendedReviewNotes.get(left.episode);
+        const rightRecommended = recommendedReviewNotes.get(right.episode);
+
+        if (leftRecommended && rightRecommended) {
+          return leftRecommended.order - rightRecommended.order;
+        }
+
+        if (leftRecommended) {
+          return -1;
+        }
+
+        if (rightRecommended) {
+          return 1;
+        }
+
+        return Number(right.episode) - Number(left.episode);
+      });
 
     if (allReviews.length === 0) {
       throw new Error("No review rows found");
@@ -608,12 +664,11 @@ async function loadPodcasts() {
       .map((row) => ({
         episode: row[0]?.trim(),
         guest: row[1]?.trim(),
-        description: row[2]?.trim(),
-        favoriteBook: row[3]?.trim(),
-        date: row[4]?.trim(),
-        spotifyLink: row[5]?.trim(),
-        youtubeLink: row[6]?.trim(),
-        bookLink: row[7]?.trim(),
+        favoriteBook: row[2]?.trim(),
+        date: row[3]?.trim(),
+        spotifyLink: row[4]?.trim(),
+        youtubeLink: row[5]?.trim(),
+        bookLink: row[6]?.trim(),
       }))
       .filter(
         (podcast) =>

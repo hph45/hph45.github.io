@@ -223,11 +223,6 @@ h2 {
   color: var(--muted);
 }
 
-.podcast-description {
-  margin: 0;
-  color: var(--muted);
-}
-
 .podcast-links {
   display: flex;
   flex-wrap: wrap;
@@ -429,6 +424,16 @@ h2 {
   margin: 0;
   font-size: 0.92rem;
   color: var(--muted);
+}
+
+.review-tag {
+  display: inline-flex;
+  width: fit-content;
+  padding: 4px 8px;
+  border: 1px solid var(--text);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .review-rating {
