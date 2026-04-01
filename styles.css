@@ -405,9 +405,9 @@ h2 {
 .review-card {
   display: grid;
   align-content: start;
-  gap: 8px;
+  gap: 4px;
   min-height: 220px;
-  padding: 22px;
+  padding: 14px 22px 22px;
   border: 1px solid var(--line-soft);
   background: rgba(255, 255, 255, 0.9);
   text-align: left;
@@ -765,8 +765,7 @@ h2 {
 
   .review-card {
     min-height: 0;
-    padding: 18px;
-    padding-right: 110px;
+    padding: 12px 18px 18px;
   }
 
   .podcast-card {
