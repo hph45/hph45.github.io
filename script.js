@@ -263,10 +263,22 @@ function renderReviewCards(reviews) {
     card.append(meta);
 
     if (review.isRecommended) {
+      const recommended = document.createElement("div");
+      recommended.className = "review-recommended";
+
       const tag = document.createElement("p");
       tag.className = "review-tag";
       tag.textContent = "Recommended";
-      card.append(tag);
+      recommended.append(tag);
+
+      if (review.recommendationNote) {
+        const note = document.createElement("p");
+        note.className = "review-note";
+        note.textContent = review.recommendationNote;
+        recommended.append(note);
+      }
+
+      card.append(recommended);
     }
 
     card.append(title, author);
@@ -500,7 +512,7 @@ async function loadReviews() {
         .slice(recommendedHeaderIndex + 1)
         .map((row, index) => [
           row[0]?.trim(),
-          { order: index },
+          { note: row[1]?.trim(), order: index },
         ])
         .filter(([episode]) => episode)
     );
@@ -516,6 +528,8 @@ async function loadReviews() {
         date: row[5]?.trim(),
         link: row[6]?.trim(),
         isRecommended: recommendedReviewNotes.has(row[0]?.trim()),
+        recommendationNote:
+          recommendedReviewNotes.get(row[0]?.trim())?.note || "",
       }))
       .filter(
         (row) =>
