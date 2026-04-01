@@ -436,7 +436,8 @@ h2 {
 }
 
 .review-tag {
-  margin: 0;
+  /* margin-bottom: 8px; */
+  margin-top: 8px;
   display: inline-flex;
   width: fit-content;
   padding: 4px 8px;
