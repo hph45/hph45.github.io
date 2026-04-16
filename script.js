@@ -16,11 +16,9 @@ async function loadTicker() {
     if (!data) throw new Error("No data row found");
     const current = data[0]?.trim() || "TBD";
     const next = data[1]?.trim() || "TBD";
-    const message = `Zebra Book Club currently reading: ${current} · Next book: ${next}`;
+    const segment = `<span>Currently reading: ${current}</span><span>Next book: ${next}</span>`;
     const repeat = 6;
-    tickerTrack.innerHTML = Array(repeat)
-      .fill(`<span>${message}</span>`)
-      .join("");
+    tickerTrack.innerHTML = Array(repeat).fill(segment).join("");
   } catch (error) {
     tickerTrack.closest(".ticker").hidden = true;
     console.error(error);
