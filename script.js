@@ -16,9 +16,24 @@ async function loadTicker() {
     if (!data) throw new Error("No data row found");
     const current = data[0]?.trim() || "TBD";
     const next = data[1]?.trim() || "TBD";
-    const segment = `<span>Currently reading: ${current}</span><span>Next book: ${next}</span>`;
+    const segment =
+      `<span data-ticker-title="${current}">Currently reading: ${current}</span>` +
+      `<span data-ticker-title="${next}">Next book: ${next}</span>`;
     const repeat = 6;
     tickerTrack.innerHTML = Array(repeat).fill(segment).join("");
+    tickerTrack.addEventListener("click", (e) => {
+      const span = e.target.closest("[data-ticker-title]");
+      if (!span) return;
+      const title = span.dataset.tickerTitle.toLowerCase();
+      const match = allReviews.find(
+        (r) => r.title.toLowerCase() === title && r.link
+      );
+      if (match) {
+        window.open(match.link, "_blank", "noreferrer");
+      } else {
+        document.querySelector("#reviews")?.scrollIntoView({ behavior: "smooth" });
+      }
+    });
   } catch (error) {
     tickerTrack.closest(".ticker").hidden = true;
     console.error(error);
@@ -465,8 +480,14 @@ function getFilteredReviews() {
       review.title.toLowerCase().includes(searchValue) ||
       review.author.toLowerCase().includes(searchValue);
 
-    const matchesRating =
-      ratingValue === "all" || String(review.ratingCount) === ratingValue;
+    let matchesRating;
+    if (ratingValue === "all") {
+      matchesRating = true;
+    } else if (ratingValue === "guest") {
+      matchesRating = review.rating && !review.rating.includes("🦓");
+    } else {
+      matchesRating = String(review.ratingCount) === ratingValue;
+    }
 
     return matchesSearch && matchesRating;
   });

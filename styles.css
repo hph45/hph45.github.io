@@ -22,7 +22,6 @@
 
 .ticker:hover .ticker-track {
   animation-play-state: paused;
-  cursor: default;
 }
 
 .ticker-track span {
@@ -31,6 +30,11 @@
   font-size: 0.92rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  cursor: pointer;
+}
+
+.ticker-track span:hover {
+  opacity: 0.65;
 }
 
 @keyframes ticker-scroll {
