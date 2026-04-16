@@ -19,6 +19,9 @@
      That lets us count clicks server-side very
      reliably. -->
 <body>
+  <div class="ticker" aria-label="Currently reading">
+    <div class="ticker-track" id="ticker-track"></div>
+  </div>
   <header class="site-header">
     <a class="brand" href="#top">Zebra Book Club</a>
     <nav class="site-nav" aria-label="Primary">
@@ -34,6 +37,13 @@
     <section class="hero section reveal is-visible">
       <!-- <p class="eyebrow">San Francisco</p> -->
       <h3> </h3>
+      <div class="hero-actions" aria-label="Quick links">
+        <a class="hero-action" href="#bookstore">Bookstore</a>
+        <a class="hero-action" href="#reviews">Reviews</a>
+        <a class="hero-action" href="#podcast">Podcast</a>
+        <a class="hero-action" href="#socials">Socials</a>
+        <a class="hero-action" href="#contact">Contact</a>
+      </div>
       <h1 class="hero-title hero-title--outline">
         <span class="hero-word" aria-label="Zebra">
           <span style="--letter-index: 0">Z</span>
@@ -58,13 +68,6 @@
       <p class="copy">
         We're thrilled to announce our bookstore is open in downtown San Francisco. Stop by to find your next favorite book! Scroll down for details.
       </p>
-      <div class="hero-actions" aria-label="Quick links">
-        <a class="hero-action" href="#bookstore">Bookstore</a>
-        <a class="hero-action" href="#reviews">Reviews</a>
-        <a class="hero-action" href="#podcast">Podcast</a>
-        <a class="hero-action" href="#socials">Socials</a>
-        <a class="hero-action" href="#contact">Contact</a>
-      </div>
     </section>
 
     <section class="section reveal" id="bookstore">

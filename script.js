@@ -1,3 +1,32 @@
+const tickerTrack = document.querySelector("#ticker-track");
+const BOOK_CLUB_CURRENT_CSV_URL = "./book_club_current.csv";
+
+async function loadTicker() {
+  if (!tickerTrack) return;
+  try {
+    const response = await fetch(BOOK_CLUB_CURRENT_CSV_URL, { cache: "no-store" });
+    if (!response.ok) throw new Error(`Request failed with ${response.status}`);
+    const csv = await response.text();
+    const rows = parseCsv(csv);
+    const headerIndex = rows.findIndex(
+      (row) => row[0]?.trim().toLowerCase() === "current"
+    );
+    if (headerIndex === -1) throw new Error("Header row not found");
+    const data = rows[headerIndex + 1];
+    if (!data) throw new Error("No data row found");
+    const current = data[0]?.trim() || "TBD";
+    const next = data[1]?.trim() || "TBD";
+    const message = `Zebra Book Club currently reading: ${current} · Next book: ${next}`;
+    const repeat = 6;
+    tickerTrack.innerHTML = Array(repeat)
+      .fill(`<span>${message}</span>`)
+      .join("");
+  } catch (error) {
+    tickerTrack.closest(".ticker").hidden = true;
+    console.error(error);
+  }
+}
+
 const revealItems = document.querySelectorAll(".reveal");
 const eventsBelt = document.querySelector(".events-belt");
 const eventsTrack = document.querySelector("#events-track");
@@ -719,6 +748,7 @@ if (reviewsRatingFilter) {
   });
 }
 
+loadTicker();
 loadReviews();
 loadEvents();
 loadPodcasts();

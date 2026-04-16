@@ -6,6 +6,43 @@
   --line-soft: rgba(0, 0, 0, 0.14);
 }
 
+.ticker {
+  width: 100%;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line-soft);
+  padding: 10px 0;
+  white-space: nowrap;
+}
+
+.ticker-track {
+  display: inline-block;
+  white-space: nowrap;
+  animation: ticker-scroll 18s linear infinite;
+}
+
+.ticker-track span {
+  display: inline-block;
+  padding: 0 48px;
+  font-size: 0.92rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@keyframes ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track {
+    animation: none;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -691,8 +728,9 @@ h2 {
     display: grid;
     gap: 12px;
     width: 100%;
-    margin-top: auto;
-    padding-top: 28px;
+    margin-top: 20px;
+    margin-bottom: 18px;
+    padding-top: 0;
   }
 
   .hero-action {
