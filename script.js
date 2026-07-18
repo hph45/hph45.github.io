@@ -767,10 +767,28 @@ if (reviewsRatingFilter) {
   });
 }
 
-loadTicker();
-loadReviews();
-loadEvents();
-loadPodcasts();
+let homeContentLoaded = false;
+
+function loadHomeContent() {
+  if (homeContentLoaded) return;
+  homeContentLoaded = true;
+  loadTicker();
+  loadReviews();
+  loadEvents();
+  loadPodcasts();
+}
+
+function syncPageMode() {
+  const secretMode = window.location.hash.toLowerCase() === "#st";
+  document.documentElement.classList.toggle("st-mode", secretMode);
+
+  if (!secretMode) {
+    loadHomeContent();
+  }
+}
+
+syncPageMode();
+window.addEventListener("hashchange", syncPageMode);
 
 if (eventsPrev && eventsViewport) {
   eventsPrev.addEventListener("click", () => {

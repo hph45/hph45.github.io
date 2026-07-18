@@ -9,6 +9,11 @@
     name="description"
     content="Zebra Bookstore is open in San Francisco!"
   >
+  <script>
+    if (window.location.hash.toLowerCase() === "#st") {
+      document.documentElement.classList.add("st-mode");
+    }
+  </script>
   <link rel="stylesheet" href="styles.css">
 </head>
 <!-- RAHHH ZEBRA BOOK CLUB, FOLLOW THE INSTA -->
@@ -226,6 +231,8 @@
   <footer class="site-footer">
     <p>&copy; 2026 Zebra Book Club</p>
   </footer>
+  <div class="st-page" id="skill-tree-page" aria-live="polite"></div>
   <script src="script.js"></script>
+  <script src="skill-tree.js"></script>
 </body>
 </html>
