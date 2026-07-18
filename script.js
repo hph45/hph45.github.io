@@ -767,28 +767,10 @@ if (reviewsRatingFilter) {
   });
 }
 
-let homeContentLoaded = false;
-
-function loadHomeContent() {
-  if (homeContentLoaded) return;
-  homeContentLoaded = true;
-  loadTicker();
-  loadReviews();
-  loadEvents();
-  loadPodcasts();
-}
-
-function syncPageMode() {
-  const secretMode = window.location.hash.toLowerCase() === "#st";
-  document.documentElement.classList.toggle("st-mode", secretMode);
-
-  if (!secretMode) {
-    loadHomeContent();
-  }
-}
-
-syncPageMode();
-window.addEventListener("hashchange", syncPageMode);
+loadTicker();
+loadReviews();
+loadEvents();
+loadPodcasts();
 
 if (eventsPrev && eventsViewport) {
   eventsPrev.addEventListener("click", () => {
