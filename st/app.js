@@ -365,7 +365,7 @@
     map.style.width = `${visibleLaneCount * 166 + Math.max(0, visibleLaneCount - 1) * 80 + 162}px`;
     map.style.minHeight = `${76 + visibleTierLabels.length * 104 + Math.max(0, visibleTierLabels.length - 1) * 48}px`;
     tierGuides.innerHTML = visibleTierLabels
-      .map((label, tier) => `<span><b>${String(tier + 1).padStart(2, "0")}</b>${label}</span>`)
+      .map((_label, tier) => `<span><b>${String(tier + 1).padStart(2, "0")}</b></span>`)
       .join("");
 
     visibleNodes.forEach((node, nodeIndex) => {
