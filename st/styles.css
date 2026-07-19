@@ -100,15 +100,6 @@ select {
   animation: st-enter 720ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.st-app-header {
-  display: grid;
-  justify-items: center;
-  padding: clamp(84px, 13vw, 142px) 0 clamp(78px, 11vw, 124px);
-  border-bottom: 1px solid var(--line-soft);
-  text-align: center;
-}
-
-.st-hero-eyebrow,
 .st-kicker,
 .st-tree-index,
 .st-detail-label,
@@ -121,32 +112,6 @@ select {
   line-height: 1.2;
   letter-spacing: 0.11em;
   text-transform: uppercase;
-}
-
-.st-hero-eyebrow {
-  margin-bottom: 22px;
-}
-
-.st-app-header h1 {
-  max-width: none;
-  margin: 0;
-  font-size: clamp(4rem, 10vw, 7.5rem);
-  font-weight: 600;
-  line-height: 0.88;
-}
-
-.st-app-header h1 span {
-  color: transparent;
-  -webkit-text-stroke: 1px var(--text);
-  animation: st-outline 7200ms ease-in-out infinite;
-}
-
-.st-app-intro {
-  max-width: 47ch;
-  margin: 30px 0 0;
-  color: var(--muted);
-  font-size: clamp(1.08rem, 2vw, 1.25rem);
-  line-height: 1.6;
 }
 
 .st-directory {
@@ -444,68 +409,97 @@ select {
   outline-offset: -2px;
 }
 
-.st-timeline-map {
+.st-timeline-scale {
   position: relative;
-  width: max-content;
-  min-width: 100%;
-  height: auto;
-  padding: 38px 36px 32px;
-  margin: 0;
-}
-
-.st-timeline-plot {
-  position: relative;
-  inset: auto;
-  display: flex;
-  align-items: stretch;
-  gap: 34px;
+  height: 96px;
+  margin: 0 26px;
+  border-bottom: 1px solid var(--line-soft);
 }
 
 .st-timeline-axis {
   position: absolute;
-  top: auto;
-  right: 4px;
-  bottom: 32px;
-  left: 4px;
-  z-index: 0;
+  top: 36px;
+  right: 0;
+  left: 0;
   height: 1px;
   border-top: 1px solid var(--text);
 }
 
-.st-timeline-axis::before {
+.st-timeline-tick {
   position: absolute;
-  top: -3px;
-  left: -1px;
-  width: 6px;
-  height: 6px;
-  border: 1px solid var(--text);
-  border-radius: 50%;
-  background: var(--bg);
+  top: 13px;
+  left: var(--timeline-position);
+  color: var(--muted);
+  font-size: 0.68rem;
+  line-height: 1;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.st-timeline-tick::before {
+  position: absolute;
+  top: -17px;
+  left: 50%;
+  height: 7px;
+  border-left: 1px solid var(--text);
   content: "";
 }
 
-.st-timeline-axis::after {
+.st-timeline-tick:first-child {
+  transform: none;
+}
+
+.st-timeline-tick:first-child::before {
+  left: 0;
+}
+
+.st-timeline-tick:last-child {
+  transform: translateX(-100%);
+}
+
+.st-timeline-tick:last-child::before {
+  right: 0;
+  left: auto;
+}
+
+.st-timeline-marker {
   position: absolute;
-  top: -3px;
-  right: -1px;
-  width: 6px;
-  height: 6px;
-  border-top: 1px solid var(--text);
-  border-right: 1px solid var(--text);
-  content: "";
-  transform: rotate(45deg);
+  top: 31px;
+  left: clamp(5px, var(--timeline-position), calc(100% - 5px));
+  z-index: 1;
+  width: 11px;
+  height: 11px;
+  border: 1px solid var(--text);
+  border-radius: 50%;
+  background: var(--text);
+  transform: translateX(-50%);
+}
+
+.st-timeline-marker.is-muted {
+  border-color: #777777;
+  background: var(--bg);
+}
+
+.st-timeline-map {
+  position: relative;
+  width: max-content;
+  min-width: 100%;
+  padding: 28px 26px 32px;
+  margin: 0;
+}
+
+.st-timeline-plot {
+  display: flex;
+  align-items: stretch;
+  gap: 22px;
 }
 
 .st-timeline-item {
-  position: relative;
-  top: auto;
-  bottom: auto;
-  left: auto;
-  z-index: 1;
-  display: grid;
-  flex: 0 0 248px;
-  grid-template-rows: minmax(250px, 1fr) 62px 32px;
-  width: 248px;
+  display: flex;
+  flex: 0 0 218px;
+  width: 218px;
   scroll-snap-align: start;
   transition: color 180ms ease;
 }
@@ -515,15 +509,11 @@ select {
 }
 
 .st-timeline-card {
-  position: relative;
-  top: auto;
-  left: auto;
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: auto;
-  min-height: 250px;
-  padding: 20px;
+  min-height: 228px;
+  padding: 18px;
   border: 1px solid var(--text);
   background: var(--bg);
   color: var(--text);
@@ -700,68 +690,6 @@ select {
 .st-timeline-state {
   margin-top: auto;
   padding-top: 30px;
-}
-
-.st-timeline-stem {
-  position: relative;
-  top: auto;
-  bottom: auto;
-  left: auto;
-  grid-row: 2;
-  justify-self: center;
-  height: 100%;
-  border-left: 1px solid var(--text);
-}
-
-.st-timeline-stem::after {
-  position: absolute;
-  right: -0.42rem;
-  bottom: 2px;
-  left: auto;
-  padding: 0 2px;
-  background: var(--bg);
-  font-size: 0.82rem;
-  line-height: 1;
-  content: "↓";
-}
-
-.st-timeline-item.is-muted .st-timeline-stem {
-  border-color: rgba(0, 0, 0, 0.42);
-}
-
-.st-timeline-dot {
-  position: absolute;
-  top: auto;
-  bottom: 28px;
-  left: 50%;
-  width: 9px;
-  height: 9px;
-  border: 1px solid var(--text);
-  border-radius: 50%;
-  background: var(--bg);
-  transform: translateX(-50%);
-}
-
-.st-timeline-item.is-muted .st-timeline-dot {
-  border-color: rgba(0, 0, 0, 0.5);
-}
-
-.st-timeline-year {
-  position: relative;
-  top: auto;
-  left: auto;
-  grid-row: 3;
-  align-self: end;
-  width: auto;
-  margin: 0;
-  padding-top: 12px;
-  color: var(--muted);
-  font-size: 0.8rem;
-  line-height: 1;
-  letter-spacing: 0.08em;
-  text-align: center;
-  text-transform: uppercase;
-  transform: none;
 }
 
 .st-tree-panel {
@@ -1252,11 +1180,6 @@ select {
   }
 }
 
-@keyframes st-outline {
-  0%, 100% { color: transparent; }
-  40%, 64% { color: var(--text); }
-}
-
 @keyframes st-denied {
   25% { transform: translateX(-5px); }
   75% { transform: translateX(5px); }
@@ -1269,8 +1192,7 @@ select {
 
   .st-app,
   .st-gate-shell,
-  .st-gate-card.is-denied,
-  .st-app-header h1 span {
+  .st-gate-card.is-denied {
     animation: none;
   }
 
@@ -1319,26 +1241,6 @@ select {
   .st-total-progress {
     max-width: 15ch;
     text-align: right;
-  }
-
-  .st-app-header {
-    padding: 70px 0 74px;
-  }
-
-  .st-hero-eyebrow {
-    margin-bottom: 17px;
-  }
-
-  .st-app-header h1 {
-    max-width: 5.8ch;
-    font-size: clamp(3.5rem, 18vw, 5.4rem);
-    line-height: 0.9;
-  }
-
-  .st-app-intro {
-    margin-top: 24px;
-    font-size: 1.04rem;
-    line-height: 1.55;
   }
 
   .st-directory {
@@ -1449,6 +1351,11 @@ select {
     scroll-snap-type: none;
   }
 
+  .st-timeline-scale {
+    height: 88px;
+    margin: 0 16px;
+  }
+
   .st-timeline-map {
     width: 100%;
     min-width: 0;
@@ -1459,33 +1366,7 @@ select {
     display: grid;
     gap: 28px;
     width: 100%;
-    padding: 0 16px 0 112px;
-  }
-
-  .st-timeline-axis {
-    top: 0;
-    right: auto;
-    bottom: 0;
-    left: 80px;
-    width: 1px;
-    height: auto;
-    border-top: 0;
-    border-left: 1px solid var(--text);
-  }
-
-  .st-timeline-axis::before {
-    top: -1px;
-    left: -4px;
-  }
-
-  .st-timeline-axis::after {
-    top: auto;
-    right: auto;
-    bottom: -1px;
-    left: -3px;
-    border-top: 0;
-    border-right: 1px solid var(--text);
-    border-bottom: 1px solid var(--text);
+    padding: 0 16px;
   }
 
   .st-timeline-item {
@@ -1501,47 +1382,6 @@ select {
 
   .st-timeline-card h3 {
     font-size: 1.42rem;
-  }
-
-  .st-timeline-stem {
-    position: absolute;
-    top: 25px;
-    right: auto;
-    bottom: auto;
-    left: -32px;
-    width: 32px;
-    height: 1px;
-    border-top: 1px solid var(--text);
-    border-left: 0;
-  }
-
-  .st-timeline-stem::after {
-    top: -0.43rem;
-    right: -3px;
-    bottom: auto;
-    padding: 1px 0;
-    content: "→";
-  }
-
-  .st-timeline-dot {
-    top: 21px;
-    bottom: auto;
-    left: -36px;
-    transform: none;
-  }
-
-  .st-timeline-year {
-    position: absolute;
-    top: 18px;
-    right: calc(100% + 40px);
-    bottom: auto;
-    left: auto;
-    width: 68px;
-    padding: 0;
-    font-size: 0.74rem;
-    line-height: 1.15;
-    text-align: right;
-    transform: none;
   }
 
   .st-tree-toolbar {
@@ -1588,11 +1428,6 @@ select {
   .st-footer {
     align-items: flex-start;
     padding-top: 20px;
-  }
-
-  .st-footer p:last-child {
-    max-width: 12ch;
-    text-align: right;
   }
 
   .st-gate {

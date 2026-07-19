@@ -192,11 +192,6 @@
           <p class="st-wordmark">${payload.wordmark}</p>
           <p class="st-total-progress"></p>
         </header>
-        <section class="st-app-header">
-          <p class="st-hero-eyebrow">${payload.eyebrow}</p>
-          <h1></h1>
-          <p class="st-app-intro">${payload.intro}</p>
-        </section>
         <section class="st-directory" aria-labelledby="st-directory-title">
           <div class="st-directory-heading">
             <div>
@@ -249,17 +244,9 @@
         </section>
         <footer class="st-footer">
           <p>&copy; 2026 ${payload.wordmark}</p>
-          <p>Private study archive</p>
         </footer>
       </div>
     `;
-
-    const title = root.querySelector(".st-app-header h1");
-    const titleWords = payload.title.split(" ");
-    title.append(document.createTextNode(`${titleWords.slice(0, -1).join(" ")} `));
-    const outlinedWord = document.createElement("span");
-    outlinedWord.textContent = titleWords.at(-1);
-    title.append(outlinedWord);
 
     renderTabs();
     renderSubjectSelect();
@@ -473,6 +460,26 @@
     const items = timelineSubjects
       .flatMap((subject) => subject.nodes.map((node) => ({ subject, node })))
       .sort((left, right) => left.node.timelineYear - right.node.timelineYear);
+    const years = items.map(({ node }) => node.timelineYear);
+    const minimumYear = Math.min(...years);
+    const maximumYear = Math.max(...years);
+    const yearSpan = Math.max(1, maximumYear - minimumYear);
+    const timelineTicks = [
+      minimumYear,
+      ...Array.from(
+        { length: Math.max(0, Math.floor((maximumYear - 1) / 500) - Math.ceil(minimumYear / 500) + 1) },
+        (_, tickIndex) => (Math.ceil(minimumYear / 500) + tickIndex) * 500
+      ),
+      maximumYear,
+    ].filter((year, tickIndex, allYears) =>
+      (tickIndex === 0 || year !== allYears[tickIndex - 1]) &&
+      (tickIndex === 0 || tickIndex === allYears.length - 1 ||
+        (year - minimumYear >= 250 && maximumYear - year >= 250))
+    )
+      .map((year) => ({
+        position: (year - minimumYear) / yearSpan * 100,
+        label: year < 0 ? `${Math.abs(year)} BCE` : year === 0 ? "1 CE" : String(year),
+      }));
     const activeCount = countCompleted(activeSubject);
     const compactTimeline = window.matchMedia("(max-width: 640px)").matches;
 
@@ -487,7 +494,7 @@
       <header class="st-timeline-toolbar">
         <div>
           <p class="st-tree-index">Shared timeline</p>
-          <p>Oldest to newest. Scroll to explore; spacing follows reading order, not elapsed time.</p>
+          <p>True scale, oldest to newest. Browse the study cards below.</p>
         </div>
         <div class="st-timeline-toggles" role="group" aria-label="Highlight a timeline discipline">
           ${timelineSubjects.map((subject) => `
@@ -504,6 +511,24 @@
           <span>The shared chronology remains visible for context. Add dated entries in the private CSV when ready.</span>
         </div>
       ` : ""}
+      <div class="st-timeline-scale" aria-label="Proportional timeline from ${items[0].node.timelineYearLabel} to ${items.at(-1).node.timelineYearLabel}">
+        <div class="st-timeline-axis" aria-hidden="true">
+          ${timelineTicks.map((tick) => `
+            <span class="st-timeline-tick" style="--timeline-position: ${tick.position}%">${tick.label}</span>
+          `).join("")}
+        </div>
+        ${items.map(({ subject, node }) => {
+          const position = ((node.timelineYear - minimumYear) / yearSpan) * 100;
+          return `
+            <span
+              class="st-timeline-marker${subject.id === activeSubject.id ? " is-highlighted" : " is-muted"}"
+              style="--timeline-position: ${position}%"
+              title="${node.title}, ${node.timelineYearLabel}"
+              aria-hidden="true"
+            ></span>
+          `;
+        }).join("")}
+      </div>
       <div
         class="st-timeline-scroll"
         ${compactTimeline ? "" : `tabindex="0"`}
@@ -511,8 +536,7 @@
       >
         <div class="st-timeline-map">
           <div class="st-timeline-plot">
-            <div class="st-timeline-axis" aria-hidden="true"></div>
-            ${items.map(({ subject, node }, itemIndex) => {
+            ${items.map(({ subject, node }) => {
               const worksStudied = node.works?.length || 0;
               const requiresWorks = Boolean(node.requiredWorks);
               const complete = isComplete(subject, node);
@@ -523,7 +547,7 @@
                   <div class="st-timeline-card">
                     <div class="st-timeline-card-topline">
                       <p class="st-timeline-kind">${subject.name}</p>
-                      <span>${String(itemIndex + 1).padStart(2, "0")}</span>
+                      <span>${node.timelineYearLabel}</span>
                     </div>
                     <h3>${node.title}</h3>
                     ${requiresWorks ? `
@@ -539,9 +563,6 @@
                       </div>
                     ` : `<p class="st-timeline-state">${complete ? "Complete" : "Future"}</p>`}
                   </div>
-                  <span class="st-timeline-stem" aria-hidden="true"></span>
-                  <span class="st-timeline-dot" aria-hidden="true"></span>
-                  <p class="st-timeline-year">${node.timelineYearLabel}</p>
                 </article>
               `;
             }).join("")}
