@@ -490,6 +490,11 @@
         position: (year - minimumYear) / yearSpan * 100,
         label: year < 0 ? `${Math.abs(year)} BCE` : year === 0 ? "1 CE" : String(year),
       }));
+    const timelineEras = (activeSubject.timelineEras || []).map((era) => ({
+      ...era,
+      position: (era.startYear - minimumYear) / yearSpan * 100,
+      width: (era.endYear - era.startYear) / yearSpan * 100,
+    }));
     const timelineRangeLabel = `${minimumYear < 0 ? `${Math.abs(minimumYear)} BCE` : minimumYear} to ${maximumYear} CE`;
     const activeCount = countCompleted(activeSubject);
     const compactTimeline = window.matchMedia("(max-width: 640px)").matches;
@@ -523,6 +528,17 @@
         </div>
       ` : ""}
       <div class="st-timeline-scale" aria-label="Proportional ${activeSubject.name} timeline from ${timelineRangeLabel}">
+        ${timelineEras.length ? `
+          <div class="st-timeline-eras" aria-label="${activeSubject.name} eras">
+            ${timelineEras.map((era) => `
+              <span
+                class="st-timeline-era"
+                style="--era-position: ${era.position}%; --era-width: ${era.width}%"
+                title="${era.label}"
+              ><b>${era.label}</b></span>
+            `).join("")}
+          </div>
+        ` : ""}
         <div class="st-timeline-axis" aria-hidden="true">
           ${timelineTicks.map((tick) => `
             <span class="st-timeline-tick" style="--timeline-position: ${tick.position}%">${tick.label}</span>
@@ -621,7 +637,7 @@
     scale?.addEventListener("pointermove", (event) => {
       const bounds = scale.getBoundingClientRect();
       const pointerY = event.clientY - bounds.top;
-      if (pointerY < 20 || pointerY > 55) {
+      if (pointerY < 42 || pointerY > 76) {
         if (hoveredTimelineKey && markers.some((marker) => marker.dataset.timelineKey === hoveredTimelineKey)) {
           hoveredTimelineKey = null;
           updateTimelineLink();
