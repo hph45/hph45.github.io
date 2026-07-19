@@ -205,9 +205,9 @@
             </div>
             <p>${String(payload.subjects.length).padStart(2, "0")} fields of study</p>
           </div>
-          <nav class="st-subject-tabs" aria-label="Skill disciplines" role="tablist"></nav>
+          <nav class="st-subject-tabs" aria-label="Skill disciplines"></nav>
         </section>
-        <section class="st-study-area" id="st-study-area" aria-live="polite">
+        <section class="st-study-area" id="st-study-area">
           <div class="st-tree-heading">
             <div>
               <p class="st-tree-index"></p>
@@ -226,7 +226,7 @@
           </div>
           <div class="st-workspace st-tree-workspace">
             <section class="st-tree-panel">
-              <div class="st-tree-group-tabs" role="tablist" aria-label="Trees within this discipline" hidden></div>
+              <div class="st-tree-group-tabs" role="group" aria-label="Trees within this discipline" hidden></div>
               <div class="st-tree-toolbar">
                 <div class="st-status-legend" aria-label="Skill status legend">
                   <span><i class="is-accomplished"></i>${payload.labels.complete}</span>
@@ -239,7 +239,7 @@
                 <div class="st-tree-map">
                   <div class="st-tier-guides" aria-hidden="true"></div>
                   <svg class="st-connectors" aria-hidden="true"></svg>
-                  <div class="st-tree-grid" role="tabpanel"></div>
+                  <div class="st-tree-grid"></div>
                 </div>
               </div>
             </section>
@@ -275,10 +275,8 @@
       const tab = document.createElement("button");
       tab.className = "st-subject-tab";
       tab.type = "button";
-      tab.role = "tab";
       tab.id = `st-tab-${subject.id}`;
-      tab.setAttribute("aria-controls", subject.view === "timeline" ? "st-shared-timeline" : "st-tree-grid");
-      tab.setAttribute("aria-selected", String(subject.id === activeSubjectId));
+      tab.setAttribute("aria-pressed", String(subject.id === activeSubjectId));
       tab.innerHTML = `
         <span class="st-tab-index">${String(index + 1).padStart(2, "0")}</span>
         <span class="st-tab-name">${subject.name}</span>
@@ -291,9 +289,12 @@
         renderTabs();
         renderSubjectSelect();
         renderSubject();
-        root.querySelector("#st-study-area")?.scrollIntoView({
-          behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-          block: "start",
+        window.requestAnimationFrame(() => {
+          root.querySelector(`#st-tab-${subject.id}`)?.focus({ preventScroll: true });
+          root.querySelector("#st-study-area")?.scrollIntoView({
+            behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+            block: "start",
+          });
         });
       });
       tabs.append(tab);
@@ -419,7 +420,16 @@
     scroller.dataset.viewKey = viewKey;
     if (subjectChanged) {
       window.requestAnimationFrame(() => {
-        scroller.scrollLeft = Math.max(0, (scroller.scrollWidth - scroller.clientWidth) / 2);
+        const selectedNode = grid.querySelector(`[data-node-id="${activeNodeId}"]`);
+        if (selectedNode) {
+          const scrollerBounds = scroller.getBoundingClientRect();
+          const nodeBounds = selectedNode.getBoundingClientRect();
+          const centerDelta = nodeBounds.left + nodeBounds.width / 2 -
+            (scrollerBounds.left + scrollerBounds.width / 2);
+          scroller.scrollLeft = Math.max(0, scroller.scrollLeft + centerDelta);
+        } else {
+          scroller.scrollLeft = Math.max(0, (scroller.scrollWidth - scroller.clientWidth) / 2);
+        }
         scroller.scrollTop = 0;
       });
     } else {
@@ -437,13 +447,18 @@
     treeGroups.forEach((group, index) => {
       const button = document.createElement("button");
       button.type = "button";
-      button.role = "tab";
-      button.setAttribute("aria-selected", String(group.name === activeTreeGroup));
+      button.dataset.treeGroup = group.name;
+      button.setAttribute("aria-pressed", String(group.name === activeTreeGroup));
       button.innerHTML = `<span>${String(index + 1).padStart(2, "0")}</span>${group.name}`;
       button.addEventListener("click", () => {
         activeTreeGroup = group.name;
         activeNodeId = null;
         renderSubject();
+        window.requestAnimationFrame(() => {
+          root
+            .querySelector(`.st-tree-group-tabs [data-tree-group="${group.name}"]`)
+            ?.focus({ preventScroll: true });
+        });
       });
       tabs.append(button);
     });
@@ -458,58 +473,70 @@
     const items = timelineSubjects
       .flatMap((subject) => subject.nodes.map((node) => ({ subject, node })))
       .sort((left, right) => left.node.timelineYear - right.node.timelineYear);
-    const years = items.map(({ node }) => node.timelineYear);
-    const minimumYear = Math.min(...years);
-    const maximumYear = Math.max(...years);
-    const yearSpan = Math.max(1, maximumYear - minimumYear);
     const activeCount = countCompleted(activeSubject);
+    const compactTimeline = window.matchMedia("(max-width: 640px)").matches;
 
     heading.textContent = "Poetry + History";
     index.textContent = "Shared chronology";
     progress.textContent = activeSubject.nodes.length
       ? `${activeSubject.name}: ${activeCount} / ${activeSubject.nodes.length} complete`
-      : `${activeSubject.name}: no dated entries yet`;
+      : "";
 
     timelineWorkspace.id = "st-shared-timeline";
     timelineWorkspace.innerHTML = `
       <header class="st-timeline-toolbar">
         <div>
-          <p class="st-tree-index">Timeline focus</p>
-          <p>Switch the emphasis without leaving the shared chronology.</p>
+          <p class="st-tree-index">Shared timeline</p>
+          <p>Oldest to newest. Scroll to explore; spacing follows reading order, not elapsed time.</p>
         </div>
-        <div class="st-timeline-toggles" role="tablist" aria-label="Timeline focus">
+        <div class="st-timeline-toggles" role="group" aria-label="Highlight a timeline discipline">
           ${timelineSubjects.map((subject) => `
-            <button type="button" role="tab" data-subject-id="${subject.id}" aria-selected="${subject.id === activeSubject.id}">
+            <button type="button" data-subject-id="${subject.id}" aria-pressed="${subject.id === activeSubject.id}">
               <span>${subject.name}</span>
               <small>${subject.nodes.length ? `${countCompleted(subject)} / ${subject.nodes.length}` : "No entries"}</small>
             </button>
           `).join("")}
         </div>
       </header>
-      <div class="st-timeline-scroll" tabindex="0" aria-label="Scrollable chronological timeline">
+      ${!activeSubject.nodes.length ? `
+        <div class="st-timeline-empty" role="status">
+          <p>No dated ${activeSubject.name.toLowerCase()} entries yet.</p>
+          <span>The shared chronology remains visible for context. Add dated entries in the private CSV when ready.</span>
+        </div>
+      ` : ""}
+      <div
+        class="st-timeline-scroll"
+        ${compactTimeline ? "" : `tabindex="0"`}
+        aria-label="${compactTimeline ? "Chronological timeline" : "Horizontally scrollable chronological timeline"}"
+      >
         <div class="st-timeline-map">
           <div class="st-timeline-plot">
             <div class="st-timeline-axis" aria-hidden="true"></div>
             ${items.map(({ subject, node }, itemIndex) => {
-              const position = ((node.timelineYear - minimumYear) / yearSpan) * 100;
               const worksStudied = node.works?.length || 0;
               const requiresWorks = Boolean(node.requiredWorks);
               const complete = isComplete(subject, node);
-              const edgeClass = position < 8 ? " is-edge-start" : position > 92 ? " is-edge-end" : "";
               return `
                 <article
-                  class="st-timeline-item${subject.id === activeSubject.id ? " is-highlighted" : " is-muted"}${complete ? " is-complete" : ""}${edgeClass}"
-                  style="--timeline-position: ${position}%; --timeline-row: ${itemIndex % 4}"
+                  class="st-timeline-item${subject.id === activeSubject.id ? " is-highlighted" : " is-muted"}${complete ? " is-complete" : ""}"
                 >
                   <div class="st-timeline-card">
-                    <p class="st-timeline-kind">${subject.name}</p>
+                    <div class="st-timeline-card-topline">
+                      <p class="st-timeline-kind">${subject.name}</p>
+                      <span>${String(itemIndex + 1).padStart(2, "0")}</span>
+                    </div>
                     <h3>${node.title}</h3>
                     ${requiresWorks ? `
                       <div class="st-poet-progress">
                         <div><span>${complete ? "Complete" : "Study progress"}</span><strong>${Math.min(worksStudied, node.requiredWorks)} / ${node.requiredWorks}</strong></div>
                         <i style="--work-progress: ${Math.min(100, worksStudied / node.requiredWorks * 100)}%"></i>
                       </div>
-                      <p class="st-studied-works"><span>Studied</span>${node.works.join(" · ")}</p>
+                      <div class="st-studied-works">
+                        <p><span>Studied works</span><small>${worksStudied} recorded</small></p>
+                        ${worksStudied
+                          ? `<ul>${node.works.map((work) => `<li>${work}</li>`).join("")}</ul>`
+                          : `<p class="st-no-works">None recorded yet.</p>`}
+                      </div>
                     ` : `<p class="st-timeline-state">${complete ? "Complete" : "Future"}</p>`}
                   </div>
                   <span class="st-timeline-stem" aria-hidden="true"></span>
@@ -521,17 +548,22 @@
           </div>
         </div>
       </div>
-      ${!activeSubject.nodes.length ? `<p class="st-timeline-empty">No ${activeSubject.name} entries have been dated yet. Add them to the private CSV and rebuild the archive.</p>` : ""}
     `;
 
     timelineWorkspace.querySelectorAll(".st-timeline-toggles button").forEach((button) => {
       button.addEventListener("click", () => {
-        activeSubjectId = button.dataset.subjectId;
+        const nextSubjectId = button.dataset.subjectId;
+        activeSubjectId = nextSubjectId;
         activeNodeId = null;
         activeTreeGroup = null;
         renderTabs();
         renderSubjectSelect();
         renderSubject();
+        window.requestAnimationFrame(() => {
+          timelineWorkspace
+            .querySelector(`[data-subject-id="${nextSubjectId}"]`)
+            ?.focus();
+        });
       });
     });
   }
