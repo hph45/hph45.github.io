@@ -457,13 +457,12 @@
     const index = root.querySelector(".st-study-area .st-tree-index");
     const progress = root.querySelector(".st-subject-progress");
     const timelineSubjects = payload.subjects.filter((subject) => subject.view === "timeline");
-    const items = timelineSubjects
-      .flatMap((subject) => subject.nodes.map((node) => ({ subject, node })))
+    const items = activeSubject.nodes
+      .map((node) => ({ subject: activeSubject, node }))
       .sort((left, right) => left.node.timelineYear - right.node.timelineYear);
-    const years = items.map(({ node }) => node.timelineYear);
-    const minimumYear = Math.min(...years);
-    const maximumYear = Math.max(...years);
-    const yearSpan = Math.max(1, maximumYear - minimumYear);
+    const minimumYear = -600;
+    const maximumYear = 2000;
+    const yearSpan = maximumYear - minimumYear;
     const timelineTicks = [
       minimumYear,
       ...Array.from(
@@ -494,9 +493,9 @@
       <header class="st-timeline-toolbar">
         <div>
           <p class="st-tree-index">Shared timeline</p>
-          <p>True scale, oldest to newest. Browse the study cards below.</p>
+          <p>One scale, two lenses. 600 BCE to 2000 CE.</p>
         </div>
-        <div class="st-timeline-toggles" role="group" aria-label="Highlight a timeline discipline">
+        <div class="st-timeline-toggles" role="group" aria-label="Choose a timeline discipline">
           ${timelineSubjects.map((subject) => `
             <button type="button" data-subject-id="${subject.id}" aria-pressed="${subject.id === activeSubject.id}">
               <span>${subject.name}</span>
@@ -508,10 +507,10 @@
       ${!activeSubject.nodes.length ? `
         <div class="st-timeline-empty" role="status">
           <p>No dated ${activeSubject.name.toLowerCase()} entries yet.</p>
-          <span>The shared chronology remains visible for context. Add dated entries in the private CSV when ready.</span>
+          <span>Add dated entries in the private CSV when ready.</span>
         </div>
       ` : ""}
-      <div class="st-timeline-scale" aria-label="Proportional timeline from ${items[0].node.timelineYearLabel} to ${items.at(-1).node.timelineYearLabel}">
+      <div class="st-timeline-scale" aria-label="Proportional timeline from 600 BCE to 2000 CE">
         <div class="st-timeline-axis" aria-hidden="true">
           ${timelineTicks.map((tick) => `
             <span class="st-timeline-tick" style="--timeline-position: ${tick.position}%">${tick.label}</span>
@@ -521,7 +520,7 @@
           const position = ((node.timelineYear - minimumYear) / yearSpan) * 100;
           return `
             <span
-              class="st-timeline-marker${subject.id === activeSubject.id ? " is-highlighted" : " is-muted"}"
+              class="st-timeline-marker is-highlighted"
               style="--timeline-position: ${position}%"
               data-timeline-key="${subject.id}:${node.id}"
               data-timeline-position="${position}"
@@ -544,7 +543,7 @@
               const complete = isComplete(subject, node);
               return `
                 <article
-                  class="st-timeline-item${subject.id === activeSubject.id ? " is-highlighted" : " is-muted"}${complete ? " is-complete" : ""}"
+                  class="st-timeline-item is-highlighted${complete ? " is-complete" : ""}"
                   data-timeline-key="${subject.id}:${node.id}"
                   tabindex="0"
                 >
