@@ -523,6 +523,8 @@
             <span
               class="st-timeline-marker${subject.id === activeSubject.id ? " is-highlighted" : " is-muted"}"
               style="--timeline-position: ${position}%"
+              data-timeline-key="${subject.id}:${node.id}"
+              data-timeline-position="${position}"
               title="${node.title}, ${node.timelineYearLabel}"
               aria-hidden="true"
             ></span>
@@ -543,20 +545,21 @@
               return `
                 <article
                   class="st-timeline-item${subject.id === activeSubject.id ? " is-highlighted" : " is-muted"}${complete ? " is-complete" : ""}"
+                  data-timeline-key="${subject.id}:${node.id}"
+                  tabindex="0"
                 >
                   <div class="st-timeline-card">
                     <div class="st-timeline-card-topline">
-                      <p class="st-timeline-kind">${subject.name}</p>
                       <span>${node.timelineYearLabel}</span>
                     </div>
                     <h3>${node.title}</h3>
+                    <p class="st-timeline-description">${node.description}</p>
                     ${requiresWorks ? `
                       <div class="st-poet-progress">
                         <div><span>${complete ? "Complete" : "Study progress"}</span><strong>${Math.min(worksStudied, node.requiredWorks)} / ${node.requiredWorks}</strong></div>
                         <i style="--work-progress: ${Math.min(100, worksStudied / node.requiredWorks * 100)}%"></i>
                       </div>
                       <div class="st-studied-works">
-                        <p><span>Studied works</span><small>${worksStudied} recorded</small></p>
                         ${worksStudied
                           ? `<ul>${node.works.map((work) => `<li>${work}</li>`).join("")}</ul>`
                           : `<p class="st-no-works">None recorded yet.</p>`}
@@ -570,6 +573,66 @@
         </div>
       </div>
     `;
+
+    const linkedElements = [...timelineWorkspace.querySelectorAll("[data-timeline-key]")];
+    const scale = timelineWorkspace.querySelector(".st-timeline-scale");
+    const markers = linkedElements.filter((element) => element.classList.contains("st-timeline-marker"));
+    let hoveredTimelineKey = null;
+    let focusedTimelineKey = null;
+
+    function updateTimelineLink() {
+      linkedElements.forEach((element) => {
+        const linked = element.dataset.timelineKey === hoveredTimelineKey ||
+          element.dataset.timelineKey === focusedTimelineKey;
+        element.classList.toggle("is-linked", linked);
+      });
+    }
+
+    timelineWorkspace.querySelectorAll(".st-timeline-item").forEach((card) => {
+      card.addEventListener("pointerenter", () => {
+        hoveredTimelineKey = card.dataset.timelineKey;
+        updateTimelineLink();
+      });
+      card.addEventListener("pointerleave", () => {
+        if (hoveredTimelineKey === card.dataset.timelineKey) hoveredTimelineKey = null;
+        updateTimelineLink();
+      });
+      card.addEventListener("focus", () => {
+        focusedTimelineKey = card.dataset.timelineKey;
+        updateTimelineLink();
+      });
+      card.addEventListener("blur", () => {
+        if (focusedTimelineKey === card.dataset.timelineKey) focusedTimelineKey = null;
+        updateTimelineLink();
+      });
+    });
+
+    scale?.addEventListener("pointermove", (event) => {
+      const bounds = scale.getBoundingClientRect();
+      const pointerY = event.clientY - bounds.top;
+      if (pointerY < 20 || pointerY > 55) {
+        if (hoveredTimelineKey && markers.some((marker) => marker.dataset.timelineKey === hoveredTimelineKey)) {
+          hoveredTimelineKey = null;
+          updateTimelineLink();
+        }
+        return;
+      }
+
+      const pointerPosition = (event.clientX - bounds.left) / bounds.width * 100;
+      const closest = markers.reduce((nearest, marker) => {
+        const distance = Math.abs(Number(marker.dataset.timelinePosition) - pointerPosition);
+        return !nearest || distance < nearest.distance ? { marker, distance } : nearest;
+      }, null);
+      const closeEnough = closest && closest.distance / 100 * bounds.width <= 14;
+      hoveredTimelineKey = closeEnough ? closest.marker.dataset.timelineKey : null;
+      updateTimelineLink();
+    });
+    scale?.addEventListener("pointerleave", () => {
+      if (hoveredTimelineKey && markers.some((marker) => marker.dataset.timelineKey === hoveredTimelineKey)) {
+        hoveredTimelineKey = null;
+        updateTimelineLink();
+      }
+    });
 
     timelineWorkspace.querySelectorAll(".st-timeline-toggles button").forEach((button) => {
       button.addEventListener("click", () => {

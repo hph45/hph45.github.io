@@ -399,7 +399,6 @@ select {
 .st-timeline-scroll {
   width: 100%;
   overflow-x: auto;
-  scroll-snap-type: x proximity;
   scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
   scrollbar-width: thin;
 }
@@ -475,11 +474,20 @@ select {
   border-radius: 50%;
   background: var(--text);
   transform: translateX(-50%);
+  transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
 }
 
 .st-timeline-marker.is-muted {
   border-color: #777777;
   background: var(--bg);
+}
+
+.st-timeline-marker.is-linked {
+  z-index: 3;
+  border-color: var(--text);
+  background: var(--text);
+  box-shadow: 0 0 0 3px var(--bg), 0 0 0 4px var(--text);
+  transform: translateX(-50%) scale(1.2);
 }
 
 .st-timeline-map {
@@ -500,8 +508,11 @@ select {
   display: flex;
   flex: 0 0 218px;
   width: 218px;
-  scroll-snap-align: start;
   transition: color 180ms ease;
+}
+
+.st-timeline-item:focus-visible {
+  outline: none;
 }
 
 .st-timeline-item.is-muted {
@@ -518,7 +529,14 @@ select {
   background: var(--bg);
   color: var(--text);
   transform: none;
-  transition: background 180ms ease, border-color 180ms ease, color 180ms ease;
+  transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease,
+    color 180ms ease, transform 180ms ease;
+}
+
+.st-timeline-item.is-linked .st-timeline-card {
+  border-color: var(--text);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.13);
+  transform: translateY(-5px);
 }
 
 .st-timeline-item.is-muted .st-timeline-card {
@@ -532,8 +550,6 @@ select {
 }
 
 .st-timeline-item.is-muted .st-studied-works,
-.st-timeline-item.is-muted .st-studied-works span,
-.st-timeline-item.is-muted .st-studied-works small,
 .st-timeline-item.is-muted .st-studied-works li,
 .st-timeline-item.is-muted .st-no-works {
   color: #666666;
@@ -542,7 +558,7 @@ select {
 .st-timeline-card-topline {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 16px;
 }
 
@@ -552,21 +568,14 @@ select {
   letter-spacing: 0.08em;
 }
 
-.st-timeline-kind,
 .st-timeline-state,
 .st-poet-progress span,
-.st-poet-progress strong,
-.st-studied-works span,
-.st-studied-works small {
+.st-poet-progress strong {
   margin: 0;
   font-size: 0.72rem;
   font-weight: 400;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-}
-
-.st-timeline-kind {
-  color: var(--muted);
 }
 
 .st-timeline-card h3 {
@@ -577,17 +586,21 @@ select {
   overflow-wrap: anywhere;
 }
 
+.st-timeline-description {
+  margin: 11px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.42;
+}
+
 .st-timeline-item.is-complete .st-timeline-card {
   border-color: var(--text);
   background: var(--text);
   color: var(--bg);
 }
 
-.st-timeline-item.is-complete .st-timeline-kind {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.st-timeline-item.is-complete .st-timeline-card-topline > span {
+.st-timeline-item.is-complete .st-timeline-card-topline > span,
+.st-timeline-item.is-complete .st-timeline-description {
   color: rgba(255, 255, 255, 0.7);
 }
 
@@ -640,21 +653,9 @@ select {
   color: var(--text);
 }
 
-.st-studied-works > p:first-child {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin: 0;
-}
-
-.st-studied-works small {
-  color: var(--muted);
-  letter-spacing: 0.04em;
-}
-
 .st-studied-works ul {
   padding: 0;
-  margin: 10px 0 0;
+  margin: 0;
   list-style: none;
 }
 
@@ -670,8 +671,12 @@ select {
   content: "—";
 }
 
+.st-studied-works li:first-child {
+  padding-top: 0;
+}
+
 .st-no-works {
-  margin: 10px 0 0;
+  margin: 0;
   color: var(--muted);
   font-size: 0.9rem;
   line-height: 1.35;
@@ -682,7 +687,6 @@ select {
 }
 
 .st-timeline-item.is-complete .st-studied-works,
-.st-timeline-item.is-complete .st-studied-works small,
 .st-timeline-item.is-complete .st-no-works {
   color: var(--bg);
 }
@@ -1200,6 +1204,7 @@ select {
   .st-progress-value,
   .st-timeline-item,
   .st-timeline-card,
+  .st-timeline-marker,
   .st-timeline-toggles button {
     transition: none;
   }
@@ -1348,7 +1353,6 @@ select {
 
   .st-timeline-scroll {
     overflow-x: visible;
-    scroll-snap-type: none;
   }
 
   .st-timeline-scale {
