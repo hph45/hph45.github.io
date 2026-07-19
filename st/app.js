@@ -482,7 +482,7 @@
     const activeCount = countCompleted(activeSubject);
     const compactTimeline = window.matchMedia("(max-width: 640px)").matches;
 
-    heading.textContent = "Poetry + History";
+    heading.textContent = "Poetry + History + Art";
     index.textContent = "Shared chronology";
     progress.textContent = activeSubject.nodes.length
       ? `${activeSubject.name}: ${activeCount} / ${activeSubject.nodes.length} complete`
@@ -493,7 +493,7 @@
       <header class="st-timeline-toolbar">
         <div>
           <p class="st-tree-index">Shared timeline</p>
-          <p>One scale, two lenses. 600 BCE to 2000 CE.</p>
+          <p>One scale, three lenses. 600 BCE to 2000 CE.</p>
         </div>
         <div class="st-timeline-toggles" role="group" aria-label="Choose a timeline discipline">
           ${timelineSubjects.map((subject) => `
