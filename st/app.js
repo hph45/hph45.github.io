@@ -240,7 +240,7 @@
             </section>
             <aside class="st-detail-panel" aria-live="polite"></aside>
           </div>
-          <section class="st-timeline-workspace" aria-label="Shared Poetry and History timeline" hidden></section>
+          <section class="st-timeline-workspace" aria-label="Shared timeline" hidden></section>
         </section>
         <footer class="st-footer">
           <p>&copy; 2026 ${payload.wordmark}</p>
@@ -346,6 +346,7 @@
       ? subject.nodes.filter((node) => node.treeGroup === activeGroup.name)
       : subject.nodes;
     const visibleTierLabels = activeGroup?.tierLabels || subject.tierLabels;
+    const visibleLaneCount = Math.max(3, ...visibleNodes.map((node) => node.lane));
     renderTreeGroupTabs(subject);
     const grid = root.querySelector(".st-tree-grid");
     const tierGuides = root.querySelector(".st-tier-guides");
@@ -358,8 +359,10 @@
     grid.id = "st-tree-grid";
     grid.setAttribute("aria-labelledby", `st-tab-${subject.id}`);
     grid.style.setProperty("--tier-count", visibleTierLabels.length);
+    grid.style.setProperty("--lane-count", visibleLaneCount);
     grid.replaceChildren();
     tierGuides.style.setProperty("--tier-count", visibleTierLabels.length);
+    map.style.width = `${visibleLaneCount * 166 + Math.max(0, visibleLaneCount - 1) * 80 + 162}px`;
     map.style.minHeight = `${76 + visibleTierLabels.length * 104 + Math.max(0, visibleTierLabels.length - 1) * 48}px`;
     tierGuides.innerHTML = visibleTierLabels
       .map((label, tier) => `<span><b>${String(tier + 1).padStart(2, "0")}</b>${label}</span>`)
@@ -460,29 +463,38 @@
     const items = activeSubject.nodes
       .map((node) => ({ subject: activeSubject, node }))
       .sort((left, right) => left.node.timelineYear - right.node.timelineYear);
-    const minimumYear = -600;
-    const maximumYear = 2000;
+    const timelineRange = activeSubject.timelineRange || {
+      minimumYear: -600,
+      maximumYear: 2000,
+      tickInterval: 500,
+    };
+    const minimumYear = timelineRange.minimumYear;
+    const maximumYear = timelineRange.maximumYear;
     const yearSpan = maximumYear - minimumYear;
-    const timelineTicks = [
+    const tickInterval = timelineRange.tickInterval;
+    const minimumTickSpacing = tickInterval / 2;
+    const firstInteriorTick = Math.ceil(minimumYear / tickInterval) * tickInterval;
+    const lastInteriorTick = Math.floor(maximumYear / tickInterval) * tickInterval;
+    const timelineTicks = [...new Set([
       minimumYear,
       ...Array.from(
-        { length: Math.max(0, Math.floor((maximumYear - 1) / 500) - Math.ceil(minimumYear / 500) + 1) },
-        (_, tickIndex) => (Math.ceil(minimumYear / 500) + tickIndex) * 500
+        { length: Math.max(0, Math.floor((lastInteriorTick - firstInteriorTick) / tickInterval) + 1) },
+        (_, tickIndex) => firstInteriorTick + tickIndex * tickInterval
       ),
       maximumYear,
-    ].filter((year, tickIndex, allYears) =>
-      (tickIndex === 0 || year !== allYears[tickIndex - 1]) &&
-      (tickIndex === 0 || tickIndex === allYears.length - 1 ||
-        (year - minimumYear >= 250 && maximumYear - year >= 250))
+    ])].filter((year) =>
+      year === minimumYear || year === maximumYear ||
+      (year - minimumYear >= minimumTickSpacing && maximumYear - year >= minimumTickSpacing)
     )
       .map((year) => ({
         position: (year - minimumYear) / yearSpan * 100,
         label: year < 0 ? `${Math.abs(year)} BCE` : year === 0 ? "1 CE" : String(year),
       }));
+    const timelineRangeLabel = `${minimumYear < 0 ? `${Math.abs(minimumYear)} BCE` : minimumYear} to ${maximumYear} CE`;
     const activeCount = countCompleted(activeSubject);
     const compactTimeline = window.matchMedia("(max-width: 640px)").matches;
 
-    heading.textContent = "Poetry + History + Art";
+    heading.textContent = timelineSubjects.map((subject) => subject.name).join(" + ");
     index.textContent = "Shared chronology";
     progress.textContent = activeSubject.nodes.length
       ? `${activeSubject.name}: ${activeCount} / ${activeSubject.nodes.length} complete`
@@ -493,7 +505,7 @@
       <header class="st-timeline-toolbar">
         <div>
           <p class="st-tree-index">Shared timeline</p>
-          <p>One scale, three lenses. 600 BCE to 2000 CE.</p>
+          <p>${activeSubject.name} lens · ${timelineRangeLabel}.</p>
         </div>
         <div class="st-timeline-toggles" role="group" aria-label="Choose a timeline discipline">
           ${timelineSubjects.map((subject) => `
@@ -510,7 +522,7 @@
           <span>Add dated entries in the private CSV when ready.</span>
         </div>
       ` : ""}
-      <div class="st-timeline-scale" aria-label="Proportional timeline from 600 BCE to 2000 CE">
+      <div class="st-timeline-scale" aria-label="Proportional ${activeSubject.name} timeline from ${timelineRangeLabel}">
         <div class="st-timeline-axis" aria-hidden="true">
           ${timelineTicks.map((tick) => `
             <span class="st-timeline-tick" style="--timeline-position: ${tick.position}%">${tick.label}</span>

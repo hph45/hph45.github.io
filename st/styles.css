@@ -866,7 +866,7 @@ select {
   position: relative;
   z-index: 2;
   display: grid;
-  grid-template-columns: repeat(3, 166px);
+  grid-template-columns: repeat(var(--lane-count, 3), 166px);
   grid-template-rows: repeat(var(--tier-count, 5), 104px);
   justify-content: center;
   gap: 48px 80px;
