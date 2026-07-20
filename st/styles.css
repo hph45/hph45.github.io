@@ -177,6 +177,11 @@ select {
   transition: background-color 180ms ease, color 180ms ease;
 }
 
+.st-subject-tab.is-standalone {
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
 .st-subject-tab:hover,
 .st-subject-tab:focus-visible {
   background: rgba(0, 0, 0, 0.035);
@@ -602,7 +607,8 @@ select {
 
 .st-timeline-item.is-muted .st-studied-works,
 .st-timeline-item.is-muted .st-studied-works li,
-.st-timeline-item.is-muted .st-no-works {
+.st-timeline-item.is-muted .st-no-works,
+.st-timeline-item.is-muted .st-analysis-status {
   color: #666666;
 }
 
@@ -704,6 +710,18 @@ select {
   color: var(--text);
 }
 
+.st-work-list + .st-work-list {
+  margin-top: 16px;
+}
+
+.st-work-list > p {
+  margin: 0 0 9px;
+  color: var(--muted);
+  font-size: 0.66rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
 .st-studied-works ul {
   padding: 0;
   margin: 0;
@@ -716,10 +734,18 @@ select {
   line-height: 1.32;
 }
 
-.st-studied-works li::before {
+.st-work-list li::before {
   float: left;
   margin-left: -14px;
   content: "—";
+}
+
+.st-work-list.is-studied li::before {
+  content: "✓";
+}
+
+.st-work-list.is-recommended li {
+  color: var(--muted);
 }
 
 .st-studied-works li:first-child {
@@ -733,13 +759,39 @@ select {
   line-height: 1.35;
 }
 
+.st-analysis-status {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 16px 0 0;
+  padding-top: 13px;
+  border-top: 1px solid var(--line-soft);
+  color: var(--muted);
+  font-size: 0.66rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.st-analysis-status strong {
+  color: var(--text);
+  font-weight: 500;
+}
+
 .st-timeline-item.is-complete .st-studied-works {
   border-top-color: rgba(255, 255, 255, 0.25);
 }
 
 .st-timeline-item.is-complete .st-studied-works,
-.st-timeline-item.is-complete .st-no-works {
+.st-timeline-item.is-complete .st-no-works,
+.st-timeline-item.is-complete .st-work-list > p,
+.st-timeline-item.is-complete .st-work-list.is-recommended li,
+.st-timeline-item.is-complete .st-analysis-status,
+.st-timeline-item.is-complete .st-analysis-status strong {
   color: var(--bg);
+}
+
+.st-timeline-item.is-complete .st-analysis-status {
+  border-top-color: rgba(255, 255, 255, 0.25);
 }
 
 .st-timeline-state {
@@ -1331,6 +1383,10 @@ select {
     gap: 9px;
     min-height: 82px;
     padding: 14px 12px;
+  }
+
+  .st-subject-tab.is-standalone {
+    grid-template-columns: 1fr;
   }
 
   .st-tab-progress {

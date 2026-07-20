@@ -144,9 +144,21 @@
 
   function isComplete(_subject, node) {
     if (node?.requiredWorks) {
-      return (node.works?.length || 0) >= node.requiredWorks;
+      const worksComplete = (node.works?.length || 0) >= node.requiredWorks;
+      return worksComplete && (!node.requiresAnalysis || node.analysisComplete);
     }
     return node?.state === "accomplished";
+  }
+
+  function getStudyProgress(node) {
+    const worksTarget = node.requiredWorks || 0;
+    const worksComplete = Math.min(node.works?.length || 0, worksTarget);
+    const analysisTarget = node.requiresAnalysis ? 1 : 0;
+    const analysisComplete = node.analysisComplete ? 1 : 0;
+    return {
+      completed: worksComplete + analysisComplete,
+      total: worksTarget + analysisTarget,
+    };
   }
 
   function resolveParent(currentSubject, reference) {
@@ -166,6 +178,14 @@
 
   function getActiveSubject() {
     return payload.subjects.find((subject) => subject.id === activeSubjectId) || payload.subjects[0];
+  }
+
+  function getSubjectNumber(subject) {
+    const subjectIndex = payload.subjects.indexOf(subject);
+    return payload.subjects
+      .slice(0, subjectIndex + 1)
+      .filter((candidate) => !candidate.unnumbered)
+      .length;
   }
 
   function getActiveNode(subject) {
@@ -258,14 +278,15 @@
     const tabs = root.querySelector(".st-subject-tabs");
     tabs.replaceChildren();
 
-    payload.subjects.forEach((subject, index) => {
+    payload.subjects.forEach((subject) => {
+      const subjectNumber = getSubjectNumber(subject);
       const tab = document.createElement("button");
-      tab.className = "st-subject-tab";
+      tab.className = `st-subject-tab${subject.unnumbered ? " is-standalone" : ""}`;
       tab.type = "button";
       tab.id = `st-tab-${subject.id}`;
       tab.setAttribute("aria-pressed", String(subject.id === activeSubjectId));
       tab.innerHTML = `
-        <span class="st-tab-index">${String(index + 1).padStart(2, "0")}</span>
+        ${subject.unnumbered ? "" : `<span class="st-tab-index">${String(subjectNumber).padStart(2, "0")}</span>`}
         <span class="st-tab-name">${subject.name}</span>
         <span class="st-tab-progress">${subject.view === "timeline" && !subject.nodes.length ? "Timeline" : `${countCompleted(subject)} / ${subject.nodes.length}`}</span>
       `;
@@ -292,10 +313,13 @@
     const select = root.querySelector(".st-subject-select");
     select.replaceChildren();
 
-    payload.subjects.forEach((subject, index) => {
+    payload.subjects.forEach((subject) => {
+      const subjectNumber = getSubjectNumber(subject);
       const option = document.createElement("option");
       option.value = subject.id;
-      option.textContent = `${String(index + 1).padStart(2, "0")} — ${subject.name}`;
+      option.textContent = subject.unnumbered
+        ? subject.name
+        : `${String(subjectNumber).padStart(2, "0")} — ${subject.name}`;
       option.selected = subject.id === activeSubjectId;
       select.append(option);
     });
@@ -311,7 +335,7 @@
 
   function renderSubject() {
     const subject = getActiveSubject();
-    const subjectIndex = payload.subjects.indexOf(subject);
+    const subjectNumber = getSubjectNumber(subject);
     const completedCount = countCompleted(subject);
     const percentage = subject.nodes.length ? (completedCount / subject.nodes.length) * 100 : 0;
     const heading = root.querySelector(".st-tree-heading h2");
@@ -322,7 +346,9 @@
     const timelineWorkspace = root.querySelector(".st-timeline-workspace");
 
     heading.textContent = subject.name;
-    index.textContent = `Discipline ${String(subjectIndex + 1).padStart(2, "0")}`;
+    index.textContent = subject.unnumbered
+      ? "Independent field"
+      : `Discipline ${String(subjectNumber).padStart(2, "0")}`;
     progress.textContent = `${completedCount} / ${subject.nodes.length} complete`;
     progressValue.style.setProperty("--progress", `${percentage}%`);
 
@@ -568,6 +594,14 @@
             ${items.map(({ subject, node }) => {
               const worksStudied = node.works?.length || 0;
               const requiresWorks = Boolean(node.requiredWorks);
+              const studyProgress = getStudyProgress(node);
+              const normalizedStudiedWorks = new Set(
+                (node.works || []).map((work) => work.trim().toLocaleLowerCase())
+              );
+              const recommendationsNeeded = Math.max(0, (node.requiredWorks || 0) - worksStudied);
+              const recommendedWorks = (node.recommendedWorks || [])
+                .filter((work) => !normalizedStudiedWorks.has(work.trim().toLocaleLowerCase()))
+                .slice(0, recommendationsNeeded);
               const complete = isComplete(subject, node);
               return `
                 <article
@@ -583,14 +617,32 @@
                     <p class="st-timeline-description">${node.description}</p>
                     ${requiresWorks ? `
                       <div class="st-poet-progress">
-                        <div><span>${complete ? "Complete" : "Study progress"}</span><strong>${Math.min(worksStudied, node.requiredWorks)} / ${node.requiredWorks}</strong></div>
-                        <i style="--work-progress: ${Math.min(100, worksStudied / node.requiredWorks * 100)}%"></i>
+                        <div><span>${complete ? "Complete" : "Study progress"}</span><strong>${studyProgress.completed} / ${studyProgress.total}</strong></div>
+                        <i style="--work-progress: ${Math.min(100, studyProgress.completed / studyProgress.total * 100)}%"></i>
                       </div>
                       <div class="st-studied-works">
-                        ${worksStudied
-                          ? `<ul>${node.works.map((work) => `<li>${work}</li>`).join("")}</ul>`
-                          : `<p class="st-no-works">None recorded yet.</p>`}
+                        ${worksStudied ? `
+                          <section class="st-work-list is-studied">
+                            <p>Studied</p>
+                            <ul>${node.works.map((work) => `<li>${work}</li>`).join("")}</ul>
+                          </section>
+                        ` : ""}
+                        ${recommendedWorks.length ? `
+                          <section class="st-work-list is-recommended">
+                            <p>Suggested next</p>
+                            <ul>${recommendedWorks.map((work) => `<li>${work}</li>`).join("")}</ul>
+                          </section>
+                        ` : ""}
+                        ${!worksStudied && !recommendedWorks.length
+                          ? `<p class="st-no-works">No works recorded yet.</p>`
+                          : ""}
                       </div>
+                      ${node.requiresAnalysis ? `
+                        <p class="st-analysis-status${node.analysisComplete ? " is-complete" : ""}">
+                          <span>Written analysis</span>
+                          <strong>${node.analysisComplete ? "Complete" : "Pending"}</strong>
+                        </p>
+                      ` : ""}
                     ` : `<p class="st-timeline-state">${complete ? "Complete" : "Future"}</p>`}
                   </div>
                 </article>
