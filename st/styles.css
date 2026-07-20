@@ -528,7 +528,7 @@ select {
   height: 11px;
   border: 1px solid var(--text);
   border-radius: 50%;
-  background: var(--text);
+  background: var(--bg);
   transform: translateX(-50%);
   transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
 }
@@ -538,12 +538,25 @@ select {
   background: var(--bg);
 }
 
+.st-timeline-marker.is-complete {
+  background: var(--text);
+}
+
+.st-timeline-marker.is-complete.is-muted {
+  border-color: #777777;
+  background: #777777;
+}
+
 .st-timeline-marker.is-linked {
   z-index: 3;
   border-color: var(--text);
-  background: var(--text);
+  background: var(--bg);
   box-shadow: 0 0 0 3px var(--bg), 0 0 0 4px var(--text);
   transform: translateX(-50%) scale(1.2);
+}
+
+.st-timeline-marker.is-complete.is-linked {
+  background: var(--text);
 }
 
 .st-timeline-map {
@@ -608,7 +621,8 @@ select {
 .st-timeline-item.is-muted .st-studied-works,
 .st-timeline-item.is-muted .st-studied-works li,
 .st-timeline-item.is-muted .st-no-works,
-.st-timeline-item.is-muted .st-analysis-status {
+.st-timeline-item.is-muted .st-analysis-status,
+.st-timeline-item.is-muted .st-extra-works {
   color: #666666;
 }
 
@@ -623,6 +637,25 @@ select {
   color: var(--muted);
   font-size: 0.72rem;
   letter-spacing: 0.08em;
+}
+
+.st-timeline-card-topline .st-timeline-year {
+  margin-left: auto;
+}
+
+.st-timeline-card-topline .st-extra-works {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 25px;
+  min-height: 25px;
+  padding: 2px 6px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
 }
 
 .st-timeline-state,
@@ -652,6 +685,8 @@ select {
 
 .st-timeline-item.is-complete .st-timeline-card {
   border-color: var(--text);
+  outline: 2px solid var(--text);
+  outline-offset: 0;
   background: var(--text);
   color: var(--bg);
 }
@@ -663,6 +698,7 @@ select {
 
 .st-timeline-item.is-muted.is-complete .st-timeline-card {
   border-color: #484848;
+  outline-color: #484848;
   background: #484848;
 }
 

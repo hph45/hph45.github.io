@@ -590,7 +590,7 @@
           const timelineKey = `${subject.id}:${node.id}`;
           return `
             <span
-              class="st-timeline-marker is-highlighted"
+              class="st-timeline-marker is-highlighted${isComplete(subject, node) ? " is-complete" : ""}"
               style="--timeline-position: ${position}%; --marker-row: ${markerRows.get(timelineKey)}"
               data-timeline-key="${timelineKey}"
               data-timeline-position="${position}"
@@ -627,7 +627,10 @@
                 >
                   <div class="st-timeline-card">
                     <div class="st-timeline-card-topline">
-                      <span>${node.timelineYearLabel}</span>
+                      ${node.extraWorks ? `
+                        <span class="st-extra-works" title="${node.extraWorks} additional works studied" aria-label="${node.extraWorks} additional works studied">+${node.extraWorks}</span>
+                      ` : ""}
+                      <span class="st-timeline-year">${node.timelineYearLabel}</span>
                     </div>
                     <h3>${node.title}</h3>
                     <p class="st-timeline-description">${node.description}</p>
