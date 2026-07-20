@@ -490,7 +490,7 @@
       .map((node) => ({ subject: activeSubject, node }))
       .sort((left, right) => left.node.timelineYear - right.node.timelineYear);
     const timelineRange = activeSubject.timelineRange || {
-      minimumYear: -600,
+      minimumYear: -650,
       maximumYear: 2000,
       tickInterval: 500,
     };
@@ -524,6 +524,21 @@
     const timelineRangeLabel = `${minimumYear < 0 ? `${Math.abs(minimumYear)} BCE` : minimumYear} to ${maximumYear} CE`;
     const activeCount = countCompleted(activeSubject);
     const compactTimeline = window.matchMedia("(max-width: 640px)").matches;
+    const markerSeparation = compactTimeline ? 4 : 1.35;
+    const lastMarkerPositionByRow = [-Infinity, -Infinity];
+    const markerRows = new Map();
+
+    items.forEach(({ subject, node }) => {
+      const position = ((node.timelineYear - minimumYear) / yearSpan) * 100;
+      let markerRow = lastMarkerPositionByRow.findIndex(
+        (lastPosition) => position - lastPosition >= markerSeparation
+      );
+      if (markerRow === -1) {
+        markerRow = lastMarkerPositionByRow[0] <= lastMarkerPositionByRow[1] ? 0 : 1;
+      }
+      lastMarkerPositionByRow[markerRow] = position;
+      markerRows.set(`${subject.id}:${node.id}`, markerRow);
+    });
 
     heading.textContent = timelineSubjects.map((subject) => subject.name).join(" + ");
     index.textContent = "Shared chronology";
@@ -572,11 +587,12 @@
         </div>
         ${items.map(({ subject, node }) => {
           const position = ((node.timelineYear - minimumYear) / yearSpan) * 100;
+          const timelineKey = `${subject.id}:${node.id}`;
           return `
             <span
               class="st-timeline-marker is-highlighted"
-              style="--timeline-position: ${position}%"
-              data-timeline-key="${subject.id}:${node.id}"
+              style="--timeline-position: ${position}%; --marker-row: ${markerRows.get(timelineKey)}"
+              data-timeline-key="${timelineKey}"
               data-timeline-position="${position}"
               title="${node.title}, ${node.timelineYearLabel}"
               aria-hidden="true"
@@ -687,22 +703,15 @@
     });
 
     scale?.addEventListener("pointermove", (event) => {
-      const bounds = scale.getBoundingClientRect();
-      const pointerY = event.clientY - bounds.top;
-      if (pointerY < 42 || pointerY > 76) {
-        if (hoveredTimelineKey && markers.some((marker) => marker.dataset.timelineKey === hoveredTimelineKey)) {
-          hoveredTimelineKey = null;
-          updateTimelineLink();
-        }
-        return;
-      }
-
-      const pointerPosition = (event.clientX - bounds.left) / bounds.width * 100;
       const closest = markers.reduce((nearest, marker) => {
-        const distance = Math.abs(Number(marker.dataset.timelinePosition) - pointerPosition);
+        const markerBounds = marker.getBoundingClientRect();
+        const distance = Math.hypot(
+          markerBounds.left + markerBounds.width / 2 - event.clientX,
+          markerBounds.top + markerBounds.height / 2 - event.clientY
+        );
         return !nearest || distance < nearest.distance ? { marker, distance } : nearest;
       }, null);
-      const closeEnough = closest && closest.distance / 100 * bounds.width <= 14;
+      const closeEnough = closest && closest.distance <= 14;
       hoveredTimelineKey = closeEnough ? closest.marker.dataset.timelineKey : null;
       updateTimelineLink();
     });

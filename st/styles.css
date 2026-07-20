@@ -521,7 +521,7 @@ select {
 
 .st-timeline-marker {
   position: absolute;
-  top: 53px;
+  top: calc(53px - var(--marker-row, 0) * 15px);
   left: clamp(5px, var(--timeline-position), calc(100% - 5px));
   z-index: 1;
   width: 11px;
