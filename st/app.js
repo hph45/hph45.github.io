@@ -589,14 +589,15 @@
           const position = ((node.timelineYear - minimumYear) / yearSpan) * 100;
           const timelineKey = `${subject.id}:${node.id}`;
           return `
-            <span
+            <button
+              type="button"
               class="st-timeline-marker is-highlighted${isComplete(subject, node) ? " is-complete" : ""}"
               style="--timeline-position: ${position}%; --marker-row: ${markerRows.get(timelineKey)}"
               data-timeline-key="${timelineKey}"
               data-timeline-position="${position}"
               title="${node.title}, ${node.timelineYearLabel}"
-              aria-hidden="true"
-            ></span>
+              aria-label="Show ${node.title}, ${node.timelineYearLabel} in the subject viewer"
+            ></button>
           `;
         }).join("")}
       </div>
@@ -627,9 +628,6 @@
                 >
                   <div class="st-timeline-card">
                     <div class="st-timeline-card-topline">
-                      ${node.extraWorks ? `
-                        <span class="st-extra-works" title="${node.extraWorks} additional works studied" aria-label="${node.extraWorks} additional works studied">+${node.extraWorks}</span>
-                      ` : ""}
                       <span class="st-timeline-year">${node.timelineYearLabel}</span>
                     </div>
                     <h3>${node.title}</h3>
@@ -644,6 +642,14 @@
                           <section class="st-work-list is-studied">
                             <p>Studied</p>
                             <ul>${node.works.map((work) => `<li>${work}</li>`).join("")}</ul>
+                            ${node.extraWorks?.length ? `
+                              <span
+                                class="st-extra-works"
+                                tabindex="0"
+                                title="${node.extraWorks.join(" · ")}"
+                                aria-label="${node.extraWorks.length} additional works studied: ${node.extraWorks.join(", ")}"
+                              >+${node.extraWorks.length}</span>
+                            ` : ""}
                           </section>
                         ` : ""}
                         ${recommendedWorks.length ? `
@@ -674,6 +680,7 @@
 
     const linkedElements = [...timelineWorkspace.querySelectorAll("[data-timeline-key]")];
     const scale = timelineWorkspace.querySelector(".st-timeline-scale");
+    const scroller = timelineWorkspace.querySelector(".st-timeline-scroll");
     const markers = linkedElements.filter((element) => element.classList.contains("st-timeline-marker"));
     let hoveredTimelineKey = null;
     let focusedTimelineKey = null;
@@ -702,6 +709,42 @@
       card.addEventListener("blur", () => {
         if (focusedTimelineKey === card.dataset.timelineKey) focusedTimelineKey = null;
         updateTimelineLink();
+      });
+    });
+
+    markers.forEach((marker) => {
+      marker.addEventListener("focus", () => {
+        focusedTimelineKey = marker.dataset.timelineKey;
+        updateTimelineLink();
+      });
+      marker.addEventListener("blur", () => {
+        if (focusedTimelineKey === marker.dataset.timelineKey) focusedTimelineKey = null;
+        updateTimelineLink();
+      });
+      marker.addEventListener("click", () => {
+        const card = linkedElements.find((element) =>
+          element.classList.contains("st-timeline-item") &&
+          element.dataset.timelineKey === marker.dataset.timelineKey
+        );
+        if (!card || !scroller) return;
+
+        const scrollBehavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth";
+        card.focus({ preventScroll: true });
+        if (window.matchMedia("(max-width: 640px)").matches) {
+          card.scrollIntoView({ behavior: scrollBehavior, block: "start", inline: "nearest" });
+          return;
+        }
+
+        const cardBounds = card.getBoundingClientRect();
+        const scrollerBounds = scroller.getBoundingClientRect();
+        const centeredLeft = scroller.scrollLeft + cardBounds.left - scrollerBounds.left -
+          (scroller.clientWidth - cardBounds.width) / 2;
+        scroller.scrollTo({
+          left: Math.max(0, centeredLeft),
+          behavior: scrollBehavior,
+        });
       });
     });
 
