@@ -835,6 +835,30 @@ select {
   font-weight: 500;
 }
 
+button.st-analysis-status {
+  width: 100%;
+  padding: 13px 0 0;
+  border-right: 0;
+  border-bottom: 0;
+  border-left: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.st-analysis-toggle:hover strong {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.st-analysis-toggle:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
 .st-timeline-item.is-complete .st-studied-works {
   border-top-color: rgba(255, 255, 255, 0.25);
 }
@@ -850,6 +874,67 @@ select {
 
 .st-timeline-item.is-complete .st-analysis-status {
   border-top-color: rgba(255, 255, 255, 0.25);
+}
+
+.st-analysis-viewer[hidden] {
+  display: none;
+}
+
+.st-analysis-viewer {
+  padding: 24px 26px 28px;
+  border-top: 1px solid var(--line-soft);
+  background: var(--bg);
+  scroll-margin-top: 82px;
+}
+
+.st-analysis-viewer-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 18px;
+}
+
+.st-analysis-viewer-header p,
+.st-analysis-viewer-header h3 {
+  margin: 0;
+}
+
+.st-analysis-viewer-header p {
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.st-analysis-viewer-header h3 {
+  font-size: 1.55rem;
+  font-weight: 600;
+}
+
+.st-analysis-viewer-close {
+  padding: 9px 13px;
+  border: 1px solid var(--text);
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+}
+
+.st-analysis-viewer-close:hover,
+.st-analysis-viewer-close:focus-visible {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.st-analysis-frame {
+  display: block;
+  width: 100%;
+  height: min(78vh, 900px);
+  min-height: 560px;
+  border: 1px solid var(--text);
+  background: #efefef;
 }
 
 .st-timeline-state {
@@ -1554,6 +1639,20 @@ select {
   .st-timeline-card {
     min-height: 0;
     padding: 18px;
+  }
+
+  .st-analysis-viewer {
+    padding: 20px 16px 24px;
+    scroll-margin-top: 20px;
+  }
+
+  .st-analysis-viewer-header {
+    align-items: flex-start;
+  }
+
+  .st-analysis-frame {
+    height: 72vh;
+    min-height: 460px;
   }
 
   .st-timeline-card h3 {

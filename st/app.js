@@ -10,10 +10,18 @@
   let activeNodeId = null;
   let activeTreeGroup = null;
   let connectorFrame = null;
+  let activeAnalysisUrl = null;
 
   function bytesFromBase64(value) {
     const decoded = window.atob(value);
     return Uint8Array.from(decoded, (character) => character.charCodeAt(0));
+  }
+
+  function releaseAnalysisDocument() {
+    const frame = root.querySelector(".st-analysis-frame");
+    if (frame) frame.src = "about:blank";
+    if (activeAnalysisUrl) window.URL.revokeObjectURL(activeAnalysisUrl);
+    activeAnalysisUrl = null;
   }
 
   async function getEncryptedPackage() {
@@ -334,6 +342,7 @@
   }
 
   function renderSubject() {
+    releaseAnalysisDocument();
     const subject = getActiveSubject();
     const subjectNumber = getSubjectNumber(subject);
     const completedCount = countCompleted(subject);
@@ -662,10 +671,21 @@
                           ? `<p class="st-no-works">No works recorded yet.</p>`
                           : ""}
                       </div>
-                      ${node.requiresAnalysis ? `
-                        <p class="st-analysis-status${node.analysisComplete ? " is-complete" : ""}">
+                      ${node.requiresAnalysis ? node.analysisDocument ? `
+                        <button
+                          type="button"
+                          class="st-analysis-status st-analysis-toggle is-complete"
+                          data-analysis-key="${subject.id}:${node.id}"
+                          aria-controls="st-analysis-viewer"
+                          aria-expanded="false"
+                        >
                           <span>Written analysis</span>
-                          <strong>${node.analysisComplete ? "Complete" : "Pending"}</strong>
+                          <strong>Complete · View PDF</strong>
+                        </button>
+                      ` : `
+                        <p class="st-analysis-status">
+                          <span>Written analysis</span>
+                          <strong>Pending</strong>
                         </p>
                       ` : ""}
                     ` : `<p class="st-timeline-state">${complete ? "Complete" : "Future"}</p>`}
@@ -676,11 +696,20 @@
           </div>
         </div>
       </div>
+      <section
+        class="st-analysis-viewer"
+        id="st-analysis-viewer"
+        role="region"
+        aria-labelledby="st-analysis-viewer-title"
+        aria-live="polite"
+        hidden
+      ></section>
     `;
 
     const linkedElements = [...timelineWorkspace.querySelectorAll("[data-timeline-key]")];
     const scale = timelineWorkspace.querySelector(".st-timeline-scale");
     const scroller = timelineWorkspace.querySelector(".st-timeline-scroll");
+    const analysisViewer = timelineWorkspace.querySelector(".st-analysis-viewer");
     const markers = linkedElements.filter((element) => element.classList.contains("st-timeline-marker"));
     let hoveredTimelineKey = null;
     let focusedTimelineKey = null;
@@ -709,6 +738,69 @@
       card.addEventListener("blur", () => {
         if (focusedTimelineKey === card.dataset.timelineKey) focusedTimelineKey = null;
         updateTimelineLink();
+      });
+    });
+
+    let openAnalysisKey = null;
+    function closeAnalysisViewer({ restoreFocus = false } = {}) {
+      const trigger = openAnalysisKey
+        ? timelineWorkspace.querySelector(`.st-analysis-toggle[data-analysis-key="${openAnalysisKey}"]`)
+        : null;
+      releaseAnalysisDocument();
+      analysisViewer.hidden = true;
+      analysisViewer.replaceChildren();
+      timelineWorkspace.querySelectorAll(".st-analysis-toggle").forEach((button) => {
+        button.setAttribute("aria-expanded", "false");
+        button.querySelector("strong").textContent = "Complete · View PDF";
+      });
+      openAnalysisKey = null;
+      if (restoreFocus) trigger?.focus({ preventScroll: true });
+    }
+
+    timelineWorkspace.querySelectorAll(".st-analysis-toggle").forEach((button) => {
+      button.addEventListener("click", () => {
+        const analysisKey = button.dataset.analysisKey;
+        if (openAnalysisKey === analysisKey && !analysisViewer.hidden) {
+          closeAnalysisViewer();
+          return;
+        }
+
+        const entry = items.find(({ subject, node }) => `${subject.id}:${node.id}` === analysisKey);
+        if (!entry?.node.analysisDocument) return;
+        closeAnalysisViewer();
+        const documentBytes = bytesFromBase64(entry.node.analysisDocument.data);
+        activeAnalysisUrl = window.URL.createObjectURL(new Blob(
+          [documentBytes],
+          { type: entry.node.analysisDocument.type || "application/pdf" }
+        ));
+        openAnalysisKey = analysisKey;
+        button.setAttribute("aria-expanded", "true");
+        button.querySelector("strong").textContent = "Complete · Close PDF";
+        analysisViewer.innerHTML = `
+          <header class="st-analysis-viewer-header">
+            <div>
+              <p>Written analysis</p>
+              <h3 id="st-analysis-viewer-title">${entry.node.title}</h3>
+            </div>
+            <button type="button" class="st-analysis-viewer-close">Close PDF</button>
+          </header>
+          <iframe
+            class="st-analysis-frame"
+            src="${activeAnalysisUrl}"
+            title="${entry.node.title} written analysis"
+          ></iframe>
+        `;
+        analysisViewer.hidden = false;
+        analysisViewer.querySelector(".st-analysis-viewer-close")?.addEventListener("click", () => {
+          closeAnalysisViewer({ restoreFocus: true });
+        });
+        window.requestAnimationFrame(() => {
+          analysisViewer.querySelector(".st-analysis-viewer-close")?.focus({ preventScroll: true });
+          analysisViewer.scrollIntoView({
+            behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+            block: "start",
+          });
+        });
       });
     });
 
