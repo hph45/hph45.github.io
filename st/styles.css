@@ -843,7 +843,7 @@ button.st-analysis-status {
   border-left: 0;
   background: transparent;
   cursor: pointer;
-  font: inherit;
+  font-family: inherit;
   text-align: left;
   -webkit-appearance: none;
   appearance: none;
