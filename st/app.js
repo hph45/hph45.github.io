@@ -11,6 +11,7 @@
   let activeTreeGroup = null;
   let connectorFrame = null;
   let activeAnalysisUrl = null;
+  let historySortMode = "date";
 
   function bytesFromBase64(value) {
     const decoded = window.atob(value);
@@ -208,6 +209,142 @@
     return payload.subjects.reduce((total, subject) => total + countCompleted(subject), 0);
   }
 
+  function formatProgressDate(value) {
+    const [year, month, day] = value.split("-").map(Number);
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }).format(new Date(year, month - 1, day));
+  }
+
+  function setupHistory() {
+    const trigger = root.querySelector(".st-history-trigger");
+    const overlay = root.querySelector(".st-history-overlay");
+    const dialog = root.querySelector(".st-history-dialog");
+    const closeButton = root.querySelector(".st-history-close");
+    const backdrop = root.querySelector(".st-history-backdrop");
+    const sort = root.querySelector(".st-history-sort");
+    const list = root.querySelector(".st-history-list");
+
+    function entries() {
+      const subjectOrder = new Map(payload.subjects.map((subject, index) => [subject.id, index]));
+      const resolved = (payload.history || []).map((event, eventIndex) => {
+        const subject = payload.subjects.find((candidate) => candidate.id === event.subjectId);
+        const node = subject?.nodes.find((candidate) => candidate.id === event.nodeId);
+        return subject && node ? { event, eventIndex, subject, node } : null;
+      }).filter(Boolean);
+
+      return resolved.sort((left, right) => {
+        if (historySortMode === "subject") {
+          return subjectOrder.get(left.subject.id) - subjectOrder.get(right.subject.id) ||
+            right.event.date.localeCompare(left.event.date) ||
+            right.eventIndex - left.eventIndex;
+        }
+        return right.event.date.localeCompare(left.event.date) || right.eventIndex - left.eventIndex;
+      });
+    }
+
+    function navigateToEntry(subject, node) {
+      activeSubjectId = subject.id;
+      activeNodeId = node.id;
+      activeTreeGroup = node.treeGroup || null;
+      renderTabs();
+      renderSubjectSelect();
+      renderSubject();
+
+      window.requestAnimationFrame(() => {
+        const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+        if (subject.view === "timeline") {
+          const key = `${subject.id}:${node.id}`;
+          const card = root.querySelector(`.st-timeline-item[data-timeline-key="${key}"]`);
+          card?.focus({ preventScroll: true });
+          card?.scrollIntoView({ behavior, block: "center", inline: "center" });
+          return;
+        }
+        const skill = root.querySelector(`.st-node[data-node-id="${node.id}"]`);
+        skill?.focus({ preventScroll: true });
+        skill?.scrollIntoView({ behavior, block: "center", inline: "center" });
+      });
+    }
+
+    function renderHistoryList() {
+      const historyEntries = entries();
+      list.innerHTML = historyEntries.length ? historyEntries.map(({ event, eventIndex, subject, node }) => `
+        <button
+          type="button"
+          class="st-history-row"
+          data-history-index="${eventIndex}"
+          aria-label="${subject.name}, ${node.title}, ${event.completed === null ? "completed" : `${event.completed} of ${event.total}`}, ${formatProgressDate(event.date)}"
+        >
+          <span class="st-history-subject">${subject.name}</span>
+          <span class="st-history-skill">${node.title}</span>
+          <strong>${event.completed === null ? "Completed" : `${event.completed} / ${event.total}`}</strong>
+          <time datetime="${event.date}">${formatProgressDate(event.date)}</time>
+        </button>
+      `).join("") : `<p class="st-history-empty">No progress has been recorded yet.</p>`;
+
+      list.querySelectorAll(".st-history-row").forEach((row) => {
+        row.addEventListener("click", () => {
+          const event = payload.history[Number(row.dataset.historyIndex)];
+          const subject = payload.subjects.find((candidate) => candidate.id === event.subjectId);
+          const node = subject?.nodes.find((candidate) => candidate.id === event.nodeId);
+          if (!subject || !node) return;
+          closeHistory({ restoreFocus: false });
+          navigateToEntry(subject, node);
+        });
+      });
+    }
+
+    function openHistory() {
+      renderHistoryList();
+      sort.value = historySortMode;
+      overlay.hidden = false;
+      trigger.setAttribute("aria-expanded", "true");
+      trigger.setAttribute("aria-label", "Close progress history");
+      document.body.classList.add("st-history-open");
+      list.scrollTop = 0;
+      window.requestAnimationFrame(() => closeButton.focus({ preventScroll: true }));
+    }
+
+    function closeHistory({ restoreFocus = true } = {}) {
+      overlay.hidden = true;
+      trigger.setAttribute("aria-expanded", "false");
+      trigger.setAttribute("aria-label", "Open progress history");
+      document.body.classList.remove("st-history-open");
+      if (restoreFocus) trigger.focus({ preventScroll: true });
+    }
+
+    trigger.addEventListener("click", () => {
+      if (overlay.hidden) openHistory();
+      else closeHistory();
+    });
+    closeButton.addEventListener("click", () => closeHistory());
+    backdrop.addEventListener("click", () => closeHistory());
+    sort.addEventListener("change", () => {
+      historySortMode = sort.value;
+      renderHistoryList();
+    });
+    overlay.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeHistory();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusable = [...dialog.querySelectorAll("button:not([disabled]), select:not([disabled])")];
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    });
+  }
+
   function renderApp() {
     activeSubjectId = activeSubjectId || payload.subjects[0].id;
     activeNodeId = null;
@@ -218,6 +355,18 @@
       <div class="st-app">
         <header class="st-site-header">
           <p class="st-wordmark">${payload.wordmark}</p>
+          <button
+            type="button"
+            class="st-history-trigger"
+            aria-label="Open progress history"
+            aria-controls="st-history-overlay"
+            aria-expanded="false"
+            title="Progress history"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 3.5h14v17H5zM8 3.5v17M11 8h5M11 12h5M11 16h4"></path>
+            </svg>
+          </button>
           <p class="st-total-progress"></p>
         </header>
         <section class="st-directory" aria-labelledby="st-directory-title">
@@ -274,8 +423,34 @@
           <p>&copy; 2026 ${payload.wordmark}</p>
         </footer>
       </div>
+      <div class="st-history-overlay" id="st-history-overlay" hidden>
+        <button class="st-history-backdrop" type="button" tabindex="-1" aria-label="Close progress history"></button>
+        <section class="st-history-dialog" role="dialog" aria-modal="true" aria-labelledby="st-history-title">
+          <header class="st-history-header">
+            <div>
+              <p class="st-tree-index">Progress archive</p>
+              <h2 id="st-history-title">History</h2>
+            </div>
+            <div class="st-history-tools">
+              <label>
+                <span>Order by</span>
+                <select class="st-history-sort">
+                  <option value="date">Date</option>
+                  <option value="subject">Subject</option>
+                </select>
+              </label>
+              <button class="st-history-close" type="button" aria-label="Close progress history">&times;</button>
+            </div>
+          </header>
+          <div class="st-history-columns" aria-hidden="true">
+            <span>Subject</span><span>Skill or subject</span><span>Progress</span><span>Date</span>
+          </div>
+          <div class="st-history-list"></div>
+        </section>
+      </div>
     `;
 
+    setupHistory();
     renderTabs();
     renderSubjectSelect();
     renderSubject();
