@@ -11,7 +11,7 @@
   let activeTreeGroup = null;
   let connectorFrame = null;
   let activeAnalysisUrl = null;
-  let historySortMode = "date";
+  let historyFilterSubjectId = "";
 
   function bytesFromBase64(value) {
     const decoded = window.atob(value);
@@ -224,25 +224,21 @@
     const dialog = root.querySelector(".st-history-dialog");
     const closeButton = root.querySelector(".st-history-close");
     const backdrop = root.querySelector(".st-history-backdrop");
-    const sort = root.querySelector(".st-history-sort");
+    const filter = root.querySelector(".st-history-filter");
     const list = root.querySelector(".st-history-list");
 
     function entries() {
-      const subjectOrder = new Map(payload.subjects.map((subject, index) => [subject.id, index]));
       const resolved = (payload.history || []).map((event, eventIndex) => {
         const subject = payload.subjects.find((candidate) => candidate.id === event.subjectId);
         const node = subject?.nodes.find((candidate) => candidate.id === event.nodeId);
         return subject && node ? { event, eventIndex, subject, node } : null;
       }).filter(Boolean);
 
-      return resolved.sort((left, right) => {
-        if (historySortMode === "subject") {
-          return subjectOrder.get(left.subject.id) - subjectOrder.get(right.subject.id) ||
-            right.event.date.localeCompare(left.event.date) ||
-            right.eventIndex - left.eventIndex;
-        }
-        return right.event.date.localeCompare(left.event.date) || right.eventIndex - left.eventIndex;
-      });
+      return resolved
+        .filter(({ subject }) => !historyFilterSubjectId || subject.id === historyFilterSubjectId)
+        .sort((left, right) =>
+          right.event.date.localeCompare(left.event.date) || right.eventIndex - left.eventIndex
+        );
     }
 
     function navigateToEntry(subject, node) {
@@ -282,7 +278,9 @@
           <strong>${event.completed === null ? "Completed" : `${event.completed} / ${event.total}`}</strong>
           <time datetime="${event.date}">${formatProgressDate(event.date)}</time>
         </button>
-      `).join("") : `<p class="st-history-empty">No progress has been recorded yet.</p>`;
+      `).join("") : `<p class="st-history-empty">${historyFilterSubjectId
+        ? `No ${payload.subjects.find((subject) => subject.id === historyFilterSubjectId)?.name || "subject"} progress has been recorded yet.`
+        : "No progress has been recorded yet."}</p>`;
 
       list.querySelectorAll(".st-history-row").forEach((row) => {
         row.addEventListener("click", () => {
@@ -298,7 +296,7 @@
 
     function openHistory() {
       renderHistoryList();
-      sort.value = historySortMode;
+      filter.value = historyFilterSubjectId;
       overlay.hidden = false;
       trigger.setAttribute("aria-expanded", "true");
       trigger.setAttribute("aria-label", "Close progress history");
@@ -321,8 +319,8 @@
     });
     closeButton.addEventListener("click", () => closeHistory());
     backdrop.addEventListener("click", () => closeHistory());
-    sort.addEventListener("change", () => {
-      historySortMode = sort.value;
+    filter.addEventListener("change", () => {
+      historyFilterSubjectId = filter.value;
       renderHistoryList();
     });
     overlay.addEventListener("keydown", (event) => {
@@ -433,10 +431,10 @@
             </div>
             <div class="st-history-tools">
               <label>
-                <span>Order by</span>
-                <select class="st-history-sort">
-                  <option value="date">Date</option>
-                  <option value="subject">Subject</option>
+                <span>Filter by</span>
+                <select class="st-history-filter" aria-label="Filter progress history by subject">
+                  <option value="">All subjects</option>
+                  ${payload.subjects.map((subject) => `<option value="${subject.id}">${subject.name}</option>`).join("")}
                 </select>
               </label>
               <button class="st-history-close" type="button" aria-label="Close progress history">&times;</button>

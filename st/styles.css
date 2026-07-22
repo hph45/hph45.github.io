@@ -224,7 +224,7 @@ body.st-history-open .st-site-header {
   text-transform: uppercase;
 }
 
-.st-history-sort {
+.st-history-filter {
   min-width: 112px;
   height: 40px;
   padding: 0 30px 0 10px;
@@ -1756,7 +1756,7 @@ button.st-analysis-status {
     gap: 4px;
   }
 
-  .st-history-sort {
+  .st-history-filter {
     min-width: 100px;
     height: 36px;
   }
