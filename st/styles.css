@@ -1513,6 +1513,55 @@ button.st-analysis-status {
   line-height: 1.4;
 }
 
+.st-node-checklist {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 18px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--line-soft);
+  column-gap: 18px;
+  list-style: none;
+}
+
+.st-node-checklist li {
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.st-node-checklist label {
+  display: grid;
+  grid-template-columns: 15px minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+  padding: 10px 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.3;
+}
+
+.st-node-checklist input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  appearance: none;
+  background: transparent;
+}
+
+.st-node-checklist input:checked {
+  background: var(--text);
+  box-shadow: inset 0 0 0 3px var(--bg);
+}
+
+.st-node-checklist input:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.st-node-checklist .is-complete label {
+  color: var(--text);
+}
+
 .st-key-submit {
   min-height: 50px;
   padding: 12px 18px;
@@ -1996,6 +2045,10 @@ button.st-analysis-status {
   .st-detail-panel h3 {
     margin-top: 34px;
     font-size: 2rem;
+  }
+
+  .st-node-checklist {
+    grid-template-columns: 1fr;
   }
 
   .st-footer {

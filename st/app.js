@@ -1063,6 +1063,9 @@
     const panel = root.querySelector(".st-detail-panel");
     const resolvedParents = node.parents.map((reference) => resolveParent(subject, reference));
     const unmetParents = resolvedParents.filter(({ node: parent }) => !isComplete(subject, parent));
+    const recordedChecklistItems = new Set(
+      (node.works || []).map((item) => item.trim().toLocaleLowerCase())
+    );
 
     panel.innerHTML = `
       <div class="st-detail-topline">
@@ -1078,7 +1081,21 @@
         <div class="st-node-progress-record">
           <div><p class="st-detail-label">${node.progressLabel || "Progress"}</p><strong>${node.works?.length || 0} / ${node.requiredWorks}</strong></div>
           <i style="--node-progress: ${Math.min(100, (node.works?.length || 0) / node.requiredWorks * 100)}%"></i>
-          <p>${node.works?.length ? node.works.join(" · ") : "None recorded yet."}</p>
+          ${node.checklistItems?.length ? `
+            <ul class="st-node-checklist" aria-label="${node.title} course checklist">
+              ${node.checklistItems.map((item) => {
+                const checked = recordedChecklistItems.has(item.trim().toLocaleLowerCase());
+                return `
+                  <li class="${checked ? "is-complete" : ""}">
+                    <label>
+                      <input type="checkbox" ${checked ? "checked" : ""} disabled>
+                      <span>${item}</span>
+                    </label>
+                  </li>
+                `;
+              }).join("")}
+            </ul>
+          ` : `<p>${node.works?.length ? node.works.join(" · ") : "None recorded yet."}</p>`}
         </div>
       ` : ""}
       ${resolvedParents.length ? `
