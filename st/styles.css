@@ -1768,6 +1768,7 @@ button.st-analysis-status {
 
   .st-total-progress {
     max-width: 15ch;
+    padding-inline-end: 4px;
     text-align: right;
   }
 
