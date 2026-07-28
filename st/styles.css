@@ -406,7 +406,7 @@ body.st-history-open .st-site-header {
 }
 
 .st-subject-tab.is-standalone {
-  grid-column: 1 / -1;
+  grid-column: span 2;
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
@@ -1177,7 +1177,7 @@ button.st-analysis-status {
 
 .st-tree-group-tabs {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   border-bottom: 1px solid var(--line);
 }
 
@@ -1736,6 +1736,10 @@ button.st-analysis-status {
 @media (max-width: 960px) {
   .st-subject-tabs {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .st-subject-tab.is-standalone {
+    grid-column: auto;
   }
 
   .st-workspace {
