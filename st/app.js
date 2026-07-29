@@ -218,6 +218,21 @@
     }).format(new Date(year, month - 1, day));
   }
 
+  function findSubjectEntry(subject, entryId) {
+    return subject?.nodes.find((candidate) => candidate.id === entryId) ||
+      subject?.repeatables?.find((candidate) => candidate.id === entryId);
+  }
+
+  function isRepeatableEntry(subject, entry) {
+    return Boolean(subject?.repeatables?.some((candidate) => candidate.id === entry?.id));
+  }
+
+  function formatHistoryProgress(event) {
+    if (event.repeatable) return `${event.completed}×`;
+    if (event.completed === null) return "Completed";
+    return `${event.completed} / ${event.total}`;
+  }
+
   function setupHistory() {
     const trigger = root.querySelector(".st-history-trigger");
     const overlay = root.querySelector(".st-history-overlay");
@@ -230,7 +245,7 @@
     function entries() {
       const resolved = (payload.history || []).map((event, eventIndex) => {
         const subject = payload.subjects.find((candidate) => candidate.id === event.subjectId);
-        const node = subject?.nodes.find((candidate) => candidate.id === event.nodeId);
+        const node = findSubjectEntry(subject, event.nodeId);
         return subject && node ? { event, eventIndex, subject, node } : null;
       }).filter(Boolean);
 
@@ -242,9 +257,10 @@
     }
 
     function navigateToEntry(subject, node) {
+      const repeatable = isRepeatableEntry(subject, node);
       activeSubjectId = subject.id;
-      activeNodeId = node.id;
-      activeTreeGroup = node.treeGroup || null;
+      activeNodeId = repeatable ? null : node.id;
+      activeTreeGroup = repeatable ? null : node.treeGroup || null;
       renderTabs();
       renderSubjectSelect();
       renderSubject();
@@ -256,6 +272,12 @@
           const card = root.querySelector(`.st-timeline-item[data-timeline-key="${key}"]`);
           card?.focus({ preventScroll: true });
           card?.scrollIntoView({ behavior, block: "center", inline: "center" });
+          return;
+        }
+        if (repeatable) {
+          const item = root.querySelector(`.st-repeatable-item[data-repeatable-id="${node.id}"]`);
+          item?.focus({ preventScroll: true });
+          item?.scrollIntoView({ behavior, block: "center" });
           return;
         }
         const skill = root.querySelector(`.st-node[data-node-id="${node.id}"]`);
@@ -271,11 +293,11 @@
           type="button"
           class="st-history-row"
           data-history-index="${eventIndex}"
-          aria-label="${subject.name}, ${node.title}, ${event.completed === null ? "completed" : `${event.completed} of ${event.total}`}, ${formatProgressDate(event.date)}"
+          aria-label="${subject.name}, ${node.title}, ${formatHistoryProgress(event)}, ${formatProgressDate(event.date)}"
         >
           <span class="st-history-subject">${subject.name}</span>
           <span class="st-history-skill">${node.title}</span>
-          <strong>${event.completed === null ? "Completed" : `${event.completed} / ${event.total}`}</strong>
+          <strong>${formatHistoryProgress(event)}</strong>
           <time datetime="${event.date}">${formatProgressDate(event.date)}</time>
         </button>
       `).join("") : `<p class="st-history-empty">${historyFilterSubjectId
@@ -286,7 +308,7 @@
         row.addEventListener("click", () => {
           const event = payload.history[Number(row.dataset.historyIndex)];
           const subject = payload.subjects.find((candidate) => candidate.id === event.subjectId);
-          const node = subject?.nodes.find((candidate) => candidate.id === event.nodeId);
+          const node = findSubjectEntry(subject, event.nodeId);
           if (!subject || !node) return;
           closeHistory({ restoreFocus: false });
           navigateToEntry(subject, node);
@@ -415,6 +437,7 @@
             </section>
             <aside class="st-detail-panel" aria-live="polite"></aside>
           </div>
+          <section class="st-repeatable-panel" aria-label="Repeatable goals" hidden></section>
           <section class="st-timeline-workspace" aria-label="Shared timeline" hidden></section>
         </section>
         <footer class="st-footer">
@@ -526,6 +549,7 @@
     const progressValue = root.querySelector(".st-progress-value");
     const treeWorkspace = root.querySelector(".st-tree-workspace");
     const timelineWorkspace = root.querySelector(".st-timeline-workspace");
+    const repeatablePanel = root.querySelector(".st-repeatable-panel");
 
     heading.textContent = subject.name;
     index.textContent = subject.unnumbered
@@ -537,6 +561,8 @@
     if (subject.view === "timeline") {
       activeTreeGroup = null;
       treeWorkspace.hidden = true;
+      repeatablePanel.hidden = true;
+      repeatablePanel.replaceChildren();
       timelineWorkspace.hidden = false;
       renderTimeline(subject);
       return;
@@ -544,6 +570,7 @@
 
     treeWorkspace.hidden = false;
     timelineWorkspace.hidden = true;
+    renderRepeatables(subject);
     const treeGroups = subject.treeGroups || [];
     if (treeGroups.length && !treeGroups.some((group) => group.name === activeTreeGroup)) {
       activeTreeGroup = treeGroups[0].name;
@@ -635,6 +662,56 @@
     }
     renderDetails();
     scheduleConnectors();
+  }
+
+  function renderRepeatables(subject) {
+    const panel = root.querySelector(".st-repeatable-panel");
+    const entries = subject.repeatables || [];
+    panel.replaceChildren();
+    panel.hidden = entries.length === 0;
+    if (!entries.length) return;
+
+    const groups = [...new Set(entries.map((entry) => entry.group))];
+    panel.innerHTML = groups.map((group) => {
+      const groupEntries = entries.filter((entry) => entry.group === group);
+      const level = groupEntries.reduce((sum, entry) => sum + entry.count, 0);
+      return `
+        <article class="st-repeatable-group">
+          <header class="st-repeatable-header">
+            <div>
+              <p class="st-tree-index">Repeatable practice</p>
+              <h3>${group}</h3>
+              <p>Every dated completion adds one level. Counts remain read-only here and are maintained in the private CSV.</p>
+            </div>
+            <div class="st-repeatable-level" aria-label="${group} skill level ${level}">
+              <span>${group} skill</span>
+              <strong>Level ${level}</strong>
+            </div>
+          </header>
+          <div class="st-repeatable-grid">
+            ${groupEntries.map((entry, index) => `
+              <section
+                class="st-repeatable-item"
+                data-repeatable-id="${entry.id}"
+                tabindex="0"
+                aria-label="${entry.title}, completed ${entry.count} times"
+              >
+                <div class="st-repeatable-item-topline">
+                  <span>${String(index + 1).padStart(2, "0")}</span>
+                  <strong>${entry.count}&times;</strong>
+                </div>
+                <h4>${entry.title}</h4>
+                <p>${entry.description}</p>
+                <div class="st-repeatable-standard">
+                  <span>Completion standard</span>
+                  <p>${entry.practice}</p>
+                </div>
+              </section>
+            `).join("")}
+          </div>
+        </article>
+      `;
+    }).join("");
   }
 
   function renderTreeGroupTabs(subject) {
