@@ -702,10 +702,6 @@
                 </div>
                 <h4>${entry.title}</h4>
                 <p>${entry.description}</p>
-                <div class="st-repeatable-standard">
-                  <span>Completion standard</span>
-                  <p>${entry.practice}</p>
-                </div>
               </section>
             `).join("")}
           </div>
