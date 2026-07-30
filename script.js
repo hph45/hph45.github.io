@@ -1,26 +1,60 @@
 const tickerTrack = document.querySelector("#ticker-track");
 const BOOK_CLUB_CURRENT_CSV_URL = "./book_club_current.csv";
+let readingQueuePromise = null;
+
+function loadReadingQueue() {
+  if (!readingQueuePromise) {
+    readingQueuePromise = fetch(BOOK_CLUB_CURRENT_CSV_URL, { cache: "no-store" })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Request failed with ${response.status}`);
+        }
+        return response.text();
+      })
+      .then((csv) => {
+        const rows = parseCsv(csv);
+        const headerIndex = rows.findIndex(
+          (row) => row[0]?.trim().toLowerCase() === "status"
+        );
+
+        if (headerIndex === -1) {
+          throw new Error("Reading queue header row not found");
+        }
+
+        return rows
+          .slice(headerIndex + 1)
+          .map((row) => ({
+            status: row[0]?.trim(),
+            author: row[1]?.trim(),
+            title: row[2]?.trim(),
+            note: row[3]?.trim(),
+          }))
+          .filter((book) => book.status && book.author && book.title);
+      });
+  }
+
+  return readingQueuePromise;
+}
 
 async function loadTicker() {
   if (!tickerTrack) return;
   try {
-    const response = await fetch(BOOK_CLUB_CURRENT_CSV_URL, { cache: "no-store" });
-    if (!response.ok) throw new Error(`Request failed with ${response.status}`);
-    const csv = await response.text();
-    const rows = parseCsv(csv);
-    const headerIndex = rows.findIndex(
-      (row) => row[0]?.trim().toLowerCase() === "current"
-    );
-    if (headerIndex === -1) throw new Error("Header row not found");
-    const data = rows[headerIndex + 1];
-    if (!data) throw new Error("No data row found");
-    const current = data[0]?.trim() || "TBD";
-    const next = data[1]?.trim() || "TBD";
-    const segment =
-      `<span data-ticker-title="${current}">Currently reading: ${current}</span>` +
-      `<span data-ticker-title="${next}">Next book: ${next}</span>`;
+    const readingQueue = await loadReadingQueue();
+    if (readingQueue.length === 0) throw new Error("No reading queue rows found");
+
     const repeat = 6;
-    tickerTrack.innerHTML = Array(repeat).fill(segment).join("");
+    const fragment = document.createDocumentFragment();
+
+    for (let index = 0; index < repeat; index += 1) {
+      readingQueue.forEach((book) => {
+        const item = document.createElement("span");
+        item.dataset.tickerTitle = book.title;
+        item.textContent = `${book.status}: ${book.title}`;
+        fragment.append(item);
+      });
+    }
+
+    tickerTrack.replaceChildren(fragment);
     tickerTrack.addEventListener("click", (e) => {
       const span = e.target.closest("[data-ticker-title]");
       if (!span) return;
@@ -296,7 +330,7 @@ function renderReviewCards(reviews) {
 
     const meta = document.createElement("p");
     meta.className = "review-meta";
-    meta.textContent = `Book #${review.episode}`;
+    meta.textContent = review.queueMeta || `Book #${review.episode}`;
     header.append(meta);
 
     const title = document.createElement("h3");
@@ -306,29 +340,41 @@ function renderReviewCards(reviews) {
     author.className = "review-meta";
     author.textContent = review.author;
 
-    if (review.isRecommended) {
-      const recommended = document.createElement("div");
-      recommended.className = "review-recommended";
+    const markerLabel = review.queueStatus || (review.isRecommended ? "Recommended" : "");
 
+    if (markerLabel) {
+      const marker = document.createElement("div");
+      marker.className = "review-marker";
       const tag = document.createElement("p");
       tag.className = "review-tag";
-      tag.textContent = "Recommended";
-      recommended.append(tag);
+      tag.textContent = markerLabel;
+      marker.append(tag);
 
-      header.append(recommended);
+      header.append(marker);
     }
 
     card.append(header, title, author);
 
-    const rating = document.createElement("p");
-    rating.className = "review-rating";
-    rating.textContent = review.rating;
+    if (review.note) {
+      const note = document.createElement("p");
+      note.className = "review-status-note";
+      note.textContent = review.note;
+      card.append(note);
+    }
 
-    const date = document.createElement("p");
-    date.className = "review-date";
-    date.textContent = review.date;
+    if (review.rating) {
+      const rating = document.createElement("p");
+      rating.className = "review-rating";
+      rating.textContent = review.rating;
+      card.append(rating);
+    }
 
-    card.append(rating, date);
+    if (review.date) {
+      const date = document.createElement("p");
+      date.className = "review-date";
+      date.textContent = review.date;
+      card.append(date);
+    }
 
     if (review.link) {
       const link = document.createElement("a");
@@ -483,6 +529,8 @@ function getFilteredReviews() {
     let matchesRating;
     if (ratingValue === "all") {
       matchesRating = true;
+    } else if (review.isReadingQueue) {
+      matchesRating = false;
     } else if (ratingValue === "guest") {
       matchesRating = review.rating && !review.rating.includes("🦓");
     } else {
@@ -516,9 +564,10 @@ async function loadReviews() {
   }
 
   try {
-    const [reviewsResponse, recommendedResponse] = await Promise.all([
+    const [reviewsResponse, recommendedResponse, readingQueue] = await Promise.all([
       fetch(REVIEWS_CSV_URL, { cache: "no-store" }),
       fetch(RECOMMENDED_REVIEWS_CSV_URL, { cache: "no-store" }),
+      loadReadingQueue(),
     ]);
 
     if (!reviewsResponse.ok) {
@@ -560,7 +609,7 @@ async function loadReviews() {
         .filter(([episode]) => episode)
     );
 
-    allReviews = rows
+    const reviews = rows
       .slice(headerIndex + 1)
       .map((row) => ({
         episode: row[0]?.trim(),
@@ -599,9 +648,24 @@ async function loadReviews() {
         return Number(right.episode) - Number(left.episode);
       });
 
-    if (allReviews.length === 0) {
+    if (reviews.length === 0) {
       throw new Error("No review rows found");
     }
+
+    const queueCards = readingQueue.map((book) => {
+      const isCurrent = book.status.toLowerCase() === "currently reading";
+
+      return {
+        author: book.author,
+        title: book.title,
+        note: book.note,
+        queueMeta: isCurrent ? "Reading now" : "Up next",
+        queueStatus: book.status,
+        isReadingQueue: true,
+      };
+    });
+
+    allReviews = [...queueCards, ...reviews];
 
     if (reviewsSearch) {
       reviewsSearch.value = "";

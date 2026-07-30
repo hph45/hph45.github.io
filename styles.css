@@ -505,7 +505,7 @@ h2 {
   text-transform: uppercase;
 }
 
-.review-recommended {
+.review-marker {
   flex: 0 0 auto;
 }
 
@@ -513,6 +513,11 @@ h2 {
   margin: 0;
   font-size: 1.1rem;
   letter-spacing: 0.04em;
+}
+
+.review-status-note {
+  margin: 4px 0 0;
+  color: var(--muted);
 }
 
 .review-link {
