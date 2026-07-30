@@ -464,7 +464,7 @@ h2 {
   display: grid;
   align-content: start;
   gap: 8px;
-  min-height: 220px;
+  min-height: 286px;
   padding: 14px 22px 22px;
   border: 1px solid var(--line-soft);
   background: rgba(255, 255, 255, 0.9);
@@ -477,7 +477,7 @@ h2 {
 .review-card > .review-rating,
 .review-card > .review-date,
 .review-card > .review-link {
-  max-width: calc(100% - 92px);
+  max-width: calc(100% - 160px);
 }
 
 .review-header {
@@ -489,7 +489,7 @@ h2 {
 
 .review-card h3 {
   margin: 0;
-  max-width: none;
+  max-width: calc(100% - 160px);
   font-size: 1.65rem;
   line-height: 1.05;
 }
@@ -534,8 +534,8 @@ h2 {
   position: absolute;
   right: 18px;
   bottom: 18px;
-  width: 68px;
-  height: 102px;
+  width: 136px;
+  height: 204px;
   object-fit: cover;
   border: 1px solid var(--line-soft);
   filter: grayscale(1);
@@ -857,7 +857,7 @@ h2 {
   }
 
   .review-card {
-    min-height: 0;
+    min-height: 254px;
     padding: 12px 18px 18px;
   }
 
@@ -867,14 +867,14 @@ h2 {
   .review-card > .review-rating,
   .review-card > .review-date,
   .review-card > .review-link {
-    max-width: calc(100% - 82px);
+    max-width: calc(100% - 144px);
   }
 
   .review-cover {
     right: 14px;
     bottom: 14px;
-    width: 60px;
-    height: 90px;
+    width: 120px;
+    height: 180px;
   }
 
   .podcast-card {
