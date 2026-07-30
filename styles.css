@@ -460,6 +460,7 @@ h2 {
 }
 
 .review-card {
+  position: relative;
   display: grid;
   align-content: start;
   gap: 8px;
@@ -468,6 +469,15 @@ h2 {
   border: 1px solid var(--line-soft);
   background: rgba(255, 255, 255, 0.9);
   text-align: left;
+}
+
+.review-card > h3,
+.review-card > .review-meta,
+.review-card > .review-status-note,
+.review-card > .review-rating,
+.review-card > .review-date,
+.review-card > .review-link {
+  max-width: calc(100% - 92px);
 }
 
 .review-header {
@@ -518,6 +528,24 @@ h2 {
 .review-status-note {
   margin: 4px 0 0;
   color: var(--muted);
+}
+
+.review-cover {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  width: 68px;
+  height: 102px;
+  object-fit: cover;
+  border: 1px solid var(--line-soft);
+  filter: grayscale(1);
+  transition: filter 220ms ease;
+  pointer-events: none;
+}
+
+.review-card:hover .review-cover,
+.review-card:focus-within .review-cover {
+  filter: grayscale(0);
 }
 
 .review-link {
@@ -831,6 +859,22 @@ h2 {
   .review-card {
     min-height: 0;
     padding: 12px 18px 18px;
+  }
+
+  .review-card > h3,
+  .review-card > .review-meta,
+  .review-card > .review-status-note,
+  .review-card > .review-rating,
+  .review-card > .review-date,
+  .review-card > .review-link {
+    max-width: calc(100% - 82px);
+  }
+
+  .review-cover {
+    right: 14px;
+    bottom: 14px;
+    width: 60px;
+    height: 90px;
   }
 
   .podcast-card {

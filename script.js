@@ -386,6 +386,16 @@ function renderReviewCards(reviews) {
       card.append(link);
     }
 
+    if (review.cover) {
+      const cover = document.createElement("img");
+      cover.className = "review-cover";
+      cover.src = review.cover;
+      cover.alt = "";
+      cover.loading = "lazy";
+      cover.decoding = "async";
+      card.append(cover);
+    }
+
     reviewsGrid.append(card);
   });
 }
@@ -619,6 +629,7 @@ async function loadReviews() {
         ratingCount: row[4]?.trim(),
         date: row[5]?.trim(),
         link: row[6]?.trim(),
+        cover: `./assets/review-covers/review-${row[0]?.trim().padStart(2, "0")}.jpg`,
         isRecommended: recommendedReviewNotes.has(row[0]?.trim()),
         recommendationNote:
           recommendedReviewNotes.get(row[0]?.trim())?.note || "",
@@ -655,11 +666,13 @@ async function loadReviews() {
     const queueCards = readingQueue
       .map((book) => {
         const isCurrent = book.status.toLowerCase() === "currently reading";
+        const coverFile = isCurrent ? "current.jpg" : "next.jpg";
 
         return {
           author: book.author,
           title: book.title,
           note: book.note,
+          cover: `./assets/review-covers/${coverFile}`,
           queueMeta: isCurrent ? "Reading now" : "Up next",
           queueStatus: book.status,
           isReadingQueue: true,
