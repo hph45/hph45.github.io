@@ -331,7 +331,9 @@ function renderReviewCards(reviews) {
     const meta = document.createElement("p");
     meta.className = "review-meta";
     meta.textContent = review.queueMeta || `Book #${review.episode}`;
-    header.append(meta);
+    if (!review.isReadingQueue) {
+      header.append(meta);
+    }
 
     const title = document.createElement("h3");
     title.textContent = review.title;
