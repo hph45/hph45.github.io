@@ -453,7 +453,7 @@ h2 {
 
 .reviews-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
   width: 100%;
   text-align: left;
@@ -472,13 +472,14 @@ h2 {
   text-align: left;
 }
 
+.review-card > .review-header,
 .review-card > h3,
 .review-card > .review-meta,
 .review-card > .review-status-note,
 .review-card > .review-rating,
 .review-card > .review-date,
 .review-card > .review-link {
-  max-width: calc(100% - 136px);
+  max-width: calc(100% - 190px);
 }
 
 .review-header {
@@ -490,7 +491,7 @@ h2 {
 
 .review-card h3 {
   margin: 0;
-  max-width: none;
+  max-width: calc(100% - 190px);
   font-size: 1.65rem;
   line-height: 1.05;
 }
@@ -533,12 +534,15 @@ h2 {
 
 .review-cover {
   position: absolute;
-  top: 100px;
-  right: 18px;
-  width: 136px;
-  height: 204px;
-  object-fit: cover;
-  border: 1px solid var(--line-soft);
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  height: 100%;
+  object-fit: contain;
+  object-position: right center;
+  border: 0;
+  border-left: 1px solid var(--line-soft);
   filter: grayscale(1);
   transition: filter 220ms ease;
   pointer-events: none;
@@ -862,20 +866,14 @@ h2 {
     padding: 12px 18px 18px;
   }
 
+  .review-card > .review-header,
   .review-card > h3,
   .review-card > .review-meta,
   .review-card > .review-status-note,
   .review-card > .review-rating,
   .review-card > .review-date,
   .review-card > .review-link {
-    max-width: calc(100% - 120px);
-  }
-
-  .review-cover {
-    top: 100px;
-    right: 14px;
-    width: 120px;
-    height: 180px;
+    max-width: calc(100% - 140px);
   }
 
   .podcast-card {
