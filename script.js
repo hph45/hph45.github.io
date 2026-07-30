@@ -652,18 +652,23 @@ async function loadReviews() {
       throw new Error("No review rows found");
     }
 
-    const queueCards = readingQueue.map((book) => {
-      const isCurrent = book.status.toLowerCase() === "currently reading";
+    const queueCards = readingQueue
+      .map((book) => {
+        const isCurrent = book.status.toLowerCase() === "currently reading";
 
-      return {
-        author: book.author,
-        title: book.title,
-        note: book.note,
-        queueMeta: isCurrent ? "Reading now" : "Up next",
-        queueStatus: book.status,
-        isReadingQueue: true,
-      };
-    });
+        return {
+          author: book.author,
+          title: book.title,
+          note: book.note,
+          queueMeta: isCurrent ? "Reading now" : "Up next",
+          queueStatus: book.status,
+          isReadingQueue: true,
+        };
+      })
+      .sort((left, right) => {
+        const order = { "Next week": 0, "Currently reading": 1 };
+        return (order[left.queueStatus] ?? 2) - (order[right.queueStatus] ?? 2);
+      });
 
     allReviews = [...queueCards, ...reviews];
 
