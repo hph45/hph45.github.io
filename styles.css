@@ -932,3 +932,64 @@ h2 {
     display: block;
   }
 }
+
+@media (min-width: 1024px) {
+  .reviews-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .review-card {
+    gap: 5px;
+    padding: 12px 16px 16px;
+  }
+
+  .review-card > .review-header,
+  .review-card > h3,
+  .review-card > .review-meta,
+  .review-card > .review-status-note,
+  .review-card > .review-rating,
+  .review-card > .review-date,
+  .review-card > .review-link {
+    max-width: calc(100% - 170px);
+  }
+
+  .review-header {
+    flex-wrap: wrap;
+    gap: 4px 6px;
+  }
+
+  .review-card h3 {
+    max-width: calc(100% - 170px);
+    font-size: 1.3rem;
+    line-height: 1.03;
+  }
+
+  .review-card .review-meta,
+  .review-card .review-date {
+    font-size: 0.78rem;
+    line-height: 1.1;
+  }
+
+  .review-tag {
+    margin: 0;
+    padding: 3px 5px;
+    font-size: 0.64rem;
+    letter-spacing: 0.05em;
+  }
+
+  .review-rating {
+    font-size: 0.9rem;
+    line-height: 1;
+  }
+
+  .review-status-note {
+    margin: 1px 0 0;
+    font-size: 0.8rem;
+    line-height: 1.15;
+  }
+
+  .review-link {
+    padding-bottom: 1px;
+    font-size: 0.8rem;
+  }
+}
