@@ -461,10 +461,10 @@ function renderReviewCards(reviews) {
 
     const meta = document.createElement("p");
     meta.className = "review-meta";
-    meta.textContent = review.queueMeta || `Book #${review.episode}`;
-    if (!review.isReadingQueue) {
-      header.append(meta);
-    }
+    meta.textContent = review.isReadingQueue
+      ? review.queueStatus
+      : `Book #${review.episode}`;
+    header.append(meta);
 
     const title = document.createElement("h3");
     title.textContent = review.title;
@@ -473,7 +473,7 @@ function renderReviewCards(reviews) {
     author.className = "review-meta";
     author.textContent = review.author;
 
-    const markerLabel = review.queueStatus || (review.isRecommended ? "Recommended" : "");
+    const markerLabel = review.isRecommended ? "Recommended" : "";
 
     if (markerLabel) {
       const marker = document.createElement("div");
@@ -807,7 +807,6 @@ async function loadReviews() {
           note: book.note,
           link: book.link,
           cover: `./assets/review-covers/${coverFile}`,
-          queueMeta: isCurrent ? "Reading now" : "Up next",
           queueStatus: book.status,
           isReadingQueue: true,
         };
