@@ -239,6 +239,204 @@ h2 {
   text-align: center;
 }
 
+.reviews-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  width: 100%;
+}
+
+.tbr-trigger-slot {
+  display: flex;
+  align-items: center;
+  flex: 0 0 124px;
+}
+
+.tbr-trigger {
+  position: relative;
+  width: 58px;
+  height: 44px;
+  overflow: hidden;
+  border: 1px solid var(--text);
+  border-radius: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.88rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: width 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tbr-trigger-short,
+.tbr-trigger-long {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  white-space: nowrap;
+  transition:
+    opacity 150ms ease,
+    transform 220ms ease;
+}
+
+.tbr-trigger-long {
+  opacity: 0;
+  transform: translateX(8px);
+}
+
+.tbr-trigger:hover,
+.tbr-trigger:focus-visible {
+  width: 116px;
+}
+
+.tbr-trigger:hover .tbr-trigger-short,
+.tbr-trigger:focus-visible .tbr-trigger-short {
+  opacity: 0;
+  transform: translateX(-8px);
+}
+
+.tbr-trigger:hover .tbr-trigger-long,
+.tbr-trigger:focus-visible .tbr-trigger-long {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.tbr-dialog {
+  width: min(780px, calc(100vw - 32px));
+  height: min(80vh, 760px);
+  height: min(80dvh, 760px);
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--text);
+  border-radius: 0;
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.12);
+}
+
+.tbr-dialog[open] {
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+}
+
+.tbr-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(3px);
+}
+
+.tbr-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px 26px 22px;
+  border-bottom: 1px solid var(--line-soft);
+  text-align: left;
+}
+
+.tbr-dialog-header .section-label {
+  margin-bottom: 10px;
+}
+
+.tbr-dialog-header h2 {
+  max-width: none;
+  font-size: clamp(2.25rem, 6vw, 3.5rem);
+}
+
+.tbr-close {
+  display: grid;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  padding: 0 0 4px;
+  place-items: center;
+  border: 1px solid var(--text);
+  border-radius: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.tbr-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 26px;
+}
+
+.tbr-search input {
+  width: 100%;
+  min-height: 50px;
+  padding: 0 15px;
+  border: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  appearance: none;
+}
+
+.tbr-count {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  white-space: nowrap;
+}
+
+.tbr-column-labels,
+.tbr-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(170px, 0.8fr);
+  gap: 24px;
+  text-align: left;
+}
+
+.tbr-column-labels {
+  padding: 10px 26px;
+  border-block: 1px solid var(--text);
+  font-size: 0.76rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.tbr-list {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.tbr-row {
+  align-items: baseline;
+  padding: 13px 26px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.tbr-book-title {
+  font-size: 1.05rem;
+  line-height: 1.25;
+}
+
+.tbr-book-author {
+  color: var(--muted);
+  line-height: 1.3;
+}
+
+.tbr-message {
+  margin: 0;
+  padding: 34px 26px;
+  color: var(--muted);
+  text-align: center;
+}
+
 .reviews-shell {
   width: 100%;
   margin-top: 40px;
@@ -704,6 +902,12 @@ h2 {
   .event-card {
     transition: none;
   }
+
+  .tbr-trigger,
+  .tbr-trigger-short,
+  .tbr-trigger-long {
+    transition: none;
+  }
 }
 
 @media (max-width: 640px) {
@@ -768,6 +972,80 @@ h2 {
     max-width: 11ch;
     font-size: clamp(2rem, 10vw, 3rem);
     line-height: 1;
+  }
+
+  .reviews-heading-row {
+    gap: 8px;
+  }
+
+  .tbr-trigger-slot {
+    flex-basis: 102px;
+  }
+
+  .tbr-trigger {
+    width: 54px;
+    height: 42px;
+    font-size: 0.76rem;
+  }
+
+  .tbr-trigger:hover,
+  .tbr-trigger:focus-visible {
+    width: 102px;
+  }
+
+  .tbr-dialog {
+    width: calc(100vw - 24px);
+    height: calc(100vh - 24px);
+    height: calc(100dvh - 24px);
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+    box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.12);
+  }
+
+  .tbr-dialog-header {
+    padding: 18px 16px 16px;
+  }
+
+  .tbr-dialog-header h2 {
+    font-size: 2.25rem;
+  }
+
+  .tbr-close {
+    flex-basis: 42px;
+    width: 42px;
+    height: 42px;
+  }
+
+  .tbr-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 9px;
+    padding: 14px 16px;
+  }
+
+  .tbr-count {
+    font-size: 0.82rem;
+  }
+
+  .tbr-column-labels,
+  .tbr-row {
+    grid-template-columns: minmax(0, 1fr) minmax(105px, 0.65fr);
+    gap: 12px;
+  }
+
+  .tbr-column-labels {
+    padding: 9px 16px;
+  }
+
+  .tbr-row {
+    padding: 12px 16px;
+  }
+
+  .tbr-book-title {
+    font-size: 0.98rem;
+  }
+
+  .tbr-book-author {
+    font-size: 0.9rem;
   }
 
   .copy,

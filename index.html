@@ -126,7 +126,22 @@
 
     <section class="section reveal" id="reviews">
       <p class="section-label">Reviews</p>
-      <h2>Club reviews and links to reviewed books will live here.</h2>
+      <div class="reviews-heading-row">
+        <h2>Club reviews and links to reviewed books will live here.</h2>
+        <span class="tbr-trigger-slot">
+          <button
+            class="tbr-trigger"
+            id="tbr-trigger"
+            type="button"
+            aria-controls="tbr-dialog"
+            aria-expanded="false"
+            aria-label="Open To Be Read list"
+          >
+            <span class="tbr-trigger-short">TBR</span>
+            <span class="tbr-trigger-long" aria-hidden="true">To Be Read</span>
+          </button>
+        </span>
+      </div>
       <p class="reviews-disclaimer">&#9888; Make sure you don't pirate online copies–it's illegal! To ensure you don't, make sure to stay away from places like Anna's Archive that allow you to download nearly any book easily for free!</p>
       <div class="reviews-shell">
         <div class="reviews-controls" aria-label="Review filters">
@@ -224,6 +239,37 @@
       </p>
     </section>
   </main>
+  <dialog class="tbr-dialog" id="tbr-dialog" aria-labelledby="tbr-dialog-title">
+    <header class="tbr-dialog-header">
+      <div>
+        <p class="section-label">Reading queue</p>
+        <h2 id="tbr-dialog-title">To Be Read</h2>
+      </div>
+      <button class="tbr-close" id="tbr-close" type="button" aria-label="Close To Be Read list">
+        &times;
+      </button>
+    </header>
+    <div class="tbr-toolbar">
+      <label class="tbr-search">
+        <span class="visually-hidden">Search the To Be Read list</span>
+        <input
+          id="tbr-search"
+          type="search"
+          name="tbr-search"
+          placeholder="Search title or author"
+          autocomplete="off"
+        >
+      </label>
+      <p class="tbr-count" id="tbr-count" aria-live="polite">Loading books</p>
+    </div>
+    <div class="tbr-column-labels" aria-hidden="true">
+      <span>Book</span>
+      <span>Author</span>
+    </div>
+    <div class="tbr-list" id="tbr-list" aria-live="polite">
+      <p class="tbr-message">Loading the reading list.</p>
+    </div>
+  </dialog>
   <footer class="site-footer">
     <p>&copy; 2026 Zebra Book Club</p>
   </footer>

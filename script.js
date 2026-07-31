@@ -1,6 +1,8 @@
 const tickerTrack = document.querySelector("#ticker-track");
 const BOOK_CLUB_CURRENT_CSV_URL = "./book_club_current.csv";
+const TBR_CSV_URL = "./tbr.csv";
 let readingQueuePromise = null;
+let tbrPromise = null;
 
 function loadReadingQueue() {
   if (!readingQueuePromise) {
@@ -87,6 +89,12 @@ const reviewsSearch = document.querySelector("#reviews-search");
 const reviewsRatingFilter = document.querySelector("#reviews-rating-filter");
 const podcastsGrid = document.querySelector("#podcasts-grid");
 const podcastsToggle = document.querySelector("#podcasts-toggle");
+const tbrTrigger = document.querySelector("#tbr-trigger");
+const tbrDialog = document.querySelector("#tbr-dialog");
+const tbrClose = document.querySelector("#tbr-close");
+const tbrSearch = document.querySelector("#tbr-search");
+const tbrCount = document.querySelector("#tbr-count");
+const tbrList = document.querySelector("#tbr-list");
 const INITIAL_REVIEW_COUNT = 6;
 const INITIAL_PODCAST_COUNT = 6;
 const REVIEWS_CSV_URL = "./reviews.csv";
@@ -99,6 +107,7 @@ let reviewsExpanded = false;
 let allPodcasts = [];
 let podcastsExpanded = false;
 let eventsAutoScrollFrame = null;
+let allTbrBooks = [];
 
 const observer = new IntersectionObserver(
   (entries) => {
@@ -303,6 +312,127 @@ function parseCsv(text) {
   }
 
   return rows;
+}
+
+function loadTbrBooks() {
+  if (!tbrPromise) {
+    tbrPromise = fetch(TBR_CSV_URL, { cache: "no-store" })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Request failed with ${response.status}`);
+        }
+
+        return response.text();
+      })
+      .then((csv) => {
+        const rows = parseCsv(csv);
+        const headerIndex = rows.findIndex(
+          (row) => row[0]?.trim().toLowerCase() === "title"
+        );
+
+        if (headerIndex === -1) {
+          throw new Error("TBR header row not found");
+        }
+
+        return rows
+          .slice(headerIndex + 1)
+          .map((row) => ({
+            title: row[0]?.trim(),
+            author: row[1]?.trim(),
+          }))
+          .filter((book) => book.title && book.author);
+      });
+  }
+
+  return tbrPromise;
+}
+
+function renderTbrBooks() {
+  if (!tbrList || !tbrCount) {
+    return;
+  }
+
+  const query = tbrSearch?.value.trim().toLowerCase() ?? "";
+  const visibleBooks = allTbrBooks.filter(
+    (book) =>
+      !query ||
+      book.title.toLowerCase().includes(query) ||
+      book.author.toLowerCase().includes(query)
+  );
+
+  tbrCount.textContent = query
+    ? `${visibleBooks.length} of ${allTbrBooks.length} books`
+    : `${allTbrBooks.length} books`;
+
+  if (visibleBooks.length === 0) {
+    const message = document.createElement("p");
+    message.className = "tbr-message";
+    message.textContent = "No books match that search.";
+    tbrList.replaceChildren(message);
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+
+  visibleBooks.forEach((book) => {
+    const row = document.createElement("div");
+    row.className = "tbr-row";
+
+    const title = document.createElement("span");
+    title.className = "tbr-book-title";
+    title.textContent = book.title;
+
+    const author = document.createElement("span");
+    author.className = "tbr-book-author";
+    author.textContent = book.author;
+
+    row.append(title, author);
+    fragment.append(row);
+  });
+
+  tbrList.replaceChildren(fragment);
+}
+
+async function openTbrDialog() {
+  if (!tbrDialog || !tbrTrigger || !tbrSearch || !tbrList || !tbrCount) {
+    return;
+  }
+
+  tbrSearch.value = "";
+  tbrTrigger.setAttribute("aria-expanded", "true");
+
+  if (!tbrDialog.open) {
+    tbrDialog.showModal();
+  }
+
+  window.requestAnimationFrame(() => tbrSearch.focus());
+
+  if (allTbrBooks.length > 0) {
+    renderTbrBooks();
+    return;
+  }
+
+  tbrCount.textContent = "Loading books";
+  const message = document.createElement("p");
+  message.className = "tbr-message";
+  message.textContent = "Loading the reading list.";
+  tbrList.replaceChildren(message);
+
+  try {
+    allTbrBooks = await loadTbrBooks();
+    renderTbrBooks();
+  } catch (error) {
+    tbrCount.textContent = "List unavailable";
+    message.textContent = "The reading list could not be loaded right now.";
+    tbrList.replaceChildren(message);
+    console.error(error);
+  }
+}
+
+function closeTbrDialog() {
+  if (tbrDialog?.open) {
+    tbrDialog.close();
+  }
 }
 
 function renderReviewCards(reviews) {
@@ -850,6 +980,38 @@ if (reviewsRatingFilter) {
   reviewsRatingFilter.addEventListener("change", () => {
     reviewsExpanded = false;
     renderVisibleReviews();
+  });
+}
+
+if (tbrTrigger) {
+  tbrTrigger.addEventListener("click", openTbrDialog);
+}
+
+if (tbrClose) {
+  tbrClose.addEventListener("click", closeTbrDialog);
+}
+
+if (tbrSearch) {
+  tbrSearch.addEventListener("input", renderTbrBooks);
+}
+
+if (tbrDialog) {
+  tbrDialog.addEventListener("click", (event) => {
+    const bounds = tbrDialog.getBoundingClientRect();
+    const clickedInside =
+      event.clientX >= bounds.left &&
+      event.clientX <= bounds.right &&
+      event.clientY >= bounds.top &&
+      event.clientY <= bounds.bottom;
+
+    if (!clickedInside) {
+      closeTbrDialog();
+    }
+  });
+
+  tbrDialog.addEventListener("close", () => {
+    tbrTrigger?.setAttribute("aria-expanded", "false");
+    tbrTrigger?.focus();
   });
 }
 
