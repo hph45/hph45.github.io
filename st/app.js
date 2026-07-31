@@ -233,6 +233,36 @@
     return `${event.completed} / ${event.total}`;
   }
 
+  function navigateToEntry(subject, node) {
+    const repeatable = isRepeatableEntry(subject, node);
+    activeSubjectId = subject.id;
+    activeNodeId = repeatable ? null : node.id;
+    activeTreeGroup = repeatable ? null : node.treeGroup || null;
+    renderTabs();
+    renderSubjectSelect();
+    renderSubject();
+
+    window.requestAnimationFrame(() => {
+      const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+      if (subject.view === "timeline") {
+        const key = `${subject.id}:${node.id}`;
+        const card = root.querySelector(`.st-timeline-item[data-timeline-key="${key}"]`);
+        card?.focus({ preventScroll: true });
+        card?.scrollIntoView({ behavior, block: "center", inline: "center" });
+        return;
+      }
+      if (repeatable) {
+        const item = root.querySelector(`.st-repeatable-item[data-repeatable-id="${node.id}"]`);
+        item?.focus({ preventScroll: true });
+        item?.scrollIntoView({ behavior, block: "center" });
+        return;
+      }
+      const skill = root.querySelector(`.st-node[data-node-id="${node.id}"]`);
+      skill?.focus({ preventScroll: true });
+      skill?.scrollIntoView({ behavior, block: "center", inline: "center" });
+    });
+  }
+
   function setupHistory() {
     const trigger = root.querySelector(".st-history-trigger");
     const overlay = root.querySelector(".st-history-overlay");
@@ -254,36 +284,6 @@
         .sort((left, right) =>
           right.event.date.localeCompare(left.event.date) || right.eventIndex - left.eventIndex
         );
-    }
-
-    function navigateToEntry(subject, node) {
-      const repeatable = isRepeatableEntry(subject, node);
-      activeSubjectId = subject.id;
-      activeNodeId = repeatable ? null : node.id;
-      activeTreeGroup = repeatable ? null : node.treeGroup || null;
-      renderTabs();
-      renderSubjectSelect();
-      renderSubject();
-
-      window.requestAnimationFrame(() => {
-        const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
-        if (subject.view === "timeline") {
-          const key = `${subject.id}:${node.id}`;
-          const card = root.querySelector(`.st-timeline-item[data-timeline-key="${key}"]`);
-          card?.focus({ preventScroll: true });
-          card?.scrollIntoView({ behavior, block: "center", inline: "center" });
-          return;
-        }
-        if (repeatable) {
-          const item = root.querySelector(`.st-repeatable-item[data-repeatable-id="${node.id}"]`);
-          item?.focus({ preventScroll: true });
-          item?.scrollIntoView({ behavior, block: "center" });
-          return;
-        }
-        const skill = root.querySelector(`.st-node[data-node-id="${node.id}"]`);
-        skill?.focus({ preventScroll: true });
-        skill?.scrollIntoView({ behavior, block: "center", inline: "center" });
-      });
     }
 
     function renderHistoryList() {
@@ -317,6 +317,8 @@
     }
 
     function openHistory() {
+      const searchOverlay = root.querySelector(".st-search-overlay");
+      if (!searchOverlay?.hidden) root.querySelector(".st-search-trigger")?.click();
       renderHistoryList();
       filter.value = historyFilterSubjectId;
       overlay.hidden = false;
@@ -365,6 +367,200 @@
     });
   }
 
+  function setupSearch() {
+    const trigger = root.querySelector(".st-search-trigger");
+    const overlay = root.querySelector(".st-search-overlay");
+    const dialog = root.querySelector(".st-search-dialog");
+    const closeButton = root.querySelector(".st-search-close");
+    const backdrop = root.querySelector(".st-search-backdrop");
+    const input = root.querySelector(".st-search-input");
+    const list = root.querySelector(".st-search-list");
+    const summary = root.querySelector(".st-search-summary");
+    const resultLimit = 60;
+    const searchEntries = payload.subjects.flatMap((subject) =>
+      [...subject.nodes, ...(subject.repeatables || [])].map((node) => ({
+        subject,
+        node,
+        normalizedTitle: normalizeSearchText(node.title),
+        normalizedSubject: normalizeSearchText(subject.name),
+        haystack: normalizeSearchText([
+          subject.name,
+          node.title,
+          node.description,
+          node.practice,
+          node.treeGroup,
+          ...(node.works || []),
+          ...(node.recommendedWorks || []),
+          ...(node.extraWorks || []),
+        ].filter(Boolean).join(" ")),
+      }))
+    );
+
+    function normalizeSearchText(value) {
+      return String(value || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLocaleLowerCase()
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function escapeSearchMarkup(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function resultMeta(subject, node) {
+      if (isRepeatableEntry(subject, node)) {
+        return node.count ? `${node.count}× recorded` : "Repeatable";
+      }
+      if (subject.view === "timeline") {
+        const progress = getStudyProgress(node);
+        return `${progress.completed} / ${progress.total} studied`;
+      }
+      if (isComplete(subject, node)) return payload.labels.complete;
+      return isUnlocked(subject, node) ? payload.labels.available : payload.labels.locked;
+    }
+
+    function matches(query) {
+      if (!query) return [];
+      return searchEntries
+        .filter((entry) => entry.haystack.includes(query))
+        .map((entry) => {
+          let score = 5;
+          if (entry.normalizedTitle === query) score = 0;
+          else if (entry.normalizedTitle.startsWith(query)) score = 1;
+          else if (entry.normalizedTitle.includes(query)) score = 2;
+          else if (entry.normalizedSubject === query) score = 3;
+          else if (entry.normalizedSubject.includes(query)) score = 4;
+          return { ...entry, score };
+        })
+        .sort((left, right) =>
+          left.score - right.score ||
+          left.subject.name.localeCompare(right.subject.name) ||
+          left.node.title.localeCompare(right.node.title)
+        );
+    }
+
+    function renderSearchResults() {
+      const query = normalizeSearchText(input.value);
+      const results = matches(query);
+      const visibleResults = results.slice(0, resultLimit);
+
+      if (!query) {
+        summary.textContent = "Search every discipline, skill, person, work, and course.";
+        list.innerHTML = `
+          <div class="st-search-empty">
+            <span>Begin typing to search the archive.</span>
+            <small>Titles and disciplines are ranked first.</small>
+          </div>
+        `;
+        return;
+      }
+
+      summary.textContent = results.length
+        ? `${results.length} ${results.length === 1 ? "result" : "results"}${results.length > resultLimit ? ` · showing first ${resultLimit}` : ""}`
+        : "No results";
+      list.innerHTML = visibleResults.length ? visibleResults.map(({ subject, node }) => `
+        <button
+          type="button"
+          class="st-search-result"
+          data-subject-id="${escapeSearchMarkup(subject.id)}"
+          data-node-id="${escapeSearchMarkup(node.id)}"
+          aria-label="${escapeSearchMarkup(`${node.title}, ${subject.name}, ${resultMeta(subject, node)}`)}"
+        >
+          <span class="st-search-subject">${escapeSearchMarkup(subject.name)}</span>
+          <span class="st-search-title">${escapeSearchMarkup(node.title)}</span>
+          <span class="st-search-meta">${escapeSearchMarkup(resultMeta(subject, node))}</span>
+        </button>
+      `).join("") : `
+        <div class="st-search-empty">
+          <span>Nothing matched that search.</span>
+          <small>Try a discipline, course, person, work, or shorter phrase.</small>
+        </div>
+      `;
+
+      list.querySelectorAll(".st-search-result").forEach((result) => {
+        result.addEventListener("click", () => {
+          const subject = payload.subjects.find((candidate) => candidate.id === result.dataset.subjectId);
+          const node = findSubjectEntry(subject, result.dataset.nodeId);
+          if (!subject || !node) return;
+          closeSearch({ restoreFocus: false });
+          navigateToEntry(subject, node);
+        });
+      });
+    }
+
+    function closeHistoryIfOpen() {
+      const historyOverlay = root.querySelector(".st-history-overlay");
+      const historyTrigger = root.querySelector(".st-history-trigger");
+      if (!historyOverlay?.hidden) historyTrigger?.click();
+    }
+
+    function openSearch() {
+      closeHistoryIfOpen();
+      overlay.hidden = false;
+      trigger.setAttribute("aria-expanded", "true");
+      trigger.setAttribute("aria-label", "Close search");
+      document.body.classList.add("st-search-open");
+      renderSearchResults();
+      list.scrollTop = 0;
+      window.requestAnimationFrame(() => input.focus({ preventScroll: true }));
+    }
+
+    function closeSearch({ restoreFocus = true } = {}) {
+      overlay.hidden = true;
+      trigger.setAttribute("aria-expanded", "false");
+      trigger.setAttribute("aria-label", "Open search");
+      document.body.classList.remove("st-search-open");
+      input.value = "";
+      renderSearchResults();
+      if (restoreFocus) trigger.focus({ preventScroll: true });
+    }
+
+    trigger.addEventListener("click", () => {
+      if (overlay.hidden) openSearch();
+      else closeSearch();
+    });
+    closeButton.addEventListener("click", () => closeSearch());
+    backdrop.addEventListener("click", () => closeSearch());
+    input.addEventListener("input", renderSearchResults);
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowDown") {
+        const firstResult = list.querySelector(".st-search-result");
+        if (firstResult) {
+          event.preventDefault();
+          firstResult.focus();
+        }
+      }
+    });
+    overlay.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeSearch();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusable = [
+        ...dialog.querySelectorAll("input:not([disabled]), button:not([disabled])"),
+      ];
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    });
+
+    renderSearchResults();
+  }
+
   function renderApp() {
     activeSubjectId = activeSubjectId || payload.subjects[0].id;
     activeNodeId = null;
@@ -375,18 +571,33 @@
       <div class="st-app">
         <header class="st-site-header">
           <p class="st-wordmark">${payload.wordmark}</p>
-          <button
-            type="button"
-            class="st-history-trigger"
-            aria-label="Open progress history"
-            aria-controls="st-history-overlay"
-            aria-expanded="false"
-            title="Progress history"
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M5 3.5h14v17H5zM8 3.5v17M11 8h5M11 12h5M11 16h4"></path>
-            </svg>
-          </button>
+          <div class="st-header-actions">
+            <button
+              type="button"
+              class="st-history-trigger"
+              aria-label="Open progress history"
+              aria-controls="st-history-overlay"
+              aria-expanded="false"
+              title="Progress history"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 3.5h14v17H5zM8 3.5v17M11 8h5M11 12h5M11 16h4"></path>
+              </svg>
+            </button>
+            <button
+              type="button"
+              class="st-search-trigger"
+              aria-label="Open search"
+              aria-controls="st-search-overlay"
+              aria-expanded="false"
+              title="Search"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="10.5" cy="10.5" r="5.75"></circle>
+                <path d="m14.75 14.75 4.5 4.5"></path>
+              </svg>
+            </button>
+          </div>
           <p class="st-total-progress"></p>
         </header>
         <section class="st-directory" aria-labelledby="st-directory-title">
@@ -469,9 +680,40 @@
           <div class="st-history-list"></div>
         </section>
       </div>
+      <div class="st-search-overlay" id="st-search-overlay" hidden>
+        <button class="st-search-backdrop" type="button" tabindex="-1" aria-label="Close search"></button>
+        <section class="st-search-dialog" role="dialog" aria-modal="true" aria-labelledby="st-search-title">
+          <header class="st-search-header">
+            <div>
+              <p class="st-tree-index">Find anything</p>
+              <h2 id="st-search-title">Search</h2>
+            </div>
+            <button class="st-search-close" type="button" aria-label="Close search">&times;</button>
+          </header>
+          <label class="st-search-field">
+            <span class="visually-hidden">Search the archive</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="10.5" cy="10.5" r="5.75"></circle>
+              <path d="m14.75 14.75 4.5 4.5"></path>
+            </svg>
+            <input
+              class="st-search-input"
+              type="search"
+              inputmode="search"
+              autocomplete="off"
+              autocapitalize="none"
+              spellcheck="false"
+              placeholder="Search skills, people, works, or courses"
+            >
+          </label>
+          <p class="st-search-summary" aria-live="polite"></p>
+          <div class="st-search-list"></div>
+        </section>
+      </div>
     `;
 
     setupHistory();
+    setupSearch();
     renderTabs();
     renderSubjectSelect();
     renderSubject();
