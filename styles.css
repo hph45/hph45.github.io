@@ -239,22 +239,11 @@ h2 {
   text-align: center;
 }
 
-.reviews-heading-row {
-  position: relative;
-  display: grid;
-  justify-items: center;
-  width: 100%;
-}
-
 .tbr-trigger-slot {
-  position: absolute;
-  top: 50%;
-  right: 0;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   width: 124px;
-  transform: translateY(-50%);
 }
 
 .tbr-trigger {
@@ -634,7 +623,8 @@ h2 {
 
 .reviews-controls {
   display: grid;
-  grid-template-columns: minmax(0, 1.8fr) minmax(180px, 0.9fr);
+  grid-template-columns: minmax(0, 1.8fr) minmax(180px, 0.9fr) 124px;
+  align-items: center;
   gap: 14px;
   width: 100%;
   margin-bottom: 20px;
@@ -978,15 +968,10 @@ h2 {
     line-height: 1;
   }
 
-  .reviews-heading-row {
-    gap: 18px;
-  }
-
   .tbr-trigger-slot {
-    position: static;
-    justify-content: center;
+    justify-content: flex-end;
+    justify-self: end;
     width: 102px;
-    transform: none;
   }
 
   .tbr-trigger {
@@ -1131,9 +1116,13 @@ h2 {
   }
 
   .reviews-controls {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) 102px;
     gap: 10px;
     margin-bottom: 16px;
+  }
+
+  .reviews-search {
+    grid-column: 1 / -1;
   }
 
   .reviews-grid {
@@ -1194,7 +1183,7 @@ h2 {
   }
 
   .reviews-controls {
-    grid-template-columns: minmax(0, 1.3fr) minmax(180px, 0.8fr);
+    grid-template-columns: minmax(0, 1.3fr) minmax(180px, 0.8fr) 124px;
   }
 
   .reviews-grid {
