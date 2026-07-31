@@ -28,6 +28,7 @@ function loadReadingQueue() {
             author: row[1]?.trim(),
             title: row[2]?.trim(),
             note: row[3]?.trim(),
+            link: row[4]?.trim(),
           }))
           .filter((book) => book.status && book.author && book.title);
       });
@@ -674,6 +675,7 @@ async function loadReviews() {
           author: book.author,
           title: book.title,
           note: book.note,
+          link: book.link,
           cover: `./assets/review-covers/${coverFile}`,
           queueMeta: isCurrent ? "Reading now" : "Up next",
           queueStatus: book.status,
