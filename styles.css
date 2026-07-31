@@ -240,17 +240,21 @@ h2 {
 }
 
 .reviews-heading-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
+  position: relative;
+  display: grid;
+  justify-items: center;
   width: 100%;
 }
 
 .tbr-trigger-slot {
+  position: absolute;
+  top: 50%;
+  right: 0;
   display: flex;
   align-items: center;
-  flex: 0 0 124px;
+  justify-content: flex-end;
+  width: 124px;
+  transform: translateY(-50%);
 }
 
 .tbr-trigger {
@@ -975,11 +979,14 @@ h2 {
   }
 
   .reviews-heading-row {
-    gap: 8px;
+    gap: 18px;
   }
 
   .tbr-trigger-slot {
-    flex-basis: 102px;
+    position: static;
+    justify-content: center;
+    width: 102px;
+    transform: none;
   }
 
   .tbr-trigger {
