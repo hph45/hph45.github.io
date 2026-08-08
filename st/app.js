@@ -12,6 +12,47 @@
   let connectorFrame = null;
   let activeAnalysisUrl = null;
   let historyFilterSubjectId = "";
+  const earTrainerNotes = [
+    { name: "A", octave: 4, frequency: 440 },
+    { name: "A♯ / B♭", octave: 4, frequency: 466.16 },
+    { name: "B", octave: 4, frequency: 493.88 },
+    { name: "C", octave: 5, frequency: 523.25 },
+    { name: "C♯ / D♭", octave: 5, frequency: 554.37 },
+    { name: "D", octave: 5, frequency: 587.33 },
+    { name: "D♯ / E♭", octave: 5, frequency: 622.25 },
+    { name: "E", octave: 5, frequency: 659.25 },
+    { name: "F", octave: 5, frequency: 698.46 },
+    { name: "F♯ / G♭", octave: 5, frequency: 739.99 },
+    { name: "G", octave: 5, frequency: 783.99 },
+    { name: "G♯ / A♭", octave: 5, frequency: 830.61 },
+  ];
+  const earTrainerTimbres = [
+    {
+      name: "Grand piano",
+      waveform: "sine",
+      partials: [1, 0.58, 0.31, 0.17, 0.09],
+      duration: 2.15,
+      attack: 0.007,
+      brightness: 0.72,
+    },
+    {
+      name: "Acoustic guitar",
+      waveform: "triangle",
+      partials: [1, 0.64, 0.34, 0.19, 0.1],
+      duration: 1.55,
+      attack: 0.003,
+      brightness: 0.56,
+      pickNoise: true,
+    },
+    {
+      name: "Electric piano",
+      waveform: "sine",
+      partials: [1, 0.36, 0.18, 0.25, 0.08],
+      duration: 2.35,
+      attack: 0.012,
+      brightness: 0.66,
+    },
+  ];
 
   function bytesFromBase64(value) {
     const decoded = window.atob(value);
@@ -319,6 +360,8 @@
     function openHistory() {
       const searchOverlay = root.querySelector(".st-search-overlay");
       if (!searchOverlay?.hidden) root.querySelector(".st-search-trigger")?.click();
+      const earOverlay = root.querySelector(".st-ear-overlay");
+      if (!earOverlay?.hidden) root.querySelector(".st-ear-trigger")?.click();
       renderHistoryList();
       filter.value = historyFilterSubjectId;
       overlay.hidden = false;
@@ -500,8 +543,15 @@
       if (!historyOverlay?.hidden) historyTrigger?.click();
     }
 
+    function closeEarTrainerIfOpen() {
+      const earOverlay = root.querySelector(".st-ear-overlay");
+      const earTrigger = root.querySelector(".st-ear-trigger");
+      if (!earOverlay?.hidden) earTrigger?.click();
+    }
+
     function openSearch() {
       closeHistoryIfOpen();
+      closeEarTrainerIfOpen();
       overlay.hidden = false;
       trigger.setAttribute("aria-expanded", "true");
       trigger.setAttribute("aria-label", "Close search");
@@ -561,6 +611,259 @@
     renderSearchResults();
   }
 
+  function setupEarTrainer() {
+    const trigger = root.querySelector(".st-ear-trigger");
+    const overlay = root.querySelector(".st-ear-overlay");
+    const dialog = root.querySelector(".st-ear-dialog");
+    const closeButton = root.querySelector(".st-ear-close");
+    const backdrop = root.querySelector(".st-ear-backdrop");
+    const playButton = root.querySelector(".st-ear-play");
+    const noteButtons = [...root.querySelectorAll(".st-ear-note")];
+    const status = root.querySelector(".st-ear-status");
+    const source = root.querySelector(".st-ear-source");
+    const streakValue = root.querySelector(".st-ear-streak strong");
+    if (!trigger || !overlay || !dialog || !closeButton || !backdrop ||
+        !playButton || !status || !source || !streakValue || !noteButtons.length) return;
+
+    let audioContext = null;
+    let activeSources = [];
+    let targetNoteIndex = null;
+    let targetTimbre = null;
+    let awaitingGuess = false;
+    let roundAnswered = false;
+    let streak = 0;
+
+    function chooseRandom(items) {
+      return items[Math.floor(Math.random() * items.length)];
+    }
+
+    function getAudioContext() {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return null;
+      if (!audioContext) audioContext = new AudioContextClass();
+      return audioContext;
+    }
+
+    function stopActiveTone() {
+      if (!audioContext) return;
+      const stopAt = audioContext.currentTime + 0.015;
+      activeSources.forEach((audioSource) => {
+        try {
+          audioSource.stop(stopAt);
+        } catch (_error) {
+          // A completed oscillator cannot be stopped twice.
+        }
+      });
+      activeSources = [];
+    }
+
+    async function playTone(note, timbre) {
+      const context = getAudioContext();
+      if (!context) {
+        status.textContent = "This browser does not support the audio engine.";
+        return false;
+      }
+
+      try {
+        if (context.state === "suspended") await context.resume();
+      } catch (_error) {
+        status.textContent = "Audio is unavailable. Check this browser's sound permissions.";
+        return false;
+      }
+
+      stopActiveTone();
+      const now = context.currentTime;
+      const master = context.createGain();
+      const brightness = context.createBiquadFilter();
+      brightness.type = "lowpass";
+      brightness.frequency.setValueAtTime(3600 + timbre.brightness * 3600, now);
+      brightness.Q.setValueAtTime(0.4, now);
+      master.gain.setValueAtTime(0.82, now);
+      master.connect(brightness);
+      brightness.connect(context.destination);
+
+      const partialTotal = timbre.partials.reduce((sum, value) => sum + value, 0);
+      timbre.partials.forEach((partial, partialIndex) => {
+        const harmonic = partialIndex + 1;
+        const oscillator = context.createOscillator();
+        const envelope = context.createGain();
+        const peak = 0.42 * (partial / partialTotal);
+        const harmonicDuration = timbre.duration * Math.max(0.4, 1 - partialIndex * 0.13);
+
+        oscillator.type = partialIndex === 0 ? timbre.waveform : "sine";
+        oscillator.frequency.setValueAtTime(note.frequency * harmonic, now);
+        oscillator.detune.setValueAtTime((Math.random() - 0.5) * 1.4, now);
+        envelope.gain.setValueAtTime(0.0001, now);
+        envelope.gain.linearRampToValueAtTime(peak, now + timbre.attack);
+        envelope.gain.exponentialRampToValueAtTime(0.0001, now + harmonicDuration);
+        oscillator.connect(envelope);
+        envelope.connect(master);
+        oscillator.start(now);
+        oscillator.stop(now + harmonicDuration + 0.05);
+        activeSources.push(oscillator);
+      });
+
+      if (timbre.pickNoise) {
+        const noiseLength = Math.floor(context.sampleRate * 0.035);
+        const noiseBuffer = context.createBuffer(1, noiseLength, context.sampleRate);
+        const noiseData = noiseBuffer.getChannelData(0);
+        for (let index = 0; index < noiseLength; index += 1) {
+          noiseData[index] = (Math.random() * 2 - 1) * (1 - index / noiseLength);
+        }
+        const pick = context.createBufferSource();
+        const pickFilter = context.createBiquadFilter();
+        const pickGain = context.createGain();
+        pick.buffer = noiseBuffer;
+        pickFilter.type = "bandpass";
+        pickFilter.frequency.setValueAtTime(Math.min(note.frequency * 3.4, 5200), now);
+        pickFilter.Q.setValueAtTime(0.8, now);
+        pickGain.gain.setValueAtTime(0.16, now);
+        pickGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.035);
+        pick.connect(pickFilter);
+        pickFilter.connect(pickGain);
+        pickGain.connect(master);
+        pick.start(now);
+        pick.stop(now + 0.04);
+        activeSources.push(pick);
+      }
+
+      return true;
+    }
+
+    function clearFeedback() {
+      noteButtons.forEach((button) => button.classList.remove("is-correct", "is-wrong"));
+    }
+
+    function updateStreak() {
+      streakValue.textContent = String(streak);
+    }
+
+    function closeOtherUtilities() {
+      const historyOverlay = root.querySelector(".st-history-overlay");
+      if (!historyOverlay?.hidden) root.querySelector(".st-history-trigger")?.click();
+      const searchOverlay = root.querySelector(".st-search-overlay");
+      if (!searchOverlay?.hidden) root.querySelector(".st-search-trigger")?.click();
+    }
+
+    function openEarTrainer() {
+      closeOtherUtilities();
+      overlay.hidden = false;
+      trigger.setAttribute("aria-expanded", "true");
+      trigger.setAttribute("aria-label", "Close ear trainer");
+      document.body.classList.add("st-ear-open");
+      window.requestAnimationFrame(() => playButton.focus({ preventScroll: true }));
+    }
+
+    function closeEarTrainer({ restoreFocus = true } = {}) {
+      overlay.hidden = true;
+      trigger.setAttribute("aria-expanded", "false");
+      trigger.setAttribute("aria-label", "Open ear trainer");
+      document.body.classList.remove("st-ear-open");
+      stopActiveTone();
+      targetNoteIndex = null;
+      targetTimbre = null;
+      awaitingGuess = false;
+      roundAnswered = false;
+      clearFeedback();
+      source.textContent = "Three synthesized instruments are chosen at random each round.";
+      status.textContent = "Press Play to hear a mystery note, then choose the pitch below.";
+      if (restoreFocus) trigger.focus({ preventScroll: true });
+    }
+
+    playButton.addEventListener("click", async () => {
+      clearFeedback();
+      const beginsNewRound = !awaitingGuess;
+      if (beginsNewRound) {
+        targetNoteIndex = Math.floor(Math.random() * earTrainerNotes.length);
+        targetTimbre = chooseRandom(earTrainerTimbres);
+        awaitingGuess = true;
+        roundAnswered = false;
+      }
+
+      const note = earTrainerNotes[targetNoteIndex];
+      source.textContent = `Source: ${targetTimbre.name}`;
+      const played = await playTone(note, targetTimbre);
+      if (!played) return;
+      status.textContent = beginsNewRound
+        ? "Listen carefully, then choose the note."
+        : "The same mystery note was replayed.";
+    });
+
+    noteButtons.forEach((button) => {
+      button.addEventListener("click", async () => {
+        const noteIndex = Number(button.dataset.noteIndex);
+        const note = earTrainerNotes[noteIndex];
+        if (!note) return;
+
+        if (roundAnswered) {
+          clearFeedback();
+          targetNoteIndex = null;
+          targetTimbre = null;
+          awaitingGuess = false;
+          roundAnswered = false;
+        }
+
+        const isGuess = awaitingGuess;
+        if (isGuess) awaitingGuess = false;
+        const timbre = isGuess ? targetTimbre : chooseRandom(earTrainerTimbres);
+        source.textContent = `Source: ${timbre.name}`;
+        const played = await playTone(note, timbre);
+        if (!played) {
+          if (isGuess) awaitingGuess = true;
+          return;
+        }
+
+        if (!isGuess) {
+          status.textContent = `${note.name} · ${note.frequency.toFixed(2)} Hz`;
+          return;
+        }
+
+        roundAnswered = true;
+        const correctButton = noteButtons[targetNoteIndex];
+        const targetNote = earTrainerNotes[targetNoteIndex];
+
+        if (noteIndex === targetNoteIndex) {
+          streak += 1;
+          button.classList.add("is-correct");
+          status.textContent = `Correct — ${targetNote.name} at ${targetNote.frequency.toFixed(2)} Hz. Press Play for the next note.`;
+        } else {
+          streak = 0;
+          button.classList.add("is-wrong");
+          correctButton?.classList.add("is-correct");
+          status.textContent = `Not quite — the note was ${targetNote.name} at ${targetNote.frequency.toFixed(2)} Hz. Press Play to continue.`;
+        }
+        updateStreak();
+      });
+    });
+
+    trigger.addEventListener("click", () => {
+      if (overlay.hidden) openEarTrainer();
+      else closeEarTrainer();
+    });
+    closeButton.addEventListener("click", () => closeEarTrainer());
+    backdrop.addEventListener("click", () => closeEarTrainer());
+    overlay.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeEarTrainer();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusable = [...dialog.querySelectorAll("button:not([disabled])")];
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    });
+
+    updateStreak();
+  }
+
   function renderApp() {
     activeSubjectId = activeSubjectId || payload.subjects[0].id;
     activeNodeId = null;
@@ -595,6 +898,21 @@
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <circle cx="10.5" cy="10.5" r="5.75"></circle>
                 <path d="m14.75 14.75 4.5 4.5"></path>
+              </svg>
+            </button>
+            <button
+              type="button"
+              class="st-ear-trigger"
+              aria-label="Open ear trainer"
+              aria-controls="st-ear-overlay"
+              aria-expanded="false"
+              title="Ear trainer"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M9 17.5V5.5l10-2v12"></path>
+                <path d="M9 8.5l10-2"></path>
+                <ellipse class="st-ear-note-head" cx="6.25" cy="18" rx="2.75" ry="2"></ellipse>
+                <ellipse class="st-ear-note-head" cx="16.25" cy="16" rx="2.75" ry="2"></ellipse>
               </svg>
             </button>
           </div>
@@ -710,10 +1028,52 @@
           <div class="st-search-list"></div>
         </section>
       </div>
+      <div class="st-ear-overlay" id="st-ear-overlay" hidden>
+        <button class="st-ear-backdrop" type="button" tabindex="-1" aria-label="Close ear trainer"></button>
+        <section class="st-ear-dialog" role="dialog" aria-modal="true" aria-labelledby="st-ear-title">
+          <header class="st-ear-header">
+            <div>
+              <p class="st-tree-index">Pitch recognition</p>
+              <h2 id="st-ear-title">Ear trainer</h2>
+            </div>
+            <div class="st-ear-header-tools">
+              <p class="st-ear-streak"><span>Correct in a row</span><strong>0</strong></p>
+              <button class="st-ear-close" type="button" aria-label="Close ear trainer">&times;</button>
+            </div>
+          </header>
+          <div class="st-ear-stage">
+            <div class="st-ear-range">
+              <p>A4 to G♯5 / A♭5</p>
+              <span>One chromatic octave · A4 = 440 Hz</span>
+            </div>
+            <button class="st-ear-play" type="button">
+              <span>Play</span>
+              <small>New note or replay the current note</small>
+            </button>
+            <p class="st-ear-source">Three synthesized instruments are chosen at random each round.</p>
+            <p class="st-ear-status" aria-live="polite">Press Play to hear a mystery note, then choose the pitch below.</p>
+          </div>
+          <div class="st-ear-note-grid" aria-label="Chromatic note choices">
+            ${earTrainerNotes.map((note, noteIndex) => `
+              <button
+                class="st-ear-note"
+                type="button"
+                data-note-index="${noteIndex}"
+                aria-label="${note.name.replace(" / ", " or ")}, octave ${note.octave}, ${note.frequency.toFixed(2)} hertz"
+              >
+                <strong>${note.name}</strong>
+                <small>${note.frequency.toFixed(2)} Hz</small>
+              </button>
+            `).join("")}
+          </div>
+          <p class="st-ear-footnote">Every note button can also be used independently to audition its pitch.</p>
+        </section>
+      </div>
     `;
 
     setupHistory();
     setupSearch();
+    setupEarTrainer();
     renderTabs();
     renderSubjectSelect();
     renderSubject();
