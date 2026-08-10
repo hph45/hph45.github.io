@@ -1752,6 +1752,13 @@
       <hr class="st-detail-rule">
       <p class="st-detail-label">${payload.labels.practice}</p>
       <p class="st-detail-practice">${node.practice}</p>
+      ${node.sheetMusicUrl ? `
+        <a class="st-sheet-music-link" href="${node.sheetMusicUrl}" target="_blank" rel="noopener noreferrer">
+          <span>Sheet music</span>
+          <strong>${node.sheetMusicSource}</strong>
+          <i aria-hidden="true">↗</i>
+        </a>
+      ` : ""}
       ${node.requiredWorks ? `
         <div class="st-node-progress-record">
           <div><p class="st-detail-label">${node.progressLabel || "Progress"}</p><strong>${node.works?.length || 0} / ${node.requiredWorks}</strong></div>

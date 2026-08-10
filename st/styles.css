@@ -1979,6 +1979,53 @@ button.st-analysis-status {
   line-height: 1.48;
 }
 
+.st-sheet-music-link {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  margin: -4px 0 28px;
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  color: var(--text);
+  text-decoration: none;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.st-sheet-music-link span {
+  font-size: 0.68rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.st-sheet-music-link strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.st-sheet-music-link i {
+  font-size: 0.92rem;
+  font-style: normal;
+  line-height: 1;
+}
+
+.st-sheet-music-link:hover,
+.st-sheet-music-link:focus-visible {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--bg);
+}
+
+.st-sheet-music-link:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 3px;
+}
+
 .st-prerequisite-record {
   margin-bottom: 24px;
   padding-top: 18px;
