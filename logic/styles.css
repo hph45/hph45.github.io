@@ -197,7 +197,6 @@ a {
 .logic-levels button:focus-visible,
 .logic-next:focus-visible,
 .logic-help-trigger:focus-visible,
-.logic-help-close:focus-visible,
 .logic-footer a:focus-visible,
 .logic-wordmark:focus-visible {
   outline: 2px solid var(--text);
@@ -311,69 +310,62 @@ a {
   border: 1px solid var(--line);
 }
 
-.logic-help-callout {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 32px;
-  padding: 38px 0;
+.logic-guide {
   border-bottom: 1px solid var(--line-soft);
 }
 
-.logic-help-callout .logic-eyebrow {
-  margin-bottom: 8px;
+.logic-guide summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 30px 0;
+  cursor: pointer;
+  font-size: clamp(1.2rem, 3vw, 1.55rem);
+  font-weight: 700;
+  list-style: none;
 }
 
-.logic-help-callout h2 {
-  max-width: 18ch;
-  margin: 0;
-  font-size: clamp(1.65rem, 4vw, 2.4rem);
-  font-weight: 500;
+.logic-guide summary::-webkit-details-marker {
+  display: none;
+}
+
+.logic-guide summary:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 4px;
+}
+
+.logic-guide-toggle {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--line);
+  font-size: 1.8rem;
+  font-weight: 400;
   line-height: 1;
+  transition: transform 160ms ease;
 }
 
-.logic-help-callout .logic-help-trigger {
-  min-width: 172px;
-  border: 1px solid var(--line);
-}
-
-body.logic-help-open {
-  overflow: hidden;
-}
-
-.logic-help-dialog {
-  width: min(980px, calc(100% - 32px));
-  max-height: min(860px, calc(100dvh - 32px));
-  padding: 0;
-  border: 1px solid var(--line);
-  border-radius: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: "Times New Roman", Times, serif;
-}
-
-.logic-help-dialog::backdrop {
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(8px);
+.logic-guide[open] .logic-guide-toggle {
+  transform: rotate(45deg);
 }
 
 .logic-help-document {
-  max-height: min(858px, calc(100dvh - 34px));
-  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  background: var(--bg);
 }
 
 .logic-help-header {
-  position: sticky;
-  top: 0;
-  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
   padding: 24px 28px;
   border-bottom: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(12px);
+  background: var(--bg);
 }
 
 .logic-help-header .logic-eyebrow {
@@ -385,25 +377,6 @@ body.logic-help-open {
   font-size: clamp(2rem, 5vw, 3.25rem);
   font-weight: 500;
   line-height: 0.95;
-}
-
-.logic-help-close {
-  display: grid;
-  flex: 0 0 auto;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  padding: 0 0 4px;
-  border: 1px solid var(--line);
-  background: var(--bg);
-  cursor: pointer;
-  font: 2rem/1 "Times New Roman", Times, serif;
-}
-
-.logic-help-close:hover,
-.logic-help-close:focus-visible {
-  background: var(--text);
-  color: var(--bg);
 }
 
 .logic-help-intro {
@@ -424,7 +397,7 @@ body.logic-help-open {
   line-height: 1.55;
 }
 
-.logic-help-dialog pre {
+.logic-help-document pre {
   margin: 0;
   padding: 18px;
   overflow-x: auto;
@@ -433,7 +406,7 @@ body.logic-help-open {
   line-height: 1.55;
 }
 
-.logic-help-dialog pre code {
+.logic-help-document pre code {
   padding: 0;
   border: 0;
   background: transparent;
@@ -667,22 +640,6 @@ code {
     min-height: 600px;
   }
 
-  .logic-help-callout {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .logic-help-dialog {
-    width: 100%;
-    max-width: none;
-    max-height: 100dvh;
-    border-width: 0;
-  }
-
-  .logic-help-document {
-    max-height: 100dvh;
-  }
-
   .logic-help-header,
   .logic-help-intro,
   .logic-help-section {
@@ -736,7 +693,8 @@ code {
   }
 
   .logic-frame-shell,
-  .logic-frame-shell iframe {
+  .logic-frame-shell iframe,
+  .logic-guide-toggle {
     transition: none;
   }
 }

@@ -49,7 +49,8 @@
               class="logic-help-trigger"
               id="logic-help-trigger"
               type="button"
-              aria-haspopup="dialog"
+              aria-controls="logic-guide"
+              aria-expanded="false"
             >Help</button>
             <button class="logic-next" id="logic-next" type="button">
               New problem <span aria-hidden="true">&rarr;</span>
@@ -77,31 +78,17 @@
         </noscript>
       </section>
 
-      <section class="logic-help-callout" aria-labelledby="logic-help-callout-title">
-        <div>
-          <p class="logic-eyebrow">Need a reminder?</p>
-          <h2 id="logic-help-callout-title">Every available move, in one place.</h2>
-        </div>
-        <button class="logic-help-trigger" type="button" aria-haspopup="dialog">
-          Open proof guide
-        </button>
-      </section>
-    </main>
-
-    <footer class="logic-footer">
-      <p>Proof checking powered by <a href="https://carnap.io" target="_blank" rel="noreferrer">Carnap</a>.</p>
-      <a href="../st/">Return to the skill tree</a>
-    </footer>
-  </div>
-
-  <dialog class="logic-help-dialog" id="logic-help-dialog" aria-labelledby="logic-help-title">
+      <details class="logic-guide" id="logic-guide">
+        <summary>
+          <span>Complete proof guide</span>
+          <span class="logic-guide-toggle" aria-hidden="true">+</span>
+        </summary>
     <div class="logic-help-document">
       <header class="logic-help-header">
         <div>
           <p class="logic-eyebrow">Carnap reference</p>
           <h2 id="logic-help-title">How to write a proof.</h2>
         </div>
-        <button class="logic-help-close" type="button" aria-label="Close proof guide">&times;</button>
       </header>
 
       <div class="logic-help-intro">
@@ -221,8 +208,15 @@ Q -&gt; P:-&gt;I 2-3</code></pre>
           line is unindented, so the assumption has been discharged.
         </p>
       </section>
-    </div>
-  </dialog>
+        </div>
+      </details>
+    </main>
+
+    <footer class="logic-footer">
+      <p>Proof checking powered by <a href="https://carnap.io" target="_blank" rel="noreferrer">Carnap</a>.</p>
+      <a href="../st/">Return to the skill tree</a>
+    </footer>
+  </div>
 
   <script src="problems.js"></script>
   <script src="app.js"></script>

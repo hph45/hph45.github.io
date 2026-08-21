@@ -10,9 +10,8 @@
   const solvedCount = document.querySelector("#logic-solved-count");
   const nextButton = document.querySelector("#logic-next");
   const difficultyButtons = [...document.querySelectorAll("[data-difficulty]")];
-  const helpDialog = document.querySelector("#logic-help-dialog");
-  const helpButtons = [...document.querySelectorAll(".logic-help-trigger")];
-  const helpClose = document.querySelector(".logic-help-close");
+  const helpGuide = document.querySelector("#logic-guide");
+  const helpButton = document.querySelector("#logic-help-trigger");
 
   if (!practice || !frame || !frameShell) return;
 
@@ -82,28 +81,13 @@
 
   nextButton.addEventListener("click", () => loadProblem(chooseProblem(difficulty)));
 
-  helpButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      if (typeof helpDialog.showModal === "function") helpDialog.showModal();
-      else helpDialog.setAttribute("open", "");
-      document.body.classList.add("logic-help-open");
-      helpClose.focus({ preventScroll: true });
-    });
+  helpButton?.addEventListener("click", () => {
+    helpGuide.open = true;
+    helpGuide.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
-  function closeHelp() {
-    if (typeof helpDialog.close === "function") helpDialog.close();
-    else helpDialog.removeAttribute("open");
-    document.body.classList.remove("logic-help-open");
-    helpButtons[0]?.focus({ preventScroll: true });
-  }
-
-  helpClose.addEventListener("click", closeHelp);
-  helpDialog.addEventListener("cancel", () => {
-    document.body.classList.remove("logic-help-open");
-  });
-  helpDialog.addEventListener("click", (event) => {
-    if (event.target === helpDialog) closeHelp();
+  helpGuide?.addEventListener("toggle", () => {
+    helpButton?.setAttribute("aria-expanded", String(helpGuide.open));
   });
 
   window.addEventListener("message", (event) => {

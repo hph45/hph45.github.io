@@ -12,8 +12,10 @@
 
 html,
 body {
+  width: 100%;
   min-height: 100%;
   margin: 0;
+  overflow-x: hidden;
 }
 
 body {
@@ -33,7 +35,8 @@ body {
 }
 
 .logic-carnap-exercise {
-  max-width: 880px;
+  width: 100%;
+  max-width: 720px;
   margin: 0 auto;
 }
 
@@ -47,15 +50,20 @@ body {
 }
 
 .logic-carnap-exercise > div {
-  width: 100%;
+  width: 100% !important;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .logic-carnap-exercise .goal {
+  width: 100%;
+  max-width: 100%;
   margin-bottom: 22px;
   padding: 14px 16px;
   border: 1px solid var(--line);
   background: #ffffff;
   font-size: clamp(1rem, 2.5vw, 1.28rem);
+  overflow-wrap: anywhere;
   text-align: left;
 }
 
@@ -66,9 +74,13 @@ body {
 }
 
 .logic-carnap-exercise textarea {
+  display: block;
   width: 100% !important;
+  max-width: 100%;
   min-height: 190px;
-  padding: 18px !important;
+  /* Carnap draws line numbers over the textarea. Keep the typing area to
+     the right of that overlay instead of letting the caret cross through it. */
+  padding: 18px 18px 18px 56px !important;
   border: 1px solid var(--line) !important;
   border-radius: 0 !important;
   background: rgba(255, 255, 255, 0.96) !important;
@@ -80,13 +92,31 @@ body {
   resize: vertical;
 }
 
+.logic-carnap-exercise .aligner,
+.logic-carnap-exercise .output {
+  width: 100% !important;
+  max-width: 100%;
+}
+
+.logic-carnap-exercise .output {
+  padding: 18px 18px 18px 12px !important;
+  font-family: "Courier New", Courier, monospace !important;
+  font-size: 0.95rem !important;
+  line-height: 1.55 !important;
+}
+
 .logic-carnap-exercise textarea:focus {
   box-shadow: 0 0 0 2px var(--line) !important;
 }
 
 .logic-carnap-exercise .proofDisplay {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   margin-top: 26px;
   padding-top: 22px;
+  padding-left: 0;
   border-top: 1px solid var(--line-soft);
   overflow-x: auto;
 }
@@ -107,6 +137,10 @@ body {
 
   .logic-carnap-exercise textarea {
     min-height: 250px;
+    font-size: 0.86rem !important;
+  }
+
+  .logic-carnap-exercise .output {
     font-size: 0.86rem !important;
   }
 }
