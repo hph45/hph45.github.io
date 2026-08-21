@@ -35,7 +35,9 @@ body {
 }
 
 .logic-carnap-exercise {
+  display: block;
   width: 100%;
+  min-width: 0;
   max-width: 720px;
   margin: 0 auto;
 }
@@ -80,7 +82,7 @@ body {
   min-height: 190px;
   /* Carnap draws line numbers over the textarea. Keep the typing area to
      the right of that overlay instead of letting the caret cross through it. */
-  padding: 18px 18px 18px 56px !important;
+  padding: 18px 18px 18px 64px !important;
   border: 1px solid var(--line) !important;
   border-radius: 0 !important;
   background: rgba(255, 255, 255, 0.96) !important;
