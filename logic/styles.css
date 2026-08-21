@@ -1,0 +1,500 @@
+:root {
+  --bg: #ffffff;
+  --text: #000000;
+  --muted: #4c4c4c;
+  --line: #000000;
+  --line-soft: rgba(0, 0, 0, 0.16);
+  --line-faint: rgba(0, 0, 0, 0.07);
+  --success: #176b3a;
+  --success-soft: #edf8f1;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  padding: 0 24px 48px;
+  overflow-x: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Times New Roman", Times, serif;
+}
+
+button {
+  border-radius: 0;
+  color: inherit;
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+.logic-page {
+  width: min(1040px, 100%);
+  min-height: 100vh;
+  margin: 0 auto;
+}
+
+.logic-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 64px;
+  border-bottom: 1px solid var(--line-soft);
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(14px);
+}
+
+.logic-header p,
+.logic-wordmark {
+  margin: 0;
+}
+
+.logic-wordmark {
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.logic-header p {
+  color: var(--muted);
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.logic-intro {
+  padding: clamp(70px, 11vw, 120px) 0 clamp(54px, 8vw, 84px);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.logic-eyebrow,
+.logic-kicker,
+.logic-guide-label {
+  margin: 0 0 14px;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.logic-intro h1,
+.logic-workspace h2 {
+  margin: 0;
+  font-weight: 500;
+  line-height: 0.96;
+}
+
+.logic-intro h1 {
+  max-width: 10ch;
+  font-size: clamp(3.7rem, 9vw, 7rem);
+}
+
+.logic-intro > p:last-child {
+  max-width: 52ch;
+  margin: 28px 0 0;
+  color: var(--muted);
+  font-size: clamp(1.05rem, 2vw, 1.2rem);
+  line-height: 1.6;
+}
+
+.logic-workspace {
+  padding: clamp(54px, 8vw, 84px) 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.logic-workspace-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
+  padding-bottom: 26px;
+}
+
+.logic-workspace h2 {
+  font-size: clamp(2rem, 4.5vw, 3.25rem);
+}
+
+.logic-session-count {
+  display: grid;
+  justify-items: end;
+  gap: 3px;
+  margin: 0;
+  text-align: right;
+}
+
+.logic-session-count span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.logic-session-count strong {
+  font-size: 1.85rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.logic-controls {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  border: 1px solid var(--line);
+}
+
+.logic-levels {
+  display: flex;
+  min-width: 0;
+}
+
+.logic-levels button,
+.logic-next {
+  min-height: 48px;
+  padding: 10px 18px;
+  border: 0;
+  background: var(--bg);
+  cursor: pointer;
+}
+
+.logic-levels button {
+  min-width: 92px;
+  border-right: 1px solid var(--line);
+}
+
+.logic-levels button:hover,
+.logic-levels button:focus-visible,
+.logic-levels button[aria-pressed="true"],
+.logic-next:hover,
+.logic-next:focus-visible {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.logic-levels button:focus-visible,
+.logic-next:focus-visible,
+.logic-guide summary:focus-visible,
+.logic-footer a:focus-visible,
+.logic-wordmark:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 3px;
+}
+
+.logic-next {
+  min-width: 156px;
+  border-left: 1px solid var(--line);
+  font-weight: 700;
+}
+
+.logic-next span {
+  display: inline-block;
+  margin-left: 7px;
+}
+
+.logic-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 48px;
+  padding: 12px 2px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.logic-status,
+.logic-level-description {
+  margin: 0;
+  font-size: 0.84rem;
+}
+
+.logic-status[data-state="success"] {
+  color: var(--success);
+  font-weight: 700;
+}
+
+.logic-status[data-state="error"] {
+  color: #8a260f;
+}
+
+.logic-level-description {
+  color: var(--muted);
+  text-align: right;
+}
+
+.logic-frame-shell {
+  position: relative;
+  min-height: 520px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+  background:
+    linear-gradient(90deg, var(--line-faint) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(var(--line-faint) 1px, transparent 1px) 0 0 / 24px 24px;
+  transition: border-color 180ms ease, background-color 180ms ease;
+}
+
+.logic-frame-shell::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 0;
+  color: var(--muted);
+  content: "Loading Carnap";
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transform: translate(-50%, -50%);
+}
+
+.logic-frame-shell.is-ready::before,
+.logic-frame-shell.is-error::before {
+  content: "";
+}
+
+.logic-frame-shell.is-solved {
+  border-color: var(--success);
+  background-color: var(--success-soft);
+}
+
+.logic-frame-shell iframe {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  min-height: 520px;
+  border: 0;
+  background: transparent;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.logic-frame-shell.is-ready iframe,
+.logic-frame-shell.is-error iframe {
+  opacity: 1;
+}
+
+.logic-noscript {
+  padding: 18px;
+  border: 1px solid var(--line);
+}
+
+.logic-guide {
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.logic-guide summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 26px 0;
+  cursor: pointer;
+  font-size: 1.15rem;
+  font-weight: 700;
+  list-style: none;
+}
+
+.logic-guide summary::-webkit-details-marker {
+  display: none;
+}
+
+.logic-guide[open] summary span:last-child {
+  transform: rotate(45deg);
+}
+
+.logic-guide-body {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 1fr;
+  gap: 0;
+  padding-bottom: 42px;
+}
+
+.logic-guide-body > div {
+  padding: 0 24px;
+  border-right: 1px solid var(--line-soft);
+}
+
+.logic-guide-body > div:first-child {
+  padding-left: 0;
+}
+
+.logic-guide-body > div:last-child {
+  padding-right: 0;
+  border-right: 0;
+}
+
+.logic-guide-body p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.logic-guide-body .logic-guide-label {
+  margin-bottom: 14px;
+  color: var(--text);
+}
+
+.logic-guide dl {
+  margin: 0;
+}
+
+.logic-guide dl div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--line-faint);
+}
+
+.logic-guide dt,
+.logic-guide dd {
+  margin: 0;
+  font-weight: 400;
+}
+
+code {
+  padding: 1px 5px;
+  border: 1px solid var(--line-soft);
+  background: #f8f8f8;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.86em;
+}
+
+.logic-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 28px 0 8px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.logic-footer p {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  body {
+    padding: 0 16px 32px;
+  }
+
+  .logic-header {
+    position: static;
+    min-height: 58px;
+  }
+
+  .logic-intro {
+    padding-top: 58px;
+  }
+
+  .logic-intro h1 {
+    font-size: clamp(3.3rem, 16vw, 5rem);
+  }
+
+  .logic-workspace-header {
+    align-items: flex-start;
+  }
+
+  .logic-controls {
+    display: block;
+    border-bottom: 0;
+  }
+
+  .logic-levels {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .logic-levels button {
+    min-width: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .logic-levels button:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .logic-next {
+    width: 100%;
+    border-bottom: 1px solid var(--line);
+    border-left: 0;
+  }
+
+  .logic-status-row {
+    display: grid;
+  }
+
+  .logic-level-description {
+    text-align: left;
+  }
+
+  .logic-frame-shell,
+  .logic-frame-shell iframe {
+    min-height: 600px;
+  }
+
+  .logic-guide-body {
+    grid-template-columns: 1fr;
+  }
+
+  .logic-guide-body > div,
+  .logic-guide-body > div:first-child,
+  .logic-guide-body > div:last-child {
+    padding: 22px 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  .logic-guide-body > div:last-child {
+    border-bottom: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .logic-workspace-header {
+    display: grid;
+  }
+
+  .logic-session-count {
+    grid-template-columns: auto auto;
+    align-items: baseline;
+    justify-content: start;
+    gap: 10px;
+    text-align: left;
+  }
+
+  .logic-session-count strong {
+    font-size: 1.3rem;
+  }
+
+  .logic-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .logic-frame-shell,
+  .logic-frame-shell iframe {
+    transition: none;
+  }
+}

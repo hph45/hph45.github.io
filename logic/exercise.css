@@ -1,0 +1,112 @@
+:root {
+  --text: #000000;
+  --muted: #4c4c4c;
+  --line: #000000;
+  --line-soft: rgba(0, 0, 0, 0.16);
+  --success: #176b3a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  padding: clamp(26px, 5vw, 52px);
+  background: transparent;
+  color: var(--text);
+  font-family: "Times New Roman", Times, serif;
+}
+
+.checker-loading,
+.checker-error {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.logic-carnap-exercise {
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.logic-exercise-label {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.logic-carnap-exercise > div {
+  width: 100%;
+}
+
+.logic-carnap-exercise .goal {
+  margin-bottom: 22px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  background: #ffffff;
+  font-size: clamp(1rem, 2.5vw, 1.28rem);
+  text-align: left;
+}
+
+.logic-carnap-exercise .goal.success {
+  border-color: var(--success);
+  background: #edf8f1;
+  color: var(--success);
+}
+
+.logic-carnap-exercise textarea {
+  width: 100% !important;
+  min-height: 190px;
+  padding: 18px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 0 !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  color: var(--text) !important;
+  font-family: "Courier New", Courier, monospace !important;
+  font-size: 0.95rem !important;
+  line-height: 1.55 !important;
+  outline: 0;
+  resize: vertical;
+}
+
+.logic-carnap-exercise textarea:focus {
+  box-shadow: 0 0 0 2px var(--line) !important;
+}
+
+.logic-carnap-exercise .proofDisplay {
+  margin-top: 26px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line-soft);
+  overflow-x: auto;
+}
+
+.logic-carnap-exercise .feedback {
+  font-family: "Times New Roman", Times, serif;
+}
+
+.logic-carnap-exercise button {
+  border-radius: 0 !important;
+  font-family: "Times New Roman", Times, serif !important;
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 24px 18px 42px;
+  }
+
+  .logic-carnap-exercise textarea {
+    min-height: 250px;
+    font-size: 0.86rem !important;
+  }
+}

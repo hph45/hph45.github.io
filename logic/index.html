@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <link rel="icon" type="image/jpeg" href="../zebra%20white.jpeg">
+  <title>Logic Practice | Zebra Book Club</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="logic-page">
+    <header class="logic-header">
+      <a class="logic-wordmark" href="../st/">Skill Tree</a>
+      <p>Logic practice</p>
+    </header>
+
+    <main>
+      <section class="logic-intro" aria-labelledby="logic-title">
+        <p class="logic-eyebrow">Anonymous practice</p>
+        <h1 id="logic-title">One proof at a time.</h1>
+        <p>
+          Pick a level, construct a natural-deduction proof, and get live feedback
+          from Carnap. Nothing is submitted or attached to an account.
+        </p>
+      </section>
+
+      <section class="logic-workspace" aria-labelledby="logic-workspace-title">
+        <header class="logic-workspace-header">
+          <div>
+            <p class="logic-kicker" id="logic-problem-label">Easy · Problem 01</p>
+            <h2 id="logic-workspace-title">Construct a derivation.</h2>
+          </div>
+          <p class="logic-session-count">
+            <span>Solved this visit</span>
+            <strong id="logic-solved-count">0</strong>
+          </p>
+        </header>
+
+        <div class="logic-controls">
+          <div class="logic-levels" role="group" aria-label="Choose problem difficulty">
+            <button type="button" data-difficulty="easy" aria-pressed="true">Easy</button>
+            <button type="button" data-difficulty="medium" aria-pressed="false">Medium</button>
+            <button type="button" data-difficulty="hard" aria-pressed="false">Hard</button>
+            <button type="button" data-difficulty="random" aria-pressed="false">Random</button>
+          </div>
+          <button class="logic-next" id="logic-next" type="button">
+            New problem <span aria-hidden="true">&rarr;</span>
+          </button>
+        </div>
+
+        <div class="logic-status-row">
+          <p class="logic-status" id="logic-status" aria-live="polite">
+            Loading the proof checker&hellip;
+          </p>
+          <p class="logic-level-description" id="logic-level-description"></p>
+        </div>
+
+        <div class="logic-frame-shell" id="logic-frame-shell" aria-busy="true">
+          <iframe
+            id="logic-exercise-frame"
+            title="Carnap natural-deduction proof editor"
+            src="about:blank"
+          ></iframe>
+        </div>
+
+        <noscript>
+          <p class="logic-noscript">JavaScript is required to run the proof checker.</p>
+        </noscript>
+      </section>
+
+      <details class="logic-guide">
+        <summary>
+          <span>Notation and proof rules</span>
+          <span aria-hidden="true">+</span>
+        </summary>
+        <div class="logic-guide-body">
+          <div>
+            <p class="logic-guide-label">Keyboard notation</p>
+            <dl>
+              <div><dt>not</dt><dd><code>~</code></dd></div>
+              <div><dt>and</dt><dd><code>/\</code></dd></div>
+              <div><dt>or</dt><dd><code>\/</code></dd></div>
+              <div><dt>if / then</dt><dd><code>-&gt;</code></dd></div>
+              <div><dt>contradiction</dt><dd><code>!?</code></dd></div>
+            </dl>
+          </div>
+          <div>
+            <p class="logic-guide-label">Line format</p>
+            <p>
+              Write one formula per line, followed by a colon, its rule, and the cited
+              lines. For example: <code>Q:-&gt;E 1,2</code>. Use <code>:PR</code> for a
+              premise and <code>:AS</code> for an indented assumption.
+            </p>
+          </div>
+          <div>
+            <p class="logic-guide-label">Feedback</p>
+            <p>
+              A plus sign marks a correct line. Hover over a question mark or cross for
+              an explanation. The problem is solved when the goal bar turns green.
+            </p>
+          </div>
+        </div>
+      </details>
+    </main>
+
+    <footer class="logic-footer">
+      <p>Proof checking powered by <a href="https://carnap.io" target="_blank" rel="noreferrer">Carnap</a>.</p>
+      <a href="../st/">Return to the skill tree</a>
+    </footer>
+  </div>
+
+  <script src="problems.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

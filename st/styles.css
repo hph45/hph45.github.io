@@ -119,7 +119,8 @@ select {
 
 .st-history-trigger,
 .st-search-trigger,
-.st-ear-trigger {
+.st-ear-trigger,
+.st-carnap-trigger {
   display: inline-grid;
   place-items: center;
   width: 36px;
@@ -127,7 +128,15 @@ select {
   padding: 0;
   border: 1px solid transparent;
   background: transparent;
+  color: inherit;
   cursor: pointer;
+  text-decoration: none;
+}
+
+.st-carnap-trigger {
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .st-history-trigger svg,
@@ -152,7 +161,8 @@ select {
 .st-search-trigger:hover,
 .st-search-trigger[aria-expanded="true"],
 .st-ear-trigger:hover,
-.st-ear-trigger[aria-expanded="true"] {
+.st-ear-trigger[aria-expanded="true"],
+.st-carnap-trigger:hover {
   border-color: var(--text);
   background: var(--text);
   color: var(--bg);
@@ -160,7 +170,8 @@ select {
 
 .st-history-trigger:focus-visible,
 .st-search-trigger:focus-visible,
-.st-ear-trigger:focus-visible {
+.st-ear-trigger:focus-visible,
+.st-carnap-trigger:focus-visible {
   outline: 2px solid var(--text);
   outline-offset: 3px;
 }
@@ -2364,7 +2375,8 @@ button.st-analysis-status {
 
   .st-history-trigger,
   .st-search-trigger,
-  .st-ear-trigger {
+  .st-ear-trigger,
+  .st-carnap-trigger {
     width: 34px;
     height: 34px;
   }

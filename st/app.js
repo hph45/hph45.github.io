@@ -915,6 +915,12 @@
                 <ellipse class="st-ear-note-head" cx="16.25" cy="16" rx="2.75" ry="2"></ellipse>
               </svg>
             </button>
+            <a
+              class="st-carnap-trigger"
+              href="../logic/"
+              aria-label="Open logic practice"
+              title="Logic practice"
+            >C</a>
           </div>
           <p class="st-total-progress"></p>
         </header>
