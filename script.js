@@ -43,21 +43,29 @@ async function loadTicker() {
   if (!tickerTrack) return;
   try {
     const readingQueue = await loadReadingQueue();
-    if (readingQueue.length === 0) throw new Error("No reading queue rows found");
+    const tickerItems = [
+      ...readingQueue.map((book) => ({ label: book.status, title: book.title })),
+      ...allReviews
+        .filter((review) => review.isRecommended)
+        .map((review) => ({ label: "Recommended", title: review.title })),
+    ];
+    if (tickerItems.length === 0) throw new Error("No ticker items found");
 
     const repeat = 6;
     const fragment = document.createDocumentFragment();
 
     for (let index = 0; index < repeat; index += 1) {
-      readingQueue.forEach((book) => {
+      tickerItems.forEach((book) => {
         const item = document.createElement("span");
         item.dataset.tickerTitle = book.title;
-        item.textContent = `${book.status}: ${book.title}`;
+        item.textContent = `${book.label}: ${book.title}`;
         fragment.append(item);
       });
     }
 
     tickerTrack.replaceChildren(fragment);
+    // Scale the loop with the item count so the scroll speed stays constant.
+    tickerTrack.style.animationDuration = `${tickerItems.length * 18}s`;
     tickerTrack.addEventListener("click", (e) => {
       const span = e.target.closest("[data-ticker-title]");
       if (!span) return;
@@ -806,7 +814,9 @@ async function loadReviews() {
           title: book.title,
           note: book.note,
           link: book.link,
-          cover: `./assets/review-covers/${coverFile}`,
+          // The file name stays fixed as the queue changes, so key the URL to
+          // the title to keep browsers from showing the previous book's cover.
+          cover: `./assets/review-covers/${coverFile}?v=${encodeURIComponent(book.title)}`,
           queueStatus: book.status,
           isReadingQueue: true,
         };
@@ -1014,8 +1024,8 @@ if (tbrDialog) {
   });
 }
 
-loadTicker();
-loadReviews();
+// The ticker lists the recommended reviews, so it waits for them to load.
+loadReviews().then(loadTicker);
 loadEvents();
 loadPodcasts();
 

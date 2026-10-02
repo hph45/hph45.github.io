@@ -38,8 +38,8 @@ const AUTHOR_ALIASES = new Map([
 ]);
 
 const ISBN_COVER_OVERRIDES = new Map([
-  ["review-66", { isbn: "9798217190065", provider: "Penguin Random House" }],
-  ["review-65", { isbn: "9780385486804", provider: "Penguin Random House" }],
+  ["review-67", { isbn: "9798217190065", provider: "Penguin Random House" }],
+  ["review-66", { isbn: "9780385486804", provider: "Penguin Random House" }],
   ["review-61", { isbn: "9780593722824", provider: "Penguin Random House" }],
   ["review-50", { isbn: "9780156032971", provider: "Open Library" }],
   ["review-49", { isbn: "9780060932138", provider: "Open Library" }],
