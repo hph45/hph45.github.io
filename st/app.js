@@ -9,6 +9,7 @@
   let activeSubjectId = null;
   let activeNodeId = null;
   let activeTreeGroup = null;
+  let activeTreeSubgroup = null;
   let connectorFrame = null;
   let activeAnalysisUrl = null;
   let historyFilterSubjectId = "";
@@ -242,6 +243,14 @@
     return subject.nodes.find((node) => node.id === activeNodeId) || subject.nodes[0];
   }
 
+  function getVisibleNodes(subject) {
+    if (!activeTreeGroup) return subject.nodes;
+    return subject.nodes.filter((node) =>
+      node.treeGroup === activeTreeGroup &&
+      (!activeTreeSubgroup || node.treeSubgroup === activeTreeSubgroup)
+    );
+  }
+
   function countCompleted(subject) {
     return subject.nodes.filter((node) => isComplete(subject, node)).length;
   }
@@ -279,6 +288,7 @@
     activeSubjectId = subject.id;
     activeNodeId = repeatable ? null : node.id;
     activeTreeGroup = repeatable ? null : node.treeGroup || null;
+    activeTreeSubgroup = repeatable ? null : node.treeSubgroup || null;
     renderTabs();
     renderSubjectSelect();
     renderSubject();
@@ -432,6 +442,7 @@
           node.description,
           node.practice,
           node.treeGroup,
+          node.treeSubgroup,
           ...(node.works || []),
           ...(node.recommendedWorks || []),
           ...(node.extraWorks || []),
@@ -954,6 +965,7 @@
           <div class="st-workspace st-tree-workspace">
             <section class="st-tree-panel">
               <div class="st-tree-group-tabs" role="group" aria-label="Trees within this discipline" hidden></div>
+              <div class="st-tree-group-tabs st-tree-subgroup-tabs" role="group" hidden></div>
               <div class="st-tree-toolbar">
                 <div class="st-status-legend" aria-label="Skill status legend">
                   <span><i class="is-accomplished"></i>${payload.labels.complete}</span>
@@ -1185,17 +1197,22 @@
     }
     if (!treeGroups.length) activeTreeGroup = null;
     const activeGroup = treeGroups.find((group) => group.name === activeTreeGroup);
-    const visibleNodes = activeGroup
-      ? subject.nodes.filter((node) => node.treeGroup === activeGroup.name)
-      : subject.nodes;
-    const visibleTierLabels = activeGroup?.tierLabels || subject.tierLabels;
+    const subgroups = activeGroup?.subgroups || [];
+    if (subgroups.length && !subgroups.some((subgroup) => subgroup.name === activeTreeSubgroup)) {
+      activeTreeSubgroup = subgroups[0].name;
+    }
+    if (!subgroups.length) activeTreeSubgroup = null;
+    const activeSubgroup = subgroups.find((subgroup) => subgroup.name === activeTreeSubgroup);
+    const visibleNodes = getVisibleNodes(subject);
+    const visibleTierLabels = activeSubgroup?.tierLabels || activeGroup?.tierLabels || subject.tierLabels;
     const visibleLaneCount = Math.max(3, ...visibleNodes.map((node) => node.lane));
     renderTreeGroupTabs(subject);
+    renderTreeSubgroupTabs(activeGroup);
     const grid = root.querySelector(".st-tree-grid");
     const tierGuides = root.querySelector(".st-tier-guides");
     const map = root.querySelector(".st-tree-map");
     const scroller = root.querySelector(".st-tree-scroll");
-    const viewKey = `${subject.id}:${activeTreeGroup || "all"}`;
+    const viewKey = `${subject.id}:${activeTreeGroup || "all"}:${activeTreeSubgroup || ""}`;
     const subjectChanged = scroller.dataset.viewKey !== viewKey;
     const previousScroll = { left: scroller.scrollLeft, top: scroller.scrollTop };
 
@@ -1319,7 +1336,7 @@
   }
 
   function renderTreeGroupTabs(subject) {
-    const tabs = root.querySelector(".st-tree-group-tabs");
+    const tabs = root.querySelector(".st-tree-group-tabs:not(.st-tree-subgroup-tabs)");
     const treeGroups = subject.treeGroups || [];
     tabs.hidden = treeGroups.length < 2;
     tabs.replaceChildren();
@@ -1331,11 +1348,41 @@
       button.innerHTML = `<span>${String(index + 1).padStart(2, "0")}</span>${group.name}`;
       button.addEventListener("click", () => {
         activeTreeGroup = group.name;
+        activeTreeSubgroup = null;
         activeNodeId = null;
         renderSubject();
         window.requestAnimationFrame(() => {
           root
             .querySelector(`.st-tree-group-tabs [data-tree-group="${group.name}"]`)
+            ?.focus({ preventScroll: true });
+        });
+      });
+      tabs.append(button);
+    });
+  }
+
+  // Subgroups split one tree group into separate trees, such as one per startup.
+  // Their tabs stay visible even when there is only one, so it remains labeled.
+  function renderTreeSubgroupTabs(group) {
+    const tabs = root.querySelector(".st-tree-subgroup-tabs");
+    const subgroups = group?.subgroups || [];
+    tabs.hidden = subgroups.length === 0;
+    tabs.replaceChildren();
+    if (!subgroups.length) return;
+    tabs.setAttribute("aria-label", `Trees within ${group.name}`);
+    subgroups.forEach((subgroup, index) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.treeSubgroup = subgroup.name;
+      button.setAttribute("aria-pressed", String(subgroup.name === activeTreeSubgroup));
+      button.innerHTML = `<span>${String(index + 1).padStart(2, "0")}</span>${subgroup.name}`;
+      button.addEventListener("click", () => {
+        activeTreeSubgroup = subgroup.name;
+        activeNodeId = null;
+        renderSubject();
+        window.requestAnimationFrame(() => {
+          root
+            .querySelector(`.st-tree-subgroup-tabs [data-tree-subgroup="${subgroup.name}"]`)
             ?.focus({ preventScroll: true });
         });
       });
@@ -1735,9 +1782,7 @@
   function renderDetails() {
     const subject = getActiveSubject();
     const node = getActiveNode(subject);
-    const visibleNodes = activeTreeGroup
-      ? subject.nodes.filter((candidate) => candidate.treeGroup === activeTreeGroup)
-      : subject.nodes;
+    const visibleNodes = getVisibleNodes(subject);
     const nodeIndex = visibleNodes.indexOf(node);
     const complete = isComplete(subject, node);
     const unlocked = isUnlocked(subject, node);
@@ -1829,9 +1874,7 @@
     svg.setAttribute("viewBox", `0 0 ${mapRect.width} ${mapRect.height}`);
     svg.replaceChildren();
 
-    const visibleNodes = activeTreeGroup
-      ? subject.nodes.filter((node) => node.treeGroup === activeTreeGroup)
-      : subject.nodes;
+    const visibleNodes = getVisibleNodes(subject);
     visibleNodes.forEach((node) => {
       const childElement = map.querySelector(`[data-node-id="${node.id}"]`);
       if (!childElement) return;
