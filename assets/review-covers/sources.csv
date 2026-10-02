@@ -1,6 +1,10 @@
 key,episode,author,title,file,source,source_id,source_page,matched_title,matched_author,match_score,bytes
-current,,Matt Dinniman,This Inevitable Ruin,current.jpg,Open Library,15142977,https://openlibrary.org/works/OL41914127W,This Inevitable Ruin,Matt Dinniman,135.0,27791
-next,,Robin Hobb,Royal Assassin,next.jpg,Open Library,14093093,https://openlibrary.org/works/OL27336080W,Royal Assassin,Robin Hobb,135.0,25967
+current,,Albert Camus,The Myth of Sisyphus,current.jpg,Open Library,12726570,https://openlibrary.org/works/OL1230690W,The Myth of Sisyphus and Other Essays,Albert Camus,105.9,13625
+review-66,66,Matt Dinniman,A Parade of Horribles,review-66.jpg,Penguin Random House,ISBN 9798217190065,https://images.penguinrandomhouse.com/cover/9798217190065,A Parade of Horribles,Matt Dinniman,100.0,64841
+review-65,65,Jon Krakauer,Into the Wild,review-65.jpg,Penguin Random House,ISBN 9780385486804,https://images.penguinrandomhouse.com/cover/9780385486804,Into the Wild,Jon Krakauer,100.0,36122
+review-64,64,Robin Hobb,Assassin's Quest,review-64.jpg,Open Library,368112,https://openlibrary.org/works/OL2707231W,Assassin's Quest,Robin Hobb,140.3,14187
+review-63,63,Robin Hobb,Royal Assassin,review-63.jpg,Open Library,14093093,https://openlibrary.org/works/OL27336080W,Royal Assassin,Robin Hobb,135.0,25967
+review-62,62,Matt Dinniman,This Inevitable Ruin,review-62.jpg,Open Library,15142977,https://openlibrary.org/works/OL41914127W,This Inevitable Ruin,Matt Dinniman,135.0,27791
 review-61,61,Robin Hobb,Assassin's Apprentice,review-61.jpg,Penguin Random House,ISBN 9780593722824,https://images.penguinrandomhouse.com/cover/9780593722824,Assassin's Apprentice,Robin Hobb,100.0,54427
 review-60,60,Catherynne M. Valente,Comfort Me with Apples,review-60.jpg,Open Library,10658546,https://openlibrary.org/works/OL24209960W,Comfort Me With Apples,Catherynne M. Valente,135.0,23650
 review-59,59,Matt Dinniman,The Eye of the Bedlam Bride,review-59.jpg,Open Library,15231488,https://openlibrary.org/works/OL36748104W,The Eye of the Bedlam Bride,Matt Dinniman,135.0,28957
