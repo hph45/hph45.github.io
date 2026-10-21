@@ -77,13 +77,15 @@ Both Edge Functions validate the bearer token with Supabase Auth themselves. The
 ## Product rules
 
 - Members are 18 or older and choose one current intent: romance, friends, or business partners.
+- Romance uses Woman, Man, or Other for gender and the people they want to meet, a slider from 18 to 80+, and an optional private ideal-match answer (up to 600 characters). The 80+ maximum is stored as 120 (the platform's oldest permitted age), so it includes every older member. Migration `20261021000400` maps earlier gender choices to Other and preserves retired self-descriptions privately without allowing new client writes.
+- Business profiles can include an optional LinkedIn personal or company page. Links are stored as canonical HTTPS URLs and shown only to their owner and released business matches. Changing connection type clears the current type-specific answers and LinkedIn link.
 - Members select a city from the catalog. The community map returns anonymous city totals and city-center coordinates, with no names or profile links. The total counts completed member profiles, including paused members. Deleting a profile removes it from future totals.
 - Each profile has one required favorite and up to two additional favorites. Book selection uses an Open Library **work ID**, so editions of the same work group together. Catalog duplicates can still exist upstream; a future alias table can merge those if needed.
 - The database resolves book titles/authors and city labels from their catalog IDs. Clients cannot insert arbitrary books or locations into the catalogs.
 - Book IDs can change once every rolling 24 hours, starting at profile creation or the last actual book change. Other preferences remain editable. The database enforces the interval using its own clock; sign-out, another browser, or a direct API request does not reset it.
 - The book-explanation question is retired. Migration `20261021000300` allows new profiles without it, prevents client writes to the legacy column, and excludes old answers from introductions. Previously submitted answers are retained privately with their owner's account rather than deleted by the migration.
 - The top ten counts each saved favorite once per member, with equal weight for all three positions. Ties are sorted by title and work ID. It shows fewer than ten entries until enough distinct books have been selected.
-- Profiles are readable only by their owners. A separate function exposes limited details of explicitly released matches to their two participants. Birthdays, emails, gender preferences, and account IDs are not returned in introductions.
+- Profiles are readable only by their owners. A separate function exposes limited details of explicitly released matches to their two participants. Birthdays, emails, gender preferences, ideal-match answers, and account IDs are not returned in introductions.
 - The account-deletion function deletes only the authenticated user's Supabase Auth account. Foreign-key cascades remove their profile and match memberships.
 
 ## Book search and geography

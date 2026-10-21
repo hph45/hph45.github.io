@@ -10,6 +10,7 @@ const C = "00000000-0000-4000-8000-000000000003";
 const D = "00000000-0000-4000-8000-000000000004";
 const MATCH = "00000000-0000-4000-8000-000000000010";
 const OTHER_MATCH = "00000000-0000-4000-8000-000000000011";
+const BUSINESS_MATCH = "00000000-0000-4000-8000-000000000012";
 const fixture = makeProfile({
   display_name: "Reader", birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States", favorite_book_id: "OL1W",
   intent: "friends", favorite_book: "A good book", favorite_author: "An author",
@@ -33,7 +34,33 @@ test("Postgres enforces ownership, validation, and released-match privacy", asyn
     grant execute on function auth.uid() to authenticated;
   `);
   const migrationFolder = new URL("../../supabase/migrations/", import.meta.url);
-  for (const file of (await readdir(migrationFolder)).filter(file => file.endsWith(".sql")).sort()) await db.exec(await readFile(new URL(file, migrationFolder), "utf8"));
+  for (const file of (await readdir(migrationFolder)).filter(file => file.endsWith(".sql")).sort()) {
+    const preferencesMigration = file === "20261021000400_matchmaking_preferences.sql";
+    const legacyID = "00000000-0000-4000-8000-000000000099";
+    if (preferencesMigration) {
+      await db.query("insert into auth.users(id) values ($1)", [legacyID]);
+      await db.exec("insert into public.matchmaking_books (work_id,title,author) values ('OL99999W','Legacy book','An author')");
+      await db.query(`insert into public.matchmaking_profiles
+        (user_id,display_name,birth_date,city_id,city,country,intent,favorite_book_id,favorite_book,favorite_author,
+         location_preference,gender,gender_description,interested_in,age_min,age_max,books_updated_at)
+        values ($1,'Legacy member','1994-06-15',5378538,'Oakland','United States','romance','OL99999W','Legacy book','An author',
+                'same_city','self_described','A private self-description',array['woman','nonbinary','self_described'],25,40,'2026-10-21T00:00:00Z')`, [legacyID]);
+    }
+    await db.exec(await readFile(new URL(file, migrationFolder), "utf8"));
+    if (preferencesMigration) {
+      await t.test("the preference migration maps legacy choices without losing private answers or resetting the book clock", async () => {
+        const migrated = (await db.query("select * from public.matchmaking_profiles where user_id=$1", [legacyID])).rows[0];
+        assert.equal(migrated.gender, "other");
+        assert.deepEqual(migrated.interested_in, ["other", "woman"]);
+        assert.equal(migrated.gender_description, "A private self-description");
+        assert.equal(migrated.romance_ideal_match, "");
+        assert.equal(migrated.business_linkedin_url, "");
+        assert.equal(new Date(migrated.books_updated_at).toISOString(), "2026-10-21T00:00:00.000Z");
+      });
+      await db.query("delete from auth.users where id=$1", [legacyID]);
+      await db.exec("delete from public.matchmaking_books where work_id='OL99999W'");
+    }
+  }
   await db.exec("insert into public.matchmaking_books (work_id,title,author) values ('OL1W','A good book','An author'),('OL2W','Another good book','Another author'),('OL3W','A third book','A third author')");
   await db.query("insert into auth.users(id) values ($1), ($2), ($3), ($4)", [A, B, C, D]);
   const insert = (id, changes = {}) => {
@@ -75,10 +102,15 @@ test("Postgres enforces ownership, validation, and released-match privacy", asyn
       await assert.rejects(insert(C, { birth_date: underage }), error => error.code === "23514");
       await assert.rejects(insert(C, { intent: "romance" }), error => error.code === "23514");
       await assert.rejects(insert(C, { intent: "romance", gender: "man", interested_in: ["woman"], age_min: 35, age_max: 25 }), error => error.code === "23514");
+      for (const changes of [
+        { gender: "nonbinary" }, { interested_in: ["self_described"] }, { interested_in: [null] },
+        { age_min: 17 }, { age_max: 121 }, { romance_ideal_match: "a".repeat(601) },
+      ]) await assert.rejects(insert(C, { intent: "romance", gender: "other", interested_in: ["other"], age_min: 25, age_max: 40, ...changes }), error => error.code === "23514");
       await assert.rejects(insert(C, { intent: "business_partners" }), error => error.code === "23514");
       await assert.rejects(insert(C, { favorite_book_2_id: "OL1W" }), error => error.code === "23514");
       await assert.rejects(insert(C, { favorite_book_id: null }), /Choose a book/);
       await denied(insert(C, { book_reason: "The removed question cannot be submitted" }));
+      await denied(insert(C, { gender_description: "The retired gender question cannot be submitted" }));
       await insert(C);
     });
     await insert(D, { books_updated_at: "2000-01-01T00:00:00Z" });
@@ -144,9 +176,42 @@ test("Postgres enforces ownership, validation, and released-match privacy", asyn
     assert.equal(result[0].display_name, "Bob");
     assert.equal(result[0].favorite_book, fixture.favorite_book);
     assert.equal(result[0].book_reason, "", "legacy explanations are never returned to matches");
-    for (const key of ["birth_date", "email", "user_id", "gender", "interested_in", "email_matches"]) assert.ok(!(key in result[0]), key);
+    for (const key of ["birth_date", "email", "user_id", "gender", "gender_description", "interested_in", "romance_ideal_match", "email_matches"]) assert.ok(!(key in result[0]), key);
+    assert.equal(result[0].business_linkedin_url, "");
     assert.equal((await asUser(B, () => db.query("select * from public.get_my_matchmaking_matches()"))).rows[0].display_name, "Alice Reader");
     assert.equal((await asUser(C, () => db.query("select * from public.get_my_matchmaking_matches()"))).rows.length, 0);
+  });
+
+  await t.test("LinkedIn is optional, validated by Postgres, and shared only in released business introductions", async () => {
+    const becomeBusiness = id => asUser(id, () => db.query(`update public.matchmaking_profiles
+      set intent='business_partners', business_about='A community bookshop', business_skills='Events and books',
+          business_seeking='An operations partner', is_active=true where user_id=$1`, [id]));
+    await becomeBusiness(C);
+    await becomeBusiness(D);
+    await asUser(D, async () => {
+      for (const url of ["javascript:alert(1)", "https://linkedin.com.evil.example/in/reader", "https://www.linkedin.com/feed", "http://www.linkedin.com/in/reader", "https://www.linkedin.com/in/" + "a".repeat(300)]) {
+        await assert.rejects(db.query("update public.matchmaking_profiles set business_linkedin_url=$1 where user_id=$2", [url, D]), error => error.code === "23514");
+      }
+      await db.query("update public.matchmaking_profiles set business_linkedin_url='https://www.linkedin.com/company/zebra-books' where user_id=$1", [D]);
+    });
+    await db.query("insert into public.matchmaking_matches (id,week_start,intent,reason) values ($1,'2026-10-26','business_partners','A shared interest in books')", [BUSINESS_MATCH]);
+    await db.query("insert into public.matchmaking_match_members (match_id,week_start,user_id) values ($1,'2026-10-26',$2),($1,'2026-10-26',$3)", [BUSINESS_MATCH, C, D]);
+    assert.equal((await asUser(C, () => db.query("select * from public.get_my_matchmaking_matches()"))).rows.length, 0);
+    await db.query("update public.matchmaking_matches set released_at=now() where id=$1", [BUSINESS_MATCH]);
+    const introduced = (await asUser(C, () => db.query("select * from public.get_my_matchmaking_matches()"))).rows[0];
+    assert.equal(introduced.business_linkedin_url, "https://www.linkedin.com/company/zebra-books");
+    assert.equal((await asUser(D, () => db.query("select * from public.get_my_matchmaking_matches()"))).rows[0].business_linkedin_url, "");
+    await asUser(D, async () => {
+      await assert.rejects(db.query("update public.matchmaking_profiles set intent='friends' where user_id=$1", [D]), error => error.code === "23514", "a LinkedIn link cannot remain on another profile type");
+      await db.query(`update public.matchmaking_profiles set intent='romance', gender='other', interested_in=array['other'],
+        age_min=25,age_max=40,romance_ideal_match='Someone curious and kind',
+        business_about='',business_skills='',business_seeking='',business_linkedin_url='' where user_id=$1`, [D]);
+      assert.equal((await db.query("select romance_ideal_match from public.matchmaking_profiles where user_id=$1", [D])).rows[0].romance_ideal_match, "Someone curious and kind");
+    });
+    const afterChange = (await asUser(C, () => db.query("select * from public.get_my_matchmaking_matches()"))).rows[0];
+    assert.equal(afterChange.business_linkedin_url, "");
+    assert.ok(!JSON.stringify(afterChange).includes("Someone curious and kind"));
+    assert.ok(!("romance_ideal_match" in afterChange));
   });
 
   await t.test("a person gets at most one match per week and deletion removes their profile and memberships", async () => {

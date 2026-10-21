@@ -93,7 +93,7 @@ test("a new member can finish all three steps with one book and no explanation",
 });
 
 test("editing intent clears old preferences, preserves a pause, and writes only the owner row", async t => {
-  const romance = { ...profile, intent: "romance", gender: "man", interested_in: ["woman"], age_min: 25, age_max: 40, is_active: false };
+  const romance = { ...profile, intent: "romance", gender: "man", interested_in: ["woman"], age_min: 25, age_max: 40, romance_ideal_match: "Someone curious and kind", is_active: false };
   const { $, set, event, state } = await setup(t, { initialProfile: romance });
   await event("#edit-profile");
   set("intent", "business_partners");
@@ -105,6 +105,11 @@ test("editing intent clears old preferences, preserves a pause, and writes only 
   set("business_about", "Building a community bookstore");
   set("business_skills", "Book buying and event planning");
   set("business_seeking", "Someone who enjoys running operations");
+  set("business_linkedin_url", "https://untrusted.example/in/reader");
+  await event("#profile-form", "submit");
+  assert.equal(state.calls.length, 0, "an invalid LinkedIn URL cannot be saved");
+  assert.match($("#form-error").textContent, /LinkedIn/);
+  set("business_linkedin_url", "linkedin.com/in/reader/?trk=profile");
   await event("#profile-form", "submit");
   assert.equal($("#dashboard-view").hidden, false);
   const call = state.calls.at(-1);
@@ -114,7 +119,69 @@ test("editing intent clears old preferences, preserves a pause, and writes only 
   assert.equal(call.values.gender, null);
   assert.deepEqual(call.values.interested_in, []);
   assert.equal(call.values.friendship_interests, "");
+  assert.equal(call.values.romance_ideal_match, "");
+  assert.equal(call.values.business_linkedin_url, "https://www.linkedin.com/in/reader");
+  assert.equal($("#profile-preferences a").href, "https://www.linkedin.com/in/reader");
   assert.ok(!("user_id" in call.values), "ownership is immutable");
+});
+
+test("romance sliders restore saved ages, cannot cross, and save the private open answer", async t => {
+  const romance = { ...profile, intent: "romance", gender: "other", interested_in: ["woman", "other"], age_min: 25, age_max: 40 };
+  const { $, set, event, state } = await setup(t, { initialProfile: romance });
+  await event("#edit-profile");
+  await event("#profile-form", "submit");
+  await event("#profile-form", "submit");
+  assert.deepEqual([...$('#gender').options].map(option => option.value), ["", "woman", "man", "other"]);
+  assert.deepEqual([...$("#profile-form").querySelectorAll('[name="interested_in"]')].map(input => input.value), ["woman", "man", "other"]);
+  assert.equal($('[name="gender_description"]'), null);
+  assert.equal($("#age-min").type, "range");
+  assert.equal($("#age-max").type, "range");
+  assert.equal($("#age-min").max, "80");
+  assert.equal($("#age-max").max, "80");
+  assert.equal($("#age-range-value").value, "25–40");
+  set("age_min", 80);
+  await event("#age-min", "input");
+  assert.equal($("#age-range-value").value, "40–40");
+  set("age_max", 30);
+  await event("#age-max", "input");
+  assert.equal($("#age-max").value, "40");
+  set("age_max", 65); await event("#age-max", "input");
+  set("age_min", 28); await event("#age-min", "input");
+  assert.equal($("#age-min").getAttribute("aria-valuemax"), "65");
+  assert.equal($("#age-max").getAttribute("aria-valuemin"), "28");
+  set("age_max", 80); await event("#age-max", "input");
+  assert.equal($("#age-range-value").value, "28–80+");
+  assert.equal($("#age-max").getAttribute("aria-valuetext"), "80 years and over");
+  set("age_min", 80); await event("#age-min", "input");
+  assert.equal($("#age-range-value").value, "80+");
+  set("age_min", 28); await event("#age-min", "input");
+  const answer = 'Kind, curious, and loves <script>stories</script>.';
+  set("romance_ideal_match", answer);
+  await event("#profile-form", "submit");
+  assert.equal(state.profile.age_min, 28);
+  assert.equal(state.profile.age_max, 120, "80+ includes all older members");
+  assert.equal(state.profile.romance_ideal_match, answer);
+  assert.ok($("#profile-preferences").textContent.includes(answer));
+  assert.equal($("#profile-preferences script"), null);
+  await event("#edit-profile");
+  assert.equal($("#age-range-value").value, "28–80+");
+  assert.equal($("#age-max").value, "80");
+  assert.equal($('[name="romance_ideal_match"]').value, answer);
+});
+
+test("business matches get safe LinkedIn links without exposing private ideal-match answers", async t => {
+  const match = { week_start: "2026-10-19", intent: "business_partners", display_name: "Reader", age: 30, city: "Oakland", country: "United States", business_about: "A bookshop", business_skills: "Events", business_seeking: "An operator", romance_ideal_match: "A private preference" };
+  const { $ } = await setup(t, { initialProfile: profile, matches: [
+    { ...match, business_linkedin_url: "https://www.linkedin.com/in/reader" },
+    { ...match, business_linkedin_url: "javascript:alert(1)" },
+    { ...match, intent: "friends", business_linkedin_url: "https://www.linkedin.com/in/reader" },
+  ] });
+  const links = $("#matches-list").querySelectorAll("a");
+  assert.equal(links.length, 1);
+  assert.equal(links[0].href, "https://www.linkedin.com/in/reader");
+  assert.equal(links[0].rel, "noopener noreferrer");
+  assert.equal(links[0].target, "_blank");
+  assert.ok(!$("#matches-list").textContent.includes("A private preference"));
 });
 
 test("settings roll back on failure and sign-out removes profile answers", async t => {

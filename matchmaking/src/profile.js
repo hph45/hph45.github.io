@@ -5,11 +5,31 @@ export const INTENTS = {
 };
 
 export const GENDERS = {
-  woman: "Women",
-  man: "Men",
-  nonbinary: "Nonbinary people",
-  self_described: "People of other gender identities",
+  woman: "Woman",
+  man: "Man",
+  other: "Other",
 };
+
+export function ageRangeLabel(minimum, maximum) {
+  return minimum >= 80 ? "80+" : `${minimum}–${maximum >= 80 ? "80+" : maximum}`;
+}
+
+// Accept pasted personal or company links, then store one safe HTTPS format.
+// Invalid input stays in the form so the member can correct it.
+export function normalizeLinkedInURL(value) {
+  const input = String(value ?? "").trim();
+  if (!input) return "";
+  if (input.length > 300) return null;
+  try {
+    const url = new URL(/^[a-z][a-z\d+.-]*:/i.test(input) ? input : `https://${input}`);
+    if (!["https:", "http:"].includes(url.protocol) || url.username || url.password || url.port
+      || !/^(?:(?:www|[a-z]{2,3})\.)?linkedin\.com$/i.test(url.hostname)
+      || !/^\/(in|company)\/(?:[a-z\d_-]|%[a-f\d]{2})+\/?$/i.test(url.pathname)) return null;
+    const [, type, slug] = url.pathname.split("/");
+    const canonical = `https://www.linkedin.com/${type.toLowerCase()}/${slug}`;
+    return canonical.length <= 300 ? canonical : null;
+  } catch { return null; }
+}
 
 export function ageOn(birthDate, today = new Date()) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate ?? "")) return NaN;
@@ -52,14 +72,16 @@ export function makeProfile(values, { isActive = true } = {}) {
     favorite_book_3: text("favorite_book_3"), favorite_author_3: text("favorite_author_3"),
     location_preference: text("location_preference"),
     gender: romance ? text("gender") || null : null,
-    gender_description: romance && values.gender === "self_described" ? text("gender_description") : "",
     interested_in: romance && Array.isArray(values.interested_in) ? [...new Set(values.interested_in)] : [],
     age_min: romance && text("age_min") ? Number(values.age_min) : null,
-    age_max: romance && text("age_max") ? Number(values.age_max) : null,
+    // The slider's 80+ endpoint includes every older member the platform allows.
+    age_max: romance && text("age_max") ? (Number(values.age_max) === 80 ? 120 : Number(values.age_max)) : null,
+    romance_ideal_match: romance ? text("romance_ideal_match") : "",
     friendship_interests: intent === "friends" ? text("friendship_interests") : "",
     business_about: business ? text("business_about") : "",
     business_skills: business ? text("business_skills") : "",
     business_seeking: business ? text("business_seeking") : "",
+    business_linkedin_url: business ? normalizeLinkedInURL(text("business_linkedin_url")) ?? text("business_linkedin_url") : "",
     is_active: Boolean(isActive), email_matches: values.email_matches === true,
   };
 }
@@ -94,7 +116,6 @@ export function validateProfile(profile, { consent, today = new Date() } = {}) {
   if (!["same_city", "anywhere"].includes(profile.location_preference)) error("location_preference", 2, "Choose where you’d like to connect.");
   if (profile.intent === "romance") {
     if (!Object.hasOwn(GENDERS, profile.gender ?? "")) error("gender", 2, "Choose how you describe your gender.");
-    if (profile.gender === "self_described") length("gender_description", 1, 80, 2, "Your gender description");
     if (!Array.isArray(profile.interested_in) || !profile.interested_in.length || profile.interested_in.some((value) => !Object.hasOwn(GENDERS, value))) {
       error("interested_in", 2, "Choose at least one group of people you’d like to meet.");
     }
@@ -102,12 +123,16 @@ export function validateProfile(profile, { consent, today = new Date() } = {}) {
       if (!Number.isInteger(profile[field]) || profile[field] < 18 || profile[field] > 120) error(field, 2, "Choose a whole-number age between 18 and 120.");
     }
     if (profile.age_min > profile.age_max) error("age_max", 2, "The maximum age must be at least the minimum age.");
+    length("romance_ideal_match", 0, 600, 2, "Your ideal-match answer");
   }
   if (profile.intent === "friends") length("friendship_interests", 5, 600, 2, "Your friendship answer");
   if (profile.intent === "business_partners") {
     length("business_about", 5, 600, 2, "Your project answer");
     length("business_skills", 5, 600, 2, "Your skills answer");
     length("business_seeking", 5, 600, 2, "Your partner answer");
+    if (normalizeLinkedInURL(profile.business_linkedin_url) === null) {
+      error("business_linkedin_url", 2, "Enter a LinkedIn profile or company URL, such as linkedin.com/in/your-name, or leave it blank.");
+    }
   }
   if (!consent) error("profile_consent", 2, "Please confirm that you’re happy to share your profile with your matches.");
   return errors;
@@ -133,7 +158,8 @@ export function preferenceDetails(profile) {
   const details = [["Where", profile.location_preference === "same_city" ? "My city or metro area" : "Open to anywhere"]];
   if (profile.intent === "romance") {
     details.push(["Who you’d like to meet", profile.interested_in.map((gender) => GENDERS[gender]).join(", ")]);
-    details.push(["Age range", `${profile.age_min}–${profile.age_max}`]);
+    details.push(["Age range", ageRangeLabel(profile.age_min, profile.age_max)]);
+    if (profile.romance_ideal_match) details.push(["Your ideal match", profile.romance_ideal_match]);
   } else if (profile.intent === "friends") {
     details.push(["Time well spent", profile.friendship_interests]);
   } else if (profile.intent === "business_partners") {

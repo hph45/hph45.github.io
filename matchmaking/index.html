@@ -7,7 +7,7 @@
   <title>Matchmaking | Zebra Book Club</title>
   <meta name="description" content="Meet through the books you love. Find romance, friends, or business partners with Zebra Book Club.">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <link rel="stylesheet" href="./styles.css?v=20261021.2">
+  <link rel="stylesheet" href="./styles.css?v=20261021.4">
 </head>
 <body>
   <header class="site-header">
@@ -110,13 +110,21 @@
           <label>Where would you like to connect?<select name="location_preference" required><option value="same_city">In my city or metro area</option><option value="anywhere">I’m open to anywhere</option></select></label>
           <fieldset data-preferences="romance" hidden disabled>
             <legend class="visually-hidden">Romance preferences</legend>
-            <label>Your gender<select name="gender" id="gender" required><option value="">Choose an option</option><option value="woman">Woman</option><option value="man">Man</option><option value="nonbinary">Nonbinary</option><option value="self_described">I describe myself another way</option></select></label>
-            <label id="gender-description-label" hidden>How do you describe your gender?<input name="gender_description" maxlength="80" disabled></label>
+            <label>Your gender<select name="gender" id="gender" required><option value="">Choose an option</option><option value="woman">Woman</option><option value="man">Man</option><option value="other">Other</option></select></label>
             <fieldset class="checkbox-group"><legend>Who would you like to meet?</legend>
-              <label><input type="checkbox" name="interested_in" value="woman">Women</label><label><input type="checkbox" name="interested_in" value="man">Men</label><label><input type="checkbox" name="interested_in" value="nonbinary">Nonbinary people</label><label><input type="checkbox" name="interested_in" value="self_described">People of other gender identities</label>
+              <label><input type="checkbox" name="interested_in" value="woman">Woman</label><label><input type="checkbox" name="interested_in" value="man">Man</label><label><input type="checkbox" name="interested_in" value="other">Other</label>
               <span class="field-help">Choose all that apply. These preferences stay private.</span>
             </fieldset>
-            <div class="field-pair"><label>Minimum age<input name="age_min" type="number" min="18" max="120" value="18" required></label><label>Maximum age<input name="age_max" type="number" min="18" max="120" value="99" required></label></div>
+            <div class="age-range" role="group" aria-labelledby="age-range-label">
+              <div class="age-range-heading"><span id="age-range-label">Age range</span><output id="age-range-value" for="age-min age-max">18–80+</output></div>
+              <div class="age-range-sliders">
+                <div class="age-range-track" aria-hidden="true"><div class="age-range-selection"></div></div>
+                <label class="visually-hidden" for="age-min">Minimum age</label><input id="age-min" name="age_min" type="range" min="18" max="80" step="1" value="18">
+                <label class="visually-hidden" for="age-max">Maximum age</label><input id="age-max" name="age_max" type="range" min="18" max="80" step="1" value="80">
+              </div>
+              <div class="age-range-scale" aria-hidden="true"><span>18</span><span>80+</span></div>
+            </div>
+            <label>Tell us about your ideal match.<textarea name="romance_ideal_match" rows="4" maxlength="600" aria-describedby="ideal-match-help"></textarea><span id="ideal-match-help" class="field-help">Optional. This answer stays private.</span></label>
           </fieldset>
           <fieldset data-preferences="friends" hidden disabled><legend class="visually-hidden">Friendship preferences</legend><label>What would you enjoy doing together?<textarea name="friendship_interests" rows="4" minlength="5" maxlength="600" required placeholder="Bookshop afternoons, hiking, spirited debates over coffee…"></textarea></label></fieldset>
           <fieldset data-preferences="business_partners" hidden disabled>
@@ -124,6 +132,7 @@
             <label>What are you working on, or hoping to build?<textarea name="business_about" rows="3" minlength="5" maxlength="600" required></textarea></label>
             <label>What skills or experience do you bring?<textarea name="business_skills" rows="3" minlength="5" maxlength="600" required></textarea></label>
             <label>What are you looking for in a partner?<textarea name="business_seeking" rows="3" minlength="5" maxlength="600" required></textarea></label>
+            <label>LinkedIn page <span class="optional">(optional)</span><input name="business_linkedin_url" type="text" inputmode="url" autocomplete="url" maxlength="300" placeholder="linkedin.com/in/your-name" aria-describedby="linkedin-help"><span id="linkedin-help" class="field-help">A profile or company page. Shared only with your business matches.</span></label>
           </fieldset>
           <div class="consent-fields">
             <p class="field-help">Read our <a href="/privacy/" target="_blank" rel="noopener">Privacy Policy</a> and <a href="/terms/" target="_blank" rel="noopener">Terms of Service</a> before creating your profile.</p>
@@ -168,6 +177,6 @@
   <dialog id="delete-dialog" aria-labelledby="delete-title"><form id="delete-form"><p class="eyebrow">Close this chapter</p><h2 id="delete-title">Delete your account?</h2><p>This permanently removes your matchmaking profile, preferences, and match memberships. Your Google account is unchanged.</p><label>Type DELETE to confirm<input id="delete-confirmation" autocomplete="off" required pattern="DELETE"></label><p id="delete-error" class="form-error" role="alert" hidden></p><div class="form-actions"><button id="cancel-delete" class="text-button" type="button">Keep my account</button><button id="confirm-delete" class="button" type="submit">Delete account</button></div></form></dialog>
   <footer class="site-footer"><span>© 2026 Zebra Book Club</span><nav class="legal-links" aria-label="Legal"><a href="/privacy/" target="_blank" rel="noopener">Privacy</a><a href="/terms/" target="_blank" rel="noopener">Terms</a></nav><span class="data-credits">Books: <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">Open Library</a> · Cities: <a href="https://www.geonames.org" target="_blank" rel="noopener noreferrer">GeoNames</a> · Map: <a href="https://naturalearthdata.com" target="_blank" rel="noopener noreferrer">Natural Earth</a></span></footer>
   <noscript><p class="notice">Please enable JavaScript to sign in and create your matchmaking profile.</p></noscript>
-  <script type="module" src="./app.js?v=20261021.2"></script>
+  <script type="module" src="./app.js?v=20261021.4"></script>
 </body>
 </html>

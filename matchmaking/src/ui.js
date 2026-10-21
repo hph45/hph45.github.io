@@ -1,6 +1,7 @@
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, PROFILE_TABLE, getAuthRedirect } from "./config.js";
-import { INTENTS, ageOn, birthdayBounds, makeProfile, validateProfile, locationLabel, preferenceDetails, bookEditTime, favoriteBooks } from "./profile.js";
+import { INTENTS, ageOn, birthdayBounds, makeProfile, validateProfile, locationLabel, preferenceDetails, bookEditTime, favoriteBooks, normalizeLinkedInURL } from "./profile.js";
 import { attachAutocomplete } from "./autocomplete.js";
+import { attachAgeRange } from "./age-range.js";
 import { renderCommunityMap } from "./map.js";
 
 export function createMatchmakingApp({ client, document, window, fetch = window.fetch.bind(window) }) {
@@ -23,6 +24,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   let bookTimer;
   let communityRequest = 0;
   const autocompletes = [];
+  const ageRange = attachAgeRange($(".age-range"));
 
   try { selectedIntent = window.localStorage.getItem("zebra-matchmaking-intent") || ""; } catch { /* Storage is optional. */ }
   if (!Object.hasOwn(INTENTS, selectedIntent)) selectedIntent = "";
@@ -81,10 +83,6 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       group.hidden = group.dataset.preferences !== intent;
       group.disabled = currentStep !== 2 || group.hidden;
     });
-    const selfDescribed = intent === "romance" && field("gender").value === "self_described";
-    $("#gender-description-label").hidden = !selfDescribed;
-    field("gender_description").disabled = currentStep !== 2 || !selfDescribed;
-    field("gender_description").required = selfDescribed;
   }
 
   function showStep(index, focus = true) {
@@ -129,14 +127,15 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     const values = profile || {
       intent: selectedIntent,
       display_name: user?.user_metadata?.given_name || user?.user_metadata?.full_name?.split(" ")[0] || "",
-      age_min: 18, age_max: 99,
+      age_min: 18, age_max: 80,
     };
     for (const input of form.querySelectorAll("[name]")) {
       if (input.type === "checkbox") {
         input.checked = input.name === "interested_in" ? (values.interested_in || []).includes(input.value)
           : input.name === "profile_consent" ? Boolean(profile) : values[input.name] === true;
-      } else if (values[input.name] !== undefined) input.value = values[input.name] ?? "";
+      } else if (values[input.name] !== undefined) input.value = values[input.name] ?? (input.type === "range" ? input.defaultValue : "");
     }
+    ageRange.sync();
     text("#form-eyebrow", profile ? "Edit your chapter" : "Your first chapter");
     showStep(0, false);
     showView("onboarding-view", "#onboarding-title");
@@ -144,6 +143,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
 
   function resetForm() {
     form.reset();
+    ageRange.sync();
     // Hidden inputs reflect .value into their default value, unlike text inputs.
     // Clear catalog IDs explicitly so a later account never inherits old picks.
     form.querySelectorAll('input[type="hidden"]').forEach(input => { input.value = ""; });
@@ -170,6 +170,23 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     container.append(group);
   }
 
+  function linkedInDetail(container, profile) {
+    const url = normalizeLinkedInURL(profile.business_linkedin_url);
+    if (profile.intent !== "business_partners" || !url) return;
+    const group = document.createElement("div");
+    const heading = document.createElement("h3");
+    heading.textContent = "LinkedIn";
+    const paragraph = document.createElement("p");
+    const link = document.createElement("a");
+    link.href = url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = "View LinkedIn page ↗";
+    paragraph.append(link);
+    group.append(heading, paragraph);
+    container.append(group);
+  }
+
   function renderDashboard(focus = false) {
     text("#account-name", profile.display_name);
     text("#profile-category", INTENTS[profile.intent]);
@@ -189,6 +206,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     const preferences = $("#profile-preferences");
     preferences.replaceChildren();
     preferenceDetails(profile).forEach(([title, value]) => detail(preferences, title, value));
+    linkedInDetail(preferences, profile);
     showView("dashboard-view", focus ? "#dashboard-title" : undefined);
   }
 
@@ -226,6 +244,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
           detail(article, "What they’re building", match.business_about);
           detail(article, "What they bring", match.business_skills);
           detail(article, "Who they’d like to meet", match.business_seeking);
+          linkedInDetail(article, match);
         }
         container.append(article);
       }
@@ -378,7 +397,6 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
 
   $$("[data-intent]").forEach((button) => action(button, "click", () => rememberIntent(button.dataset.intent)));
   action(field("intent"), "change", updatePreferenceFields);
-  action(field("gender"), "change", updatePreferenceFields);
   action($("#previous-step"), "click", () => showStep(Math.max(0, currentStep - 1)));
   action($("#edit-profile"), "click", openForm);
   action($("#cancel-edit"), "click", () => { resetForm(); renderDashboard(true); });
@@ -511,6 +529,6 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       }
     },
     async settled() { while (pending.size) await Promise.allSettled([...pending]); },
-    destroy() { subscription?.unsubscribe(); generation++; window.clearTimeout(bookTimer); autocompletes.forEach(control => control.destroy()); },
+    destroy() { subscription?.unsubscribe(); generation++; window.clearTimeout(bookTimer); ageRange.destroy(); autocompletes.forEach(control => control.destroy()); },
   };
 }
