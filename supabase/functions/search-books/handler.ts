@@ -1,4 +1,4 @@
-type Book = { work_id: string; title: string; author: string };
+type Book = { work_id: string; title: string; author: string; cover_id: number | null };
 type SearchActions = {
   authenticate: (token: string) => Promise<boolean>;
   cached: (query: string) => Promise<Book[] | null>;
@@ -12,11 +12,12 @@ export function normalizeBooks(response: unknown): Book[] {
   if (!Array.isArray(docs)) throw new Error("Invalid book response");
   const books = new Map<string, Book>();
   for (const raw of docs.slice(0, 12)) {
-    const doc = raw as { key?: string; title?: string; author_name?: string[] };
+    const doc = raw as { key?: string; title?: string; author_name?: string[]; cover_i?: number };
     const work_id = typeof doc.key === "string" ? doc.key.replace(/^\/works\//, "") : "";
     if (!/^OL\d+W$/.test(work_id) || typeof doc.title !== "string" || !doc.title.trim()) continue;
     const names = Array.isArray(doc.author_name) ? doc.author_name.filter(name => typeof name === "string") : [];
-    books.set(work_id, { work_id, title: doc.title.trim().slice(0, 300), author: (names.join(", ").trim() || "Unknown author").slice(0, 300) });
+    const cover_id = Number.isSafeInteger(doc.cover_i) && doc.cover_i! > 0 ? doc.cover_i! : null;
+    books.set(work_id, { work_id, title: doc.title.trim().slice(0, 300), author: (names.join(", ").trim() || "Unknown author").slice(0, 300), cover_id });
   }
   return [...books.values()].slice(0, 8);
 }
@@ -37,7 +38,9 @@ export function createBookSearchHandler(actions: SearchActions) {
       if (!await actions.authenticate(token)) return respond(401, { error: "Sign in again" });
       let body;
       try { body = await request.json(); } catch { return respond(400, { error: "Invalid request" }); }
-      const query = typeof body?.query === "string" ? body.query.normalize("NFKC").trim().replace(/\s+/g, " ").toLowerCase() : "";
+      if (body?.work_id !== undefined && (typeof body.work_id !== "string" || !/^OL\d+W$/.test(body.work_id))) return respond(400, { error: "Choose a valid book" });
+      const query = body?.work_id ? `key:/works/${body.work_id}`
+        : typeof body?.query === "string" ? body.query.normalize("NFKC").trim().replace(/\s+/g, " ").toLowerCase() : "";
       if (query.length < 2 || query.length > 120) return respond(400, { error: "Enter 2–120 characters" });
       const cached = await actions.cached(query);
       if (cached) return respond(200, { books: cached });

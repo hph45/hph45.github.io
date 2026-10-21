@@ -3,6 +3,8 @@ import { INTENTS, ageOn, birthdayBounds, makeProfile, validateProfile, locationL
 import { attachAutocomplete } from "./autocomplete.js";
 import { attachAgeRange } from "./age-range.js";
 import { renderCommunityMap } from "./map.js";
+import { loadReviewCatalog } from "./review-catalog.js";
+import { createCoverLookup, renderTopBooks } from "./top-books.js";
 
 export function createMatchmakingApp({ client, document, window, fetch = window.fetch.bind(window) }) {
   const $ = (selector) => document.querySelector(selector);
@@ -25,6 +27,8 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   let communityRequest = 0;
   const autocompletes = [];
   const ageRange = attachAgeRange($(".age-range"));
+  const loadCover = createCoverLookup(client, window);
+  let reviewCatalog;
 
   try { selectedIntent = window.localStorage.getItem("zebra-matchmaking-intent") || ""; } catch { /* Storage is optional. */ }
   if (!Object.hasOwn(INTENTS, selectedIntent)) selectedIntent = "";
@@ -96,7 +100,8 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     const descriptions = ["The basics, before the book.", "A little shelf that says a lot about you.", "Tell us what a good connection looks like."];
     text("#onboarding-title", titles[index]);
     text("#form-description", descriptions[index]);
-    text("#next-step", index === 2 ? (profile ? "Save changes" : "Create my profile") : "Continue →");
+    text("#next-step-label", index === 2 ? (profile ? "Save changes" : "Create my profile") : "Continue");
+    $("#next-step-arrow").toggleAttribute("hidden", index === 2);
     $("#previous-step").hidden = index === 0;
     $("#cancel-edit").hidden = !profile;
     $("#form-error").hidden = true;
@@ -181,7 +186,13 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     link.href = url;
     link.target = "_blank";
     link.rel = "noopener noreferrer";
-    link.textContent = "View LinkedIn page ↗";
+    link.textContent = "View LinkedIn page ";
+    const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    icon.setAttribute("class", "icon-arrow"); icon.setAttribute("viewBox", "0 0 24 24");
+    icon.setAttribute("aria-hidden", "true"); icon.setAttribute("focusable", "false");
+    const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+    use.setAttribute("href", "/assets/icons.svg#arrow-up-right");
+    icon.append(use); link.append(icon);
     paragraph.append(link);
     group.append(heading, paragraph);
     container.append(group);
@@ -262,22 +273,16 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
 
   async function loadCommunity(version) {
     const request = ++communityRequest;
-    const list = $("#top-books-list");
     try {
-      const { data, error } = await client.rpc("get_matchmaking_community");
+      const [{ data, error }, catalog] = await Promise.all([
+        client.rpc("get_matchmaking_community"), reviewCatalog ||= loadReviewCatalog(fetch),
+      ]);
       if (version !== generation || request !== communityRequest) return;
       if (error || !data) throw error || new Error("No community data");
       renderCommunityMap(document, data);
-      list.replaceChildren();
-      (data.top_books || []).forEach((book, index) => {
-        const item = document.createElement("li");
-        const rank = document.createElement("span"); rank.className = "book-rank"; rank.textContent = String(index + 1).padStart(2, "0");
-        const info = document.createElement("div");
-        const title = document.createElement("span"); title.className = "ranked-book-title"; title.textContent = book.title;
-        const author = document.createElement("span"); author.className = "ranked-book-author"; author.textContent = book.author;
-        const votes = document.createElement("span"); votes.className = "book-votes"; votes.textContent = `${book.votes} ${book.votes === 1 ? "reader" : "readers"}`;
-        info.append(title, author); item.append(rank, info, votes); list.append(item);
-      });
+      const coverWork = renderTopBooks(document, data.top_books || [], catalog, loadCover);
+      pending.add(coverWork);
+      void coverWork.finally(() => pending.delete(coverWork));
       text("#top-books-status", data.top_books?.length ? "" : "The first favorites will appear here as readers join.");
     } catch {
       if (version !== generation || request !== communityRequest) return;
@@ -369,7 +374,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     setMutationBusy(true);
     form.inert = true;
     $("#next-step").disabled = true;
-    text("#next-step", "Saving…");
+    text("#next-step-label", "Saving…");
     try {
       const table = client.from(PROFILE_TABLE);
       const query = profile ? table.update(values).eq("user_id", user.id) : table.insert({ ...values, user_id: user.id });
@@ -390,7 +395,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     } finally {
       form.inert = false;
       $("#next-step").disabled = false;
-      text("#next-step", profile ? "Save changes" : "Create my profile");
+      text("#next-step-label", profile ? "Save changes" : "Create my profile");
       setMutationBusy(false);
     }
   });

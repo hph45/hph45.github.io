@@ -54,7 +54,7 @@ const ISBN_COVER_OVERRIDES = new Map([
   ["review-22", { isbn: "9781546171461", provider: "Open Library" }],
   ["review-21", { isbn: "9780140449266", provider: "Penguin Random House" }],
   ["review-02", { isbn: "9780141191461", provider: "Open Library" }],
-  ["review-01", { isbn: "9780143039426", provider: "Penguin Random House" }],
+  ["review-01", { isbn: "9780140455106", provider: "Penguin Random House" }],
 ]);
 
 function parseCsv(text) {

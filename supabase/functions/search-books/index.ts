@@ -24,14 +24,15 @@ Deno.serve(createBookSearchHandler({
   },
   async search(query) {
     const url = new URL("https://openlibrary.org/search.json");
-    url.search = new URLSearchParams({ q: query, fields: "key,title,author_name", limit: "8", lang: "en" }).toString();
+    url.search = new URLSearchParams({ q: query, fields: "key,title,author_name,cover_i", limit: "8", lang: "en" }).toString();
     const response = await fetch(url, { headers: { "User-Agent": "ZebraBookClub/1.0 (henry@zebrabookclub.com)", "email": "henry@zebrabookclub.com" }, signal: AbortSignal.timeout(10000) });
     if (!response.ok) throw new Error("Book service unavailable");
     return response.json();
   },
   async save(query, books) {
     if (books.length) {
-      const { error } = await admin.from("matchmaking_books").upsert(books, { onConflict: "work_id" });
+      const catalog = books.map(({ work_id, title, author }) => ({ work_id, title, author }));
+      const { error } = await admin.from("matchmaking_books").upsert(catalog, { onConflict: "work_id" });
       if (error) throw error;
     }
     const { error } = await admin.from("matchmaking_book_search_cache").upsert({ query, results: books, expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() });
