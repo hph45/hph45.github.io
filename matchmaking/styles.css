@@ -82,6 +82,7 @@ input[readonly], fieldset:disabled input, fieldset:disabled textarea { backgroun
 .affiliate-note { margin: 14px 0 0; font-size: 12px; color: var(--muted); }
 .data-credits { font-size: 11px; }
 .dashboard-heading h1, .profile-card h2, .favorite-book h3 { overflow-wrap: anywhere; }
+#dashboard-title:focus { outline: none; }
 @media (max-width:960px) {
   .community-grid { gap: 24px; }
   .community-map { padding: 22px 18px 16px; }
