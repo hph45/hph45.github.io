@@ -1,2 +1,9 @@
 .skill-tree-private/
-st/analyses/
+# Private archives belong outside this public website repository.
+skill-tree-local/
+node_modules/
+.env
+.env.*
+!.env.example
+supabase/.temp/
+supabase/.branches/

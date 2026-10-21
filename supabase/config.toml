@@ -1,0 +1,13 @@
+project_id = "zebra-matchmaking"
+
+[auth]
+site_url = "https://zebrabookclub.com/matchmaking/"
+additional_redirect_urls = ["http://127.0.0.1:8080/matchmaking/", "http://localhost:8080/matchmaking/"]
+
+# The handler validates every caller's access token with Auth.getUser itself.
+# It returns 401 without a verified user session, even with a publishable API key.
+[functions.delete-matchmaking-account]
+verify_jwt = false
+
+[functions.search-books]
+verify_jwt = false

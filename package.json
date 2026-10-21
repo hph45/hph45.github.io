@@ -1,0 +1,20 @@
+{
+  "name": "zebra-book-club",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:matchmaking": "esbuild matchmaking/src/app.js --bundle --format=esm --target=es2022 --minify --outfile=matchmaking/app.js",
+    "test:matchmaking": "node --test matchmaking/tests/*.test.mjs",
+    "supabase": "supabase"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.118.0",
+    "d3-geo": "3.1.1"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.11",
+    "esbuild": "0.28.2",
+    "happy-dom": "21.0.4",
+    "supabase": "2.121.0"
+  }
+}

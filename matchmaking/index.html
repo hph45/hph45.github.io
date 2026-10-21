@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/jpeg" href="/zebra%20white.jpeg">
+  <title>Matchmaking | Zebra Book Club</title>
+  <meta name="description" content="Meet through the books you love. Find romance, friends, or business partners with Zebra Book Club.">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <link rel="stylesheet" href="./styles.css?v=20261021.2">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">Zebra Book Club<span> / Matchmaking</span></a>
+    <div id="account-tools" class="account-tools" hidden>
+      <span id="account-name"></span>
+      <button id="sign-out" class="text-button" type="button">Sign out</button>
+    </div>
+    <a id="back-to-club" class="text-link" href="/">Back to the club <span aria-hidden="true">↗</span></a>
+  </header>
+
+  <main>
+    <div id="notice" class="notice" role="alert" tabindex="-1" hidden></div>
+
+    <section id="welcome-view" aria-labelledby="welcome-title">
+      <div class="welcome-grid">
+        <div class="welcome-copy">
+          <p class="eyebrow">A meeting of minds</p>
+          <h1 id="welcome-title">Good books.<br><em>Better company.</em></h1>
+          <p class="lede">Some connections begin with a hello.<br>Ours begin with a favorite book.</p>
+          <p class="choice-label" id="intent-label">What are you looking for?</p>
+          <div class="intent-choices" role="group" aria-labelledby="intent-label">
+            <button type="button" class="intent-choice" data-intent="romance" aria-pressed="false"><span aria-hidden="true">♡</span>Romance</button>
+            <button type="button" class="intent-choice" data-intent="friends" aria-pressed="false"><span aria-hidden="true">↔</span>Friends</button>
+            <button type="button" class="intent-choice" data-intent="business_partners" aria-pressed="false"><span aria-hidden="true">✧</span>Business partners</button>
+          </div>
+          <button id="google-sign-in" class="google-button" type="button" disabled>
+            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 48 48"><path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.2H24v7.9h11a9.4 9.4 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.8 6.1-15Z"/><path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.9l-6.6-5.1c-1.8 1.2-4.1 1.9-6.9 1.9-5.3 0-9.8-3.6-11.4-8.4H5.8v5.3A20.4 20.4 0 0 0 24 44Z"/><path fill="#FBBC05" d="M12.6 27.5a12.2 12.2 0 0 1 0-7V15.2H5.8a20.4 20.4 0 0 0 0 17.6l6.8-5.3Z"/><path fill="#EA4335" d="M24 12.1c3 0 5.6 1 7.7 3l5.8-5.8A19.4 19.4 0 0 0 24 4 20.4 20.4 0 0 0 5.8 15.2l6.8 5.3C14.2 15.7 18.7 12.1 24 12.1Z"/></svg>
+            <span id="google-button-label">Checking sign-in…</span>
+          </button>
+          <p id="sign-in-status" class="small-copy" role="status" hidden>Google sign-in is being set up. Please check back soon.</p>
+          <p class="small-copy">For readers 18 and over. You choose what comes next.</p>
+          <p class="small-copy legal-notice">By continuing with Google, you agree to our <a href="/terms/" target="_blank" rel="noopener">Terms of Service</a>. Read our <a href="/privacy/" target="_blank" rel="noopener">Privacy Policy</a> to learn how your information is used.</p>
+        </div>
+        <div class="book-art" aria-hidden="true">
+          <div class="book-spine">ZEBRA BOOK CLUB</div>
+          <div class="book-cover">
+            <p class="cover-kicker">The beginning of something</p>
+            <div class="cover-rule"></div>
+            <p class="cover-title">On the<br>same<br><em>page.</em></p>
+            <div class="cover-star">✳</div>
+            <p class="cover-footer">A new chapter, together.</p>
+          </div>
+          <div class="book-pages"></div>
+        </div>
+      </div>
+      <div class="how-it-works">
+        <div><span class="step-number">01</span><h2>Tell us your story.</h2><p>A little about you, and a book that stayed with you.</p></div>
+        <div><span class="step-number">02</span><h2>Find your kind of connection.</h2><p>Romance, friends, or someone to build something with.</p></div>
+        <div><span class="step-number">03</span><h2>Meet your next chapter.</h2><p>Weekly introductions are coming soon. Start with your profile.</p></div>
+      </div>
+    </section>
+
+    <section id="loading-view" class="loading-view" aria-live="polite" hidden><p class="eyebrow">Zebra matchmaking</p><h1>Opening your chapter…</h1></section>
+
+    <section id="error-view" class="loading-view" hidden>
+      <p class="eyebrow">A small interruption</p><h1>We couldn’t load your profile.</h1>
+      <p>Your sign-in is safe. Please try again in a moment.</p>
+      <button id="retry-profile" type="button" class="button">Try again</button>
+    </section>
+
+    <section id="onboarding-view" class="onboarding" aria-labelledby="onboarding-title" hidden>
+      <div class="form-intro">
+        <p class="eyebrow" id="form-eyebrow">Your first chapter</p>
+        <h1 id="onboarding-title" tabindex="-1">A little about you.</h1>
+        <p id="form-description">The basics, before the book.</p>
+        <ol class="form-progress" aria-label="Profile steps">
+          <li data-progress="0" aria-current="step"><span>01</span>You</li>
+          <li data-progress="1"><span>02</span>Your books</li>
+          <li data-progress="2"><span>03</span>Your people</li>
+        </ol>
+        <p class="privacy-note">Your birthday and email stay private. The member map shows anonymous city totals, and the community shelf counts favorite books. Your name and introduction answers are shared only with your matches.</p>
+      </div>
+      <form id="profile-form" class="profile-form">
+        <fieldset data-step="0">
+          <legend class="visually-hidden">About you</legend>
+          <label>What are you looking for?<select name="intent" id="profile-intent" required><option value="">Choose your connection</option><option value="romance">Romance</option><option value="friends">Friends</option><option value="business_partners">Business partners</option></select></label>
+          <label>What should we call you?<input name="display_name" autocomplete="given-name" maxlength="60" required placeholder="Your first name"></label>
+          <label>Birthday<input name="birth_date" type="date" required aria-describedby="birthday-help"><span id="birthday-help" class="field-help">You must be 18 or older. Only your age is shown to a match.</span></label>
+          <input name="city_id" type="hidden">
+          <label>City or nearby city<input name="city" maxlength="200" required placeholder="Start typing your city"><span class="field-help">Choose a suggestion. Your map dot represents the city, never your address.</span></label>
+          <div class="field-pair"><label>State / region<input name="region" maxlength="200" readonly></label><label>Country<input name="country" maxlength="200" readonly required></label></div>
+        </fieldset>
+        <fieldset data-step="1" hidden disabled>
+          <legend class="visually-hidden">Your favorite books</legend>
+          <p class="field-help">Choose one to three favorite books. Only the first is required. Search by title or author, then choose a suggestion. You can change your picks once every 24 hours.</p>
+          <input name="favorite_book_id" type="hidden">
+          <label>01 — Your favorite book<input name="favorite_book" maxlength="300" required placeholder="Search for a book or author"></label>
+          <label>Author<input name="favorite_author" maxlength="300" required readonly></label>
+          <input name="favorite_book_2_id" type="hidden">
+          <label>02 — Another favorite <span class="optional">(optional)</span><input name="favorite_book_2" maxlength="300" placeholder="Search for a book or author"></label>
+          <label>Author<input name="favorite_author_2" maxlength="300" readonly></label>
+          <input name="favorite_book_3_id" type="hidden">
+          <label>03 — One more <span class="optional">(optional)</span><input name="favorite_book_3" maxlength="300" placeholder="Search for a book or author"></label>
+          <label>Author<input name="favorite_author_3" maxlength="300" readonly></label>
+        </fieldset>
+        <p id="books-lock-note" class="book-lock-note" role="status" hidden></p>
+        <fieldset data-step="2" hidden disabled>
+          <legend class="visually-hidden">Your connection preferences</legend>
+          <label>Where would you like to connect?<select name="location_preference" required><option value="same_city">In my city or metro area</option><option value="anywhere">I’m open to anywhere</option></select></label>
+          <fieldset data-preferences="romance" hidden disabled>
+            <legend class="visually-hidden">Romance preferences</legend>
+            <label>Your gender<select name="gender" id="gender" required><option value="">Choose an option</option><option value="woman">Woman</option><option value="man">Man</option><option value="nonbinary">Nonbinary</option><option value="self_described">I describe myself another way</option></select></label>
+            <label id="gender-description-label" hidden>How do you describe your gender?<input name="gender_description" maxlength="80" disabled></label>
+            <fieldset class="checkbox-group"><legend>Who would you like to meet?</legend>
+              <label><input type="checkbox" name="interested_in" value="woman">Women</label><label><input type="checkbox" name="interested_in" value="man">Men</label><label><input type="checkbox" name="interested_in" value="nonbinary">Nonbinary people</label><label><input type="checkbox" name="interested_in" value="self_described">People of other gender identities</label>
+              <span class="field-help">Choose all that apply. These preferences stay private.</span>
+            </fieldset>
+            <div class="field-pair"><label>Minimum age<input name="age_min" type="number" min="18" max="120" value="18" required></label><label>Maximum age<input name="age_max" type="number" min="18" max="120" value="99" required></label></div>
+          </fieldset>
+          <fieldset data-preferences="friends" hidden disabled><legend class="visually-hidden">Friendship preferences</legend><label>What would you enjoy doing together?<textarea name="friendship_interests" rows="4" minlength="5" maxlength="600" required placeholder="Bookshop afternoons, hiking, spirited debates over coffee…"></textarea></label></fieldset>
+          <fieldset data-preferences="business_partners" hidden disabled>
+            <legend class="visually-hidden">Business partner preferences</legend>
+            <label>What are you working on, or hoping to build?<textarea name="business_about" rows="3" minlength="5" maxlength="600" required></textarea></label>
+            <label>What skills or experience do you bring?<textarea name="business_skills" rows="3" minlength="5" maxlength="600" required></textarea></label>
+            <label>What are you looking for in a partner?<textarea name="business_seeking" rows="3" minlength="5" maxlength="600" required></textarea></label>
+          </fieldset>
+          <div class="consent-fields">
+            <p class="field-help">Read our <a href="/privacy/" target="_blank" rel="noopener">Privacy Policy</a> and <a href="/terms/" target="_blank" rel="noopener">Terms of Service</a> before creating your profile.</p>
+            <label class="checkbox-label"><input name="profile_consent" type="checkbox" required><span>I’m happy to share my profile with my matches, and include my city and book picks in anonymous community totals.</span></label>
+            <label class="checkbox-label"><input name="email_matches" type="checkbox"><span>Email me when a match is ready.<small>You can turn these emails off at any time.</small></span></label>
+          </div>
+        </fieldset>
+        <p id="form-error" class="form-error" role="alert" hidden></p>
+        <div class="form-actions"><button id="previous-step" class="text-button" type="button" hidden>← Back</button><button id="cancel-edit" class="text-button" type="button" hidden>Cancel</button><button id="next-step" class="button" type="submit">Continue <span aria-hidden="true">→</span></button></div>
+      </form>
+    </section>
+
+    <section id="dashboard-view" class="dashboard" aria-labelledby="dashboard-title" hidden>
+      <div class="dashboard-heading"><div><p class="eyebrow">Your chapter</p><h1 id="dashboard-title" tabindex="-1">You’re in good company.</h1></div></div>
+      <div class="community-grid">
+        <section class="community-map" aria-labelledby="map-title">
+          <div class="map-heading"><div><p class="eyebrow">A world of readers</p><h2 id="map-title">On the same page.</h2></div><p class="member-total"><strong id="member-count">—</strong><span id="member-count-label">readers in the club</span></p></div>
+          <svg id="world-map" viewBox="0 0 1000 500" role="group" aria-labelledby="world-map-title"><title id="world-map-title">Member locations by city</title><image href="./world-outline.svg" width="1000" height="500"/><g id="map-markers"></g></svg>
+          <div class="map-caption"><p id="map-selection" role="status">Loading our community…</p><span>Anonymous dots · City locations</span></div>
+        </section>
+        <section class="community-books" aria-labelledby="top-books-title"><div class="card-heading"><h2 id="top-books-title">Top Ten</h2></div><ol id="top-books-list" class="top-books-list" aria-label="Most selected favorite books"></ol><p id="top-books-status" class="small-copy" role="status">Loading favorite books…</p></section>
+      </div>
+      <div class="dashboard-grid">
+        <article class="profile-card">
+          <div class="card-heading"><p class="eyebrow">Your profile</p><button id="edit-profile" class="text-button" type="button">Edit profile ↗</button></div>
+          <p id="profile-category" class="category-label"></p><h2 id="profile-name"></h2><p id="profile-location" class="muted"></p>
+          <div class="favorite-book"><p class="eyebrow">Your bookshelf</p><h3 id="profile-book"></h3><p id="profile-author"></p><div id="profile-extra-books"></div><p id="book-edit-status" class="small-copy"></p></div>
+          <div id="profile-preferences" class="profile-preferences"></div>
+        </article>
+        <aside class="preferences-card">
+          <p class="eyebrow">At your own pace</p><h2>Leave room for a new chapter.</h2><p>Weekly introductions are coming soon. Your profile is the first step.</p>
+          <div class="account-setting"><div><h3>Matchmaking</h3><p id="participation-description"></p></div><button id="pause-matching" class="button button-secondary" type="button">Pause</button></div>
+          <label class="checkbox-label email-setting"><input id="email-preference" type="checkbox"><span>Email me when a match is ready.</span></label>
+          <p class="small-copy">Signed in as <span id="account-email"></span></p>
+        </aside>
+      </div>
+      <section class="matches-section" aria-labelledby="matches-title"><div class="card-heading"><h2 id="matches-title">Your matches</h2><span class="eyebrow">A little serendipity</span></div><div id="matches-list" aria-live="polite"></div></section>
+      <div class="account-footer"><p>Need a hand? <a href="mailto:henry@zebrabookclub.com">Get in touch.</a></p><button id="delete-account" class="text-button" type="button">Delete my account</button></div>
+    </section>
+  </main>
+
+  <dialog id="delete-dialog" aria-labelledby="delete-title"><form id="delete-form"><p class="eyebrow">Close this chapter</p><h2 id="delete-title">Delete your account?</h2><p>This permanently removes your matchmaking profile, preferences, and match memberships. Your Google account is unchanged.</p><label>Type DELETE to confirm<input id="delete-confirmation" autocomplete="off" required pattern="DELETE"></label><p id="delete-error" class="form-error" role="alert" hidden></p><div class="form-actions"><button id="cancel-delete" class="text-button" type="button">Keep my account</button><button id="confirm-delete" class="button" type="submit">Delete account</button></div></form></dialog>
+  <footer class="site-footer"><span>© 2026 Zebra Book Club</span><nav class="legal-links" aria-label="Legal"><a href="/privacy/" target="_blank" rel="noopener">Privacy</a><a href="/terms/" target="_blank" rel="noopener">Terms</a></nav><span class="data-credits">Books: <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">Open Library</a> · Cities: <a href="https://www.geonames.org" target="_blank" rel="noopener noreferrer">GeoNames</a> · Map: <a href="https://naturalearthdata.com" target="_blank" rel="noopener noreferrer">Natural Earth</a></span></footer>
+  <noscript><p class="notice">Please enable JavaScript to sign in and create your matchmaking profile.</p></noscript>
+  <script type="module" src="./app.js?v=20261021.2"></script>
+</body>
+</html>

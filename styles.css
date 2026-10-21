@@ -162,9 +162,12 @@ h1 {
 }
 
 .hero-title {
+  --hero-font-size: clamp(2.5rem, 10vw, 7.5rem);
   margin: 0;
   display: grid;
   justify-items: center;
+  max-width: 100%;
+  font-size: var(--hero-font-size);
   line-height: 0.92;
 }
 
@@ -176,14 +179,32 @@ h1 {
 
 .hero-word > span {
   display: inline-block;
-  font-size: clamp(4rem, 10vw, 7.5rem);
+  font-size: var(--hero-font-size);
 }
 
 .hero-title--outline .hero-word > span {
-  color: transparent;
+  color: var(--bg);
   -webkit-text-stroke: 1px #000000;
   animation: outline-letter 6600ms ease-in-out infinite;
   animation-delay: calc(var(--letter-index) * 150ms);
+}
+
+.hero-announcement {
+  margin-top: 26px;
+  font-size: clamp(1.25rem, 2.5vw, 1.6rem);
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+.hero-cta {
+  margin: 28px 0 0;
+  font-size: 1.1rem;
+  line-height: 1.5;
+}
+
+.hero-cta .info-link {
+  display: inline-block;
+  padding: 10px 0 4px;
 }
 
 h2 {
@@ -834,6 +855,16 @@ h2 {
   color: var(--muted);
 }
 
+.site-footer .legal-links {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 14px;
+  font-size: 0.9rem;
+  color: var(--muted);
+  text-underline-offset: 4px;
+}
+
 @keyframes slideDown {
   from {
     opacity: 0;
@@ -847,28 +878,21 @@ h2 {
 }
 
 @keyframes outline-letter {
-  0% {
-    color: transparent;
+  0%,
+  100% {
+    color: var(--bg);
     transform: scale(0.98);
   }
 
-  24% {
-    color: transparent;
+  24%,
+  82% {
+    color: var(--bg);
   }
 
   38%,
   66% {
-    color: #000000;
+    color: var(--text);
     transform: scale(1);
-  }
-
-  82% {
-    color: transparent;
-  }
-
-  100% {
-    color: transparent;
-    transform: scale(0.98);
   }
 }
 
@@ -890,7 +914,7 @@ h2 {
 
   .hero-title--outline .hero-word > span {
     animation: none;
-    color: #000000;
+    color: var(--text);
   }
 
   .event-card {
@@ -938,8 +962,8 @@ h2 {
   .hero {
     min-height: calc(100vh - 56px);
     justify-content: flex-start;
-    padding-top: 20px;
-    padding-bottom: 12px;
+    padding-top: 48px;
+    padding-bottom: 40px;
   }
 
   .eyebrow,
@@ -955,11 +979,12 @@ h2 {
     line-height: 0.98;
   }
 
-  .hero h3 {
-    margin: 0;
-    font-size: 1.05rem;
-    font-weight: 400;
-    line-height: 1.1;
+  .hero-announcement {
+    margin-top: 20px;
+  }
+
+  .hero-cta {
+    margin-top: 18px;
   }
 
   h2 {
@@ -1054,10 +1079,10 @@ h2 {
 
   .hero-actions {
     display: grid;
-    gap: 12px;
-    width: 100%;
-    margin-top: 20px;
-    margin-bottom: 18px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    width: min(420px, 100%);
+    margin-top: 32px;
     padding-top: 0;
   }
 
@@ -1065,11 +1090,12 @@ h2 {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 56px;
+    min-height: 48px;
     width: 100%;
+    padding: 10px;
     border: 1px solid var(--text);
     background: var(--bg);
-    font-size: 1.05rem;
+    font-size: 0.95rem;
   }
 
   .reviews-shell {
@@ -1178,6 +1204,20 @@ h2 {
 }
 
 @media (min-width: 641px) and (max-width: 960px) {
+  .site-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .site-nav {
+    justify-content: center;
+    gap: 10px 20px;
+  }
+
+  .section {
+    scroll-margin-top: 128px;
+  }
+
   .bookstore-info {
     grid-template-columns: minmax(0, 1fr);
   }

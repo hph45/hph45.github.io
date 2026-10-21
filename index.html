@@ -7,13 +7,8 @@
   <title>Zebra Book Club</title>
   <meta
     name="description"
-    content="Zebra Bookstore is open in San Francisco!"
+    content="Book-based matchmaking is now open! Visit the matchmaking platform from Zebra Book Club."
   >
-  <script>
-    if (window.location.hash.toLowerCase() === "#st") {
-      window.location.replace("/st/");
-    }
-  </script>
   <link rel="stylesheet" href="styles.css">
 </head>
 <!-- RAHHH ZEBRA BOOK CLUB, FOLLOW THE INSTA -->
@@ -30,98 +25,56 @@
   <header class="site-header">
     <a class="brand" href="#top">Zebra Book Club</a>
     <nav class="site-nav" aria-label="Primary">
-      <a href="#bookstore">Bookstore</a>
+      <a href="/matchmaking/">Matchmaking</a>
       <a href="#reviews">Reviews</a>
       <a href="#podcast">Podcast</a>
       <a href="#socials">Socials</a>
+      <a href="#bookstore">Bookstore</a>
       <a href="#contact">Contact</a>
     </nav>
   </header>
 
   <main id="top">
     <section class="hero section reveal is-visible">
-      <!-- <p class="eyebrow">San Francisco</p> -->
-      <h3> </h3>
-      <div class="hero-actions" aria-label="Quick links">
-        <a class="hero-action" href="#bookstore">Bookstore</a>
+      <h1 class="hero-title hero-title--outline" aria-label="Book-based matchmaking is now open!">
+        <span class="hero-word" aria-hidden="true">
+          <span style="--letter-index: 0">B</span>
+          <span style="--letter-index: 1">o</span>
+          <span style="--letter-index: 2">o</span>
+          <span style="--letter-index: 3">k</span>
+          <span style="--letter-index: 4">-</span>
+          <span style="--letter-index: 5">b</span>
+          <span style="--letter-index: 6">a</span>
+          <span style="--letter-index: 7">s</span>
+          <span style="--letter-index: 8">e</span>
+          <span style="--letter-index: 9">d</span>
+        </span>
+        <span class="hero-word" aria-hidden="true">
+          <span style="--letter-index: 11">m</span>
+          <span style="--letter-index: 12">a</span>
+          <span style="--letter-index: 13">t</span>
+          <span style="--letter-index: 14">c</span>
+          <span style="--letter-index: 15">h</span>
+          <span style="--letter-index: 16">m</span>
+          <span style="--letter-index: 17">a</span>
+          <span style="--letter-index: 18">k</span>
+          <span style="--letter-index: 19">i</span>
+          <span style="--letter-index: 20">n</span>
+          <span style="--letter-index: 21">g</span>
+        </span>
+        <span class="hero-announcement" aria-hidden="true">is now open!</span>
+      </h1>
+      <p class="hero-cta">
+        <a class="info-link" href="/matchmaking/">Matchmaking platform <span aria-hidden="true">&#8599;</span></a>
+      </p>
+      <nav class="hero-actions" aria-label="Quick links">
+        <a class="hero-action" href="/matchmaking/">Matchmaking</a>
         <a class="hero-action" href="#reviews">Reviews</a>
         <a class="hero-action" href="#podcast">Podcast</a>
         <a class="hero-action" href="#socials">Socials</a>
+        <a class="hero-action" href="#bookstore">Bookstore</a>
         <a class="hero-action" href="#contact">Contact</a>
-      </div>
-      <h1 class="hero-title hero-title--outline">
-        <span class="hero-word" aria-label="Zebra">
-          <span style="--letter-index: 0">Z</span>
-          <span style="--letter-index: 1">e</span>
-          <span style="--letter-index: 2">b</span>
-          <span style="--letter-index: 3">r</span>
-          <span style="--letter-index: 4">a</span>
-        </span>
-        <span class="hero-word" aria-label="Bookstore">
-          <span style="--letter-index: 6">B</span>
-          <span style="--letter-index: 7">o</span>
-          <span style="--letter-index: 8">o</span>
-          <span style="--letter-index: 9">k</span>
-          <span style="--letter-index: 10">s</span>
-          <span style="--letter-index: 11">t</span>
-          <span style="--letter-index: 12">o</span>
-          <span style="--letter-index: 13">r</span>
-          <span style="--letter-index: 14">e</span>
-        </span>
-      </h1>
-      <h3>is now open!</h3>
-      <p class="copy">
-        We're thrilled to announce our bookstore is open in downtown San Francisco. Stop by to find your next favorite book! Scroll down for details.
-      </p>
-    </section>
-
-    <section class="section reveal" id="bookstore">
-      <p class="section-label">Bookstore</p>
-      <h2>Discover your next favorite book.</h2>
-      <p class="section-copy">
-        Zebra Bookstore is a used bookstore in downtown San Francisco where you can find any kind of book you might want.
-      </p>
-      <div class="bookstore-info">
-        <div class="hours-card" aria-label="Bookstore hours">
-          <p class="hours-title">Open hours</p>
-          <p>Monday: 6:30am - 8am, 10am - 3pm</p>
-          <p>Tuesday: 6:30am - 8am, 10am - 3pm</p>
-          <p>Wednesday: 6:30am - 8am, 10am - 3pm</p>
-          <p>Thursday: 6:30am - 8am, 10am - 3pm</p>
-          <p>Friday: 6:30am - 8am, 10am - 3pm</p>
-          <p>Saturday: 12pm - 5pm</p>
-          <p>Sunday: Closed</p>
-        </div>
-        <div class="map-card">
-          <iframe
-            class="map-frame"
-            title="Zebra Book Store map"
-            loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade"
-            src="https://www.google.com/maps?q=Zebra%20Bookstore%2C%20San%20Francisco&ll=37.7956037,-122.4037604&z=17&output=embed"
-          ></iframe>
-        </div>
-      </div>
-      <div class="events-shell">
-        <p class="events-label">Upcoming events</p>
-        <div class="events-belt" aria-label="Upcoming event schedule">
-          <button class="events-arrow" id="events-prev" type="button" aria-label="Previous events">
-            &#8592;
-          </button>
-          <div class="events-viewport" id="events-viewport" aria-live="polite">
-            <div class="events-track" id="events-track">
-              <article class="event-card event-card--placeholder">
-                <p class="event-date">Loading</p>
-                <h3>Building the events calendar.</h3>
-                <p class="event-detail">TBD</p>
-              </article>
-            </div>
-          </div>
-          <button class="events-arrow" id="events-next" type="button" aria-label="Next events">
-            &#8594;
-          </button>
-        </div>
-      </div>
+      </nav>
     </section>
 
     <section class="section reveal" id="reviews">
@@ -215,14 +168,37 @@
 
     <section class="section reveal" id="socials">
       <p class="section-label">Socials</p>
-      <h2>Follow the opening as it takes shape.</h2>
+      <h2>Keep up with Zebra Book Club.</h2>
       <p class="section-copy">
         Follow Zebra Book Club on
         <a class="inline-link" href="https://www.instagram.com/zebrabookclub/" target="_blank" rel="noreferrer">
           Instagram
         </a>
-        for updates, events, and opening announcements.
+        for books, events, and club updates.
       </p>
+    </section>
+
+    <section class="section reveal" id="bookstore">
+      <p class="section-label">Bookstore</p>
+      <h2>Our San Francisco bookstore.</h2>
+      <p class="section-copy">
+        Zebra Bookstore is our used bookstore in downtown San Francisco.
+      </p>
+      <div class="bookstore-info">
+        <div class="hours-card" aria-label="Bookstore status">
+          <p class="hours-title">Currently closed</p>
+          <p>The bookstore is currently closed. Follow our <a class="inline-link" href="#socials">socials</a> for updates.</p>
+        </div>
+        <div class="map-card">
+          <iframe
+            class="map-frame"
+            title="Zebra Book Store map"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            src="https://www.google.com/maps?q=Zebra%20Bookstore%2C%20San%20Francisco&ll=37.7956037,-122.4037604&z=17&output=embed"
+          ></iframe>
+        </div>
+      </div>
     </section>
 
     <section class="section reveal" id="contact">
@@ -270,6 +246,7 @@
   </dialog>
   <footer class="site-footer">
     <p>&copy; 2026 Zebra Book Club</p>
+    <nav class="legal-links" aria-label="Legal"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a></nav>
   </footer>
   <script src="script.js"></script>
 </body>
