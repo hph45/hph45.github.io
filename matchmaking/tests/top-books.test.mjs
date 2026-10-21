@@ -5,7 +5,7 @@ import { Window } from "happy-dom";
 import { bookPresentation, createReviewCatalog, loadReviewCatalog } from "../src/review-catalog.js";
 import { coverURL, createCoverLookup, renderTopBooks } from "../src/top-books.js";
 
-const catalog = createReviewCatalog(...await Promise.all(["reviews.csv", "book_club_current.csv", "assets/review-covers/sources.csv"].map(file => readFile(new URL(`../../${file}`, import.meta.url), "utf8"))));
+const catalog = createReviewCatalog(...await Promise.all(["reviews.csv", "book_club_current.csv", "assets/review-covers/sources.csv", "matchmaking/books.csv"].map(file => readFile(new URL(`../../${file}`, import.meta.url), "utf8"))));
 
 test("current favorites reuse their review covers and exact affiliate links, including original-language work IDs", () => {
   const examples = [
@@ -19,6 +19,31 @@ test("current favorites reuse their review covers and exact affiliate links, inc
   for (const [work_id, title, author, episode, link] of examples) {
     assert.deepEqual(bookPresentation({ work_id, title, author }, catalog), { cover: `/assets/review-covers/review-${episode}.jpg`, url: `https://amzn.to/${link}`, affiliate: true });
   }
+});
+
+test("curated favorites use the supplied Amazon short links and local covers", () => {
+  for (const [work_id, title, author, slug, link] of [
+    ["OL1095427W", "Jane Eyre", "Charlotte Brontë", "jane-eyre", "B095C7mY1"],
+    ["OL42543873W", "Alchemised", "SenLinYu", "alchemised", "B03RDERzW"],
+  ]) {
+    assert.deepEqual(bookPresentation({ work_id, title, author }, catalog), { cover: `/assets/matchmaking-covers/${slug}.jpg`, url: `https://link.amazon/${link}`, affiliate: true });
+  }
+});
+
+test("a curated link can reuse a review cover, while invalid destinations keep the fallback", () => {
+  const reviews = createReviewCatalog('51,Pierce Brown,Iron Gold,,,,', "", "", [
+    'work_id,title,author,amazon_url,cover',
+    'OL19726995W,Iron Gold,Pierce Brown,https://link.amazon/example,',
+    'OL1W,Unreviewed book,An author,https://link.amazon.evil.example/book,https://untrusted.example/cover.jpg',
+  ].join('\n'));
+  assert.equal(reviews.length, 2, "the reviewed work is enriched instead of duplicated");
+  const book = { work_id: 'OL19726995W', title: 'Iron Gold', author: 'Pierce Brown' };
+  assert.deepEqual(bookPresentation(book, reviews), { cover: '/assets/review-covers/review-51.jpg', url: 'https://link.amazon/example', affiliate: true });
+  assert.equal(bookPresentation({ ...book, work_id: 'OL2W' }, reviews).affiliate, true, "title-and-author matching still works");
+  const unknown = bookPresentation({ work_id: 'OL1W', title: 'Unreviewed book', author: 'An author' }, reviews);
+  assert.equal(unknown.affiliate, false);
+  assert.equal(unknown.cover, '');
+  assert.equal(new URL(unknown.url).origin, 'https://www.amazon.com');
 });
 
 test("title matching respects authors and non-Latin text; unknown books get a safely encoded Amazon search", () => {

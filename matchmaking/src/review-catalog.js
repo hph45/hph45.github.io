@@ -32,12 +32,17 @@ const reviewWorkAliases = {
 function amazonLink(value) {
   try {
     const url = new URL(value);
-    return url.protocol === "https:" && ["amzn.to", "amazon.com", "www.amazon.com"].includes(url.hostname)
+    return url.protocol === "https:" && ["amzn.to", "link.amazon", "amazon.com", "www.amazon.com"].includes(url.hostname)
       && !url.username && !url.password && !url.port ? value : "";
   } catch { return ""; }
 }
 
-export function createReviewCatalog(reviews, queue, sources) {
+function records(csv) {
+  const [headers = [], ...rows] = parseCsv(csv);
+  return rows.map(row => Object.fromEntries(headers.map((header, index) => [header, row[index] || ""])));
+}
+
+export function createReviewCatalog(reviews, queue, sources, books = "") {
   const catalog = new Map();
   for (const row of parseCsv(reviews)) {
     if (!/^\d+$/.test(row[0]?.trim()) || !row[2]?.trim()) continue;
@@ -51,21 +56,33 @@ export function createReviewCatalog(reviews, queue, sources) {
   }
   // The cover manifest connects review spellings to Open Library's work IDs and
   // canonical labels. Don't guess a book from its title alone.
-  const rows = parseCsv(sources);
-  const headers = rows.shift() || [];
-  for (const row of rows) {
-    const source = Object.fromEntries(headers.map((header, index) => [header, row[index] || ""]));
+  for (const source of records(sources)) {
     const entry = catalog.get(source.key);
     if (!entry || key(entry.title) !== key(source.title) || key(entry.author) !== key(source.author)) continue;
     const workID = source.source_page.match(/^https:\/\/openlibrary\.org\/works\/(OL\d+W)$/)?.[1];
     if (workID) entry.workIDs.push(workID);
     Object.assign(entry, { matchedTitle: source.matched_title, matchedAuthor: source.matched_author });
   }
+  // Curated assets also cover books that haven't appeared in a club review.
+  // Merge known books so adding a link can retain their existing review cover.
+  for (const book of records(books)) {
+    const workID = book.work_id?.trim(), title = clean(book.title), author = clean(book.author);
+    if (!/^OL\d+W$/.test(workID) || !title || !author) continue;
+    const matches = [...catalog.values()].filter(entry => entry.workIDs.includes(workID)
+      || (key(entry.title) === key(title) && key(entry.author) === key(author)));
+    const entry = matches.length === 1 ? matches[0] : { title, author, workIDs: [], amazon: "", cover: "" };
+    if (!entry.workIDs.includes(workID)) entry.workIDs.push(workID);
+    const amazon = amazonLink(book.amazon_url?.trim());
+    const cover = book.cover?.trim();
+    if (amazon) entry.amazon = amazon;
+    if (/^\/assets\/(?:review-covers|matchmaking-covers)\/[a-z0-9-]+\.(?:jpg|jpeg|png|webp)$/.test(cover)) entry.cover = cover;
+    if (matches.length !== 1) catalog.set(`work-${workID}`, entry);
+  }
   return [...catalog.values()];
 }
 
 export async function loadReviewCatalog(fetch) {
-  const files = ["/reviews.csv", "/book_club_current.csv", "/assets/review-covers/sources.csv"];
+  const files = ["/reviews.csv", "/book_club_current.csv", "/assets/review-covers/sources.csv", "/matchmaking/books.csv"];
   const texts = await Promise.all(files.map(async file => {
     try {
       const response = await fetch(file, { signal: AbortSignal.timeout(8000) });
