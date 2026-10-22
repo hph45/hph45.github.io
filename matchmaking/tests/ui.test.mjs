@@ -9,8 +9,8 @@ const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
 const member = { id: "00000000-0000-4000-8000-000000000001", email: "reader@example.invalid", user_metadata: { given_name: "Reader" } };
 const profile = { ...makeProfile({ display_name: "Reader", birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States", intent: "friends", favorite_book_id: "OL1W", favorite_book: "A book", favorite_author: "An author", location_preference: "same_city", friendship_interests: "Afternoons in bookshops" }), user_id: member.id };
 
-function mockClient({ signedIn = true, initialProfile = null, matches = [] } = {}) {
-  const state = { profile: initialProfile ? structuredClone(initialProfile) : null, calls: [], failNext: false, matches, session: signedIn ? { user: member } : null };
+function mockClient({ signedIn = true, initialProfile = null, matches = [], risingBooks = [], communityError = false } = {}) {
+  const state = { profile: initialProfile ? structuredClone(initialProfile) : null, calls: [], failNext: false, matches, communityError, session: signedIn ? { user: member } : null };
   const client = {
     auth: {
       getSession: async () => ({ data: { session: state.session }, error: null }),
@@ -35,7 +35,7 @@ function mockClient({ signedIn = true, initialProfile = null, matches = [] } = {
       };
       return query;
     },
-    rpc: async name => ({ data: name === "get_matchmaking_community" ? { total_members: 1, cities: [{ id: 5378538, name: "Oakland", region: "California", country: "United States", latitude: 37.8, longitude: -122.27, member_count: 1 }], top_books: [{ work_id: "OL1W", title: "A book", author: "An author", votes: 1 }] } : state.matches, error: null }),
+    rpc: async name => ({ data: name === "get_matchmaking_community" ? { total_members: 1, cities: [{ id: 5378538, name: "Oakland", region: "California", country: "United States", latitude: 37.8, longitude: -122.27, member_count: 1 }], top_books: [{ work_id: "OL1W", title: "A book", author: "An author", votes: 1 }], rising_books: risingBooks } : state.matches, error: name === "get_matchmaking_community" && state.communityError ? new Error("Unavailable") : null }),
     functions: { invoke: async () => ({ data: { deleted: true }, error: null }) },
   };
   return { client, state };
@@ -231,6 +231,24 @@ test("the dashboard renders the real count, city dots, and community book rankin
   assert.match($("#map-markers circle").getAttribute("aria-label"), /Oakland/);
   assert.match($("#top-books-list").textContent, /A book/);
   assert.match($("#top-books-list").textContent, /1 reader/);
+});
+
+test("rising favorites recover after a community error, then clear on sign-out with map zoom", async t => {
+  const { $, event, state } = await setup(t, { initialProfile: profile, communityError: true, risingBooks: [
+    { work_id: "OL2W", title: "A rising book", author: "An author" },
+  ] });
+  assert.equal($("#rising-books-list").children.length, 0);
+  assert.equal($("#rising-books-status").hidden, false);
+  assert.match($("#rising-books-status").textContent, /temporarily unavailable/);
+  state.communityError = false;
+  await event("#top-books-status button");
+  assert.match($("#rising-books-list").textContent, /A rising book/);
+  assert.equal($("#rising-books-status").hidden, true);
+  await event("#map-zoom-in");
+  assert.match($("#map-content").getAttribute("transform"), /scale\(1.5\)/);
+  await event("#sign-out");
+  assert.equal($("#rising-books-list").children.length, 0);
+  assert.match($("#map-content").getAttribute("transform"), /scale\(1\)/);
 });
 
 test("books stay locked for 24 hours while other profile details remain editable", async t => {

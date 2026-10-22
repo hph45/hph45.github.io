@@ -21,7 +21,8 @@ export function renderCommunityMap(document, community) {
     const memberCount = Math.max(1, Number(city.member_count) || 1);
     const label = `${[city.name, city.region, city.country].filter(Boolean).join(", ")} · ${memberCount} ${memberCount === 1 ? "reader" : "readers"}`;
     circle.setAttribute("cx", point[0]); circle.setAttribute("cy", point[1]);
-    circle.setAttribute("r", Math.min(12, 4 + Math.log2(memberCount + 1)));
+    const radius = Math.min(12, 4 + Math.log2(memberCount + 1));
+    circle.setAttribute("r", radius); circle.dataset.mapRadius = radius;
     circle.setAttribute("fill-opacity", Math.min(.85, .3 + .15 * Math.log2(memberCount)));
     circle.setAttribute("class", "map-marker"); circle.setAttribute("tabindex", "0");
     circle.setAttribute("role", "img"); circle.setAttribute("aria-label", label);

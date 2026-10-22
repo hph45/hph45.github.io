@@ -3,6 +3,7 @@ import { INTENTS, ageOn, birthdayBounds, makeProfile, validateProfile, locationL
 import { attachAutocomplete } from "./autocomplete.js";
 import { attachAgeRange } from "./age-range.js";
 import { renderCommunityMap } from "./map.js";
+import { attachMapZoom } from "./map-zoom.js";
 import { loadReviewCatalog } from "./review-catalog.js";
 import { createCoverLookup, renderTopBooks } from "./top-books.js";
 import { renderRisingBooks } from "./rising-books.js";
@@ -28,6 +29,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   let communityRequest = 0;
   const autocompletes = [];
   const ageRange = attachAgeRange($(".age-range"));
+  const mapZoom = attachMapZoom(document);
   const loadCover = createCoverLookup(client, window);
   let reviewCatalog;
 
@@ -281,6 +283,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       if (version !== generation || request !== communityRequest) return;
       if (error || !data) throw error || new Error("No community data");
       renderCommunityMap(document, data);
+      mapZoom.refresh();
       const coverWork = Promise.all([
         renderTopBooks(document, data.top_books || [], catalog, loadCover),
         renderRisingBooks(document, data.rising_books || [], data.top_books || [], catalog, loadCover),
@@ -322,6 +325,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     const version = ++generation;
     user = session?.user || null;
     profile = null;
+    mapZoom.reset();
     resetForm();
     window.clearTimeout(bookTimer);
     autocompletes.forEach(control => control.close());
@@ -541,6 +545,6 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       }
     },
     async settled() { while (pending.size) await Promise.allSettled([...pending]); },
-    destroy() { subscription?.unsubscribe(); generation++; window.clearTimeout(bookTimer); ageRange.destroy(); autocompletes.forEach(control => control.destroy()); },
+    destroy() { subscription?.unsubscribe(); generation++; window.clearTimeout(bookTimer); ageRange.destroy(); mapZoom.destroy(); autocompletes.forEach(control => control.destroy()); },
   };
 }

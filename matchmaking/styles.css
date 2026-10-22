@@ -51,6 +51,22 @@ input[readonly], fieldset:disabled input, fieldset:disabled textarea { backgroun
 .member-total strong { display: block; font-size: 44px; line-height: 1; font-weight: normal; font-variant-numeric: tabular-nums; }
 .member-total span { display: block; font: 11px var(--sans); color: var(--muted); margin-top: 8px; }
 #world-map { display: block; width: 100%; height: auto; max-height: 430px; margin: 18px auto 10px; }
+#world-map { overflow: hidden; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+#world-map.is-zoomed { cursor: grab; }
+#world-map.is-dragging { cursor: grabbing; }
+#world-map:focus-visible { outline-offset: 4px; }
+.map-marker { vector-effect: non-scaling-stroke; }
+.map-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 0 0 12px; }
+#map-help { margin: 0; font: 11px/1.4 var(--sans); color: var(--muted); }
+.map-help-touch { display: none; }
+.map-controls { display: flex; flex-shrink: 0; border: 1px solid var(--line); }
+.map-controls button { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; background: var(--paper); color: var(--ink); cursor: pointer; }
+.map-controls button + button { border-left: 1px solid var(--line); }
+.map-controls svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.map-controls button:disabled { opacity: .3; cursor: default; }
+.map-controls button:focus-visible { position: relative; outline-offset: 2px; }
+@media (hover: hover) { .map-controls button:hover:not(:disabled) { color: var(--paper); background: var(--ink); } }
+@media (pointer: coarse), (max-width: 680px) { .map-help-desktop { display: none; } .map-help-touch { display: inline; } }
 .map-marker { fill: #16a34a; stroke: #166534; stroke-opacity: .35; stroke-width: 1.4; cursor: pointer; }
 .map-marker:focus, .map-marker:hover { stroke: #14532d; stroke-opacity: 1; stroke-width: 2.5; outline: none; }
 .map-caption { border-top: 1px solid var(--line); padding-top: 13px; font-size: 13px; color: var(--muted); }
