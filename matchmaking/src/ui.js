@@ -5,6 +5,7 @@ import { attachAgeRange } from "./age-range.js";
 import { renderCommunityMap } from "./map.js";
 import { loadReviewCatalog } from "./review-catalog.js";
 import { createCoverLookup, renderTopBooks } from "./top-books.js";
+import { renderRisingBooks } from "./rising-books.js";
 
 export function createMatchmakingApp({ client, document, window, fetch = window.fetch.bind(window) }) {
   const $ = (selector) => document.querySelector(selector);
@@ -280,7 +281,10 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       if (version !== generation || request !== communityRequest) return;
       if (error || !data) throw error || new Error("No community data");
       renderCommunityMap(document, data);
-      const coverWork = renderTopBooks(document, data.top_books || [], catalog, loadCover);
+      const coverWork = Promise.all([
+        renderTopBooks(document, data.top_books || [], catalog, loadCover),
+        renderRisingBooks(document, data.rising_books || [], data.top_books || [], catalog, loadCover),
+      ]);
       pending.add(coverWork);
       void coverWork.finally(() => pending.delete(coverWork));
       text("#top-books-status", data.top_books?.length ? "" : "The first favorites will appear here as readers join.");
@@ -288,6 +292,9 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       if (version !== generation || request !== communityRequest) return;
       text("#member-count", "—");
       text("#map-selection", "We couldn’t load the community right now.");
+      $("#rising-books-list").replaceChildren();
+      $("#rising-books-status").hidden = false;
+      text("#rising-books-status", "Rising favorites are temporarily unavailable.");
       text("#top-books-status", "The community shelf is temporarily unavailable. ");
       const retry = document.createElement("button"); retry.type = "button"; retry.className = "text-button"; retry.textContent = "Try again";
       action(retry, "click", () => loadCommunity(generation)); $("#top-books-status").append(retry);
@@ -324,7 +331,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     notice();
     if (user) await loadProfile(version);
     else {
-      $$("#dashboard-view [id^='profile-'], #account-email, #matches-list, #top-books-list, #map-markers").forEach((element) => element.replaceChildren());
+      $$("#dashboard-view [id^='profile-'], #account-email, #matches-list, #top-books-list, #rising-books-list, #rising-books-status, #map-markers").forEach((element) => element.replaceChildren());
       if ($("#delete-dialog").open) $("#delete-dialog").close();
       showView("welcome-view");
     }

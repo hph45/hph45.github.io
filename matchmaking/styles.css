@@ -68,11 +68,11 @@ input[readonly], fieldset:disabled input, fieldset:disabled textarea { backgroun
 .top-book-link { display: grid; grid-template-columns: 16px 44px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 0 10px; min-height: 66px; color: var(--ink); background: var(--paper); text-decoration: none; transition: background .2s, color .2s; }
 .top-book-link:hover, .top-book-link:focus-visible, .top-book-link:active { background: var(--ink); color: var(--paper); }
 .top-book-link:focus-visible { position: relative; z-index: 1; outline-offset: 2px; }
-.ranked-book-cover { position: relative; display: block; width: 44px; height: 66px; }
-.ranked-book-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: grayscale(1); transition: filter .2s; }
+.ranked-book-cover, .rising-book-cover { position: relative; display: block; width: 44px; height: 66px; }
+.ranked-book-cover img, .rising-book-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: grayscale(1); transition: filter .2s; }
 .top-book-link:hover img, .top-book-link:focus-visible img, .top-book-link:active img { filter: grayscale(0); }
 .cover-placeholder { display: grid; place-items: center; height: 100%; border: 1px solid currentColor; border-left: 4px double currentColor; font: 9px var(--sans); letter-spacing: .12em; }
-.ranked-book-cover:has(img:not([hidden])) .cover-placeholder { visibility: hidden; }
+.ranked-book-cover:has(img:not([hidden])) .cover-placeholder, .rising-book-cover:has(img:not([hidden])) .cover-placeholder { visibility: hidden; }
 .ranked-book-info { min-width: 0; }
 .book-rank { font: 11px var(--sans); }
 .ranked-book-title { display: block; font-size: 17px; line-height: 1.3; overflow-wrap: anywhere; }
@@ -82,6 +82,24 @@ input[readonly], fieldset:disabled input, fieldset:disabled textarea { backgroun
 .data-credits { font-size: 11px; }
 .dashboard-heading h1, .profile-card h2, .favorite-book h3 { overflow-wrap: anywhere; }
 #dashboard-title:focus { outline: none; }
+.rising-favorites { margin-top: 20px; min-width: 0; }
+.rising-heading { margin-bottom: 12px; }
+.rising-heading h2 { margin: 0; font-size: 28px; }
+.rising-books { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; list-style: none; margin: 0; padding: 0; }
+.rising-books li { min-width: 0; }
+.rising-book-link { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 72px; padding-right: 10px; border: 1px solid var(--line); color: var(--ink); background: var(--paper); text-decoration: none; transition: color .2s, background .2s, border-color .2s; }
+.rising-book-cover { width: 48px; height: 72px; }
+.rising-book-details { min-width: 0; padding-block: 6px; }
+.rising-book-title { display: block; font-size: 17px; line-height: 1.2; overflow-wrap: anywhere; }
+.rising-book-author { display: block; font-size: 12px; line-height: 1.35; margin-top: 3px; overflow-wrap: anywhere; }
+.rising-book-rank { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font: 12px/1 var(--sans); font-variant-numeric: tabular-nums; }
+.rising-book-icon { display: block; width: 16px; height: 18px; }
+.rising-book-link:hover, .rising-book-link:focus-visible, .rising-book-link:active { color: var(--paper); background: var(--ink); border-color: var(--ink); }
+.rising-book-link:hover img, .rising-book-link:focus-visible img, .rising-book-link:active img { filter: grayscale(0); }
+@media (max-width: 960px) and (min-width: 801px) {
+  .rising-books { gap: 12px; }
+  .rising-book-link { gap: 8px; padding-right: 8px; }
+}
 @media (max-width:960px) {
   .community-grid { gap: 24px; }
   .community-map { padding: 22px 18px 16px; }
@@ -101,4 +119,10 @@ input[readonly], fieldset:disabled input, fieldset:disabled textarea { backgroun
   #world-map { width: calc(100% + 12px); margin-left: -6px; }
   .map-caption { font-size: 12px; }
   .community-books h2 { font-size: 30px; }
+  .rising-favorites { margin-top: 18px; }
+  .rising-heading { margin-bottom: 10px; }
+  .rising-books { grid-template-columns: 1fr; gap: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rising-book-link, .rising-book-cover img { transition: none; }
 }

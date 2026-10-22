@@ -7,7 +7,7 @@
   <title>Matchmaking | Zebra Book Club</title>
   <meta name="description" content="Meet through the books you love. Find romance, friends, or business partners with Zebra Book Club.">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <link rel="stylesheet" href="./styles.css?v=20261021.9">
+  <link rel="stylesheet" href="./styles.css?v=20261021.10">
 </head>
 <body>
   <header class="site-header">
@@ -154,6 +154,11 @@
             <svg id="world-map" viewBox="0 0 1000 500" role="group" aria-labelledby="world-map-title"><title id="world-map-title">Member locations by city</title><image href="./world-outline.svg" width="1000" height="500"/><g id="map-markers"></g></svg>
             <div class="map-caption"><p id="map-selection" role="status">Loading our community…</p></div>
           </section>
+          <section class="rising-favorites" aria-labelledby="rising-favorites-title">
+            <div class="rising-heading"><h2 id="rising-favorites-title">Rising favorites</h2></div>
+            <ol class="rising-books" id="rising-books-list" aria-label="Recent favorites outside the Top Ten"></ol>
+            <p id="rising-books-status" class="small-copy" role="status">Loading rising favorites…</p>
+          </section>
         </div>
         <section class="community-books" aria-labelledby="top-books-title"><div class="card-heading"><h2 id="top-books-title">Top Ten</h2></div><ol id="top-books-list" class="top-books-list" aria-label="Most selected favorite books"></ol><p id="top-books-status" class="small-copy" role="status">Loading favorite books…</p><p class="affiliate-note">Some book links may earn Zebra Book Club a commission.</p></section>
       </div>
@@ -179,6 +184,6 @@
   <dialog id="delete-dialog" aria-labelledby="delete-title"><form id="delete-form"><p class="eyebrow">Close this chapter</p><h2 id="delete-title">Delete your account?</h2><p>This permanently removes your matchmaking profile, preferences, and match memberships. Your Google account is unchanged.</p><label>Type DELETE to confirm<input id="delete-confirmation" autocomplete="off" required pattern="DELETE"></label><p id="delete-error" class="form-error" role="alert" hidden></p><div class="form-actions"><button id="cancel-delete" class="text-button" type="button">Keep my account</button><button id="confirm-delete" class="button" type="submit">Delete account</button></div></form></dialog>
   <footer class="site-footer"><span>© 2026 Zebra Book Club</span><nav class="legal-links" aria-label="Legal"><a href="/privacy/" target="_blank" rel="noopener">Privacy</a><a href="/terms/" target="_blank" rel="noopener">Terms</a></nav><span class="data-credits">Books: <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">Open Library</a> · Cities: <a href="https://www.geonames.org" target="_blank" rel="noopener noreferrer">GeoNames</a> · Map: <a href="https://naturalearthdata.com" target="_blank" rel="noopener noreferrer">Natural Earth</a></span></footer>
   <noscript><p class="notice">Please enable JavaScript to sign in and create your matchmaking profile.</p></noscript>
-  <script type="module" src="./app.js?v=20261021.8"></script>
+  <script type="module" src="./app.js?v=20261021.9"></script>
 </body>
 </html>
