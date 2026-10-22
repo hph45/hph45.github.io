@@ -51,11 +51,10 @@ input[readonly], fieldset:disabled input, fieldset:disabled textarea { backgroun
 .member-total strong { display: block; font-size: 44px; line-height: 1; font-weight: normal; font-variant-numeric: tabular-nums; }
 .member-total span { display: block; font: 11px var(--sans); color: var(--muted); margin-top: 8px; }
 #world-map { display: block; width: 100%; height: auto; max-height: 430px; margin: 18px auto 10px; }
-.map-marker { fill: var(--ink); stroke: white; stroke-width: 1.8; cursor: pointer; }
-.map-marker:focus, .map-marker:hover { stroke: var(--ink); stroke-width: 2.5; outline: none; fill: #66665d; }
-.map-caption { display: flex; justify-content: space-between; gap: 18px; align-items: baseline; border-top: 1px solid var(--line); padding-top: 13px; font-size: 13px; color: var(--muted); }
+.map-marker { fill: #16a34a; stroke: #166534; stroke-opacity: .35; stroke-width: 1.4; cursor: pointer; }
+.map-marker:focus, .map-marker:hover { stroke: #14532d; stroke-opacity: 1; stroke-width: 2.5; outline: none; }
+.map-caption { border-top: 1px solid var(--line); padding-top: 13px; font-size: 13px; color: var(--muted); }
 .map-caption p { margin: 0; }
-.map-caption > span { font: 10px var(--sans); white-space: nowrap; }
 #profile-author { font-size: 16px; color: var(--muted); }
 #profile-extra-books h3 { font-size: 24px; }
 #profile-extra-books p { font-size: 15px; color: var(--muted); }
@@ -88,8 +87,6 @@ input[readonly], fieldset:disabled input, fieldset:disabled textarea { backgroun
   .community-map { padding: 22px 18px 16px; }
   .map-heading { gap: 14px; }
   .map-heading h2 { font-size: 28px; }
-  .map-caption { display: block; }
-  .map-caption > span { display: block; margin-top: 8px; }
 }
 @media (max-width:800px) {
   .community-grid { grid-template-columns: 1fr; gap: 28px; }
@@ -102,7 +99,6 @@ input[readonly], fieldset:disabled input, fieldset:disabled textarea { backgroun
   .member-total strong { font-size: 35px; }
   .member-total span { font-size: 9px; max-width: 12ch; line-height: 1.4; }
   #world-map { width: calc(100% + 12px); margin-left: -6px; }
-  .map-caption { display: block; font-size: 12px; }
-  .map-caption > span { display: block; margin-top: 8px; }
+  .map-caption { font-size: 12px; }
   .community-books h2 { font-size: 30px; }
 }

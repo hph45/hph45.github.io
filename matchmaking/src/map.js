@@ -18,9 +18,11 @@ export function renderCommunityMap(document, community) {
     const point = project([Number(city.longitude), Number(city.latitude)]);
     if (!point || point.some(value => !Number.isFinite(value))) continue;
     const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    const label = `${[city.name, city.region, city.country].filter(Boolean).join(", ")} · ${city.member_count} ${city.member_count === 1 ? "reader" : "readers"}`;
+    const memberCount = Math.max(1, Number(city.member_count) || 1);
+    const label = `${[city.name, city.region, city.country].filter(Boolean).join(", ")} · ${memberCount} ${memberCount === 1 ? "reader" : "readers"}`;
     circle.setAttribute("cx", point[0]); circle.setAttribute("cy", point[1]);
-    circle.setAttribute("r", Math.min(12, 4 + Math.log2(Number(city.member_count) + 1)));
+    circle.setAttribute("r", Math.min(12, 4 + Math.log2(memberCount + 1)));
+    circle.setAttribute("fill-opacity", Math.min(.85, .3 + .15 * Math.log2(memberCount)));
     circle.setAttribute("class", "map-marker"); circle.setAttribute("tabindex", "0");
     circle.setAttribute("role", "img"); circle.setAttribute("aria-label", label);
     const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
