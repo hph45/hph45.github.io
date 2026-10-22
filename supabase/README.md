@@ -56,6 +56,34 @@ Open `http://127.0.0.1:8080/matchmaking/`. Source is under `matchmaking/src/`; `
 
 The publishable key in `matchmaking/src/config.js` is intentionally public. Private profile access is enforced by database grants and row-level security. No server credential belongs in browser code.
 
+## Private admin dashboard
+
+`/admin/` is an unlinked dashboard on the main domain. Sign in with the owner’s existing Google account at `/matchmaking/`, then open `/admin/` on that same origin. Signed-out visitors and other members are redirected to matchmaking. The page is marked `noindex` and is not included in public navigation.
+
+Both `get_matchmaking_admin_stats()` and `get_matchmaking_admin_profiles()` independently verify `auth.uid()` against the server-managed, single-row `matchmaking_admin_access` table on every call. Browser roles cannot read or modify that table. The page contains no owner email, user ID, service key, or client-side allowlist. Existing profile RLS remains owner-only, even for the admin. The statistics endpoint returns aggregate counts, city coordinates, and a median age. The separate profiles endpoint returns names, ages, locations, one to three books, settings, and answers for every currently selected connection type, including optional romance and business answers. It excludes exact birthdays, emails, Auth IDs, and retired answers. See [Supabase database function security](https://supabase.com/docs/guides/database/functions#security-definer-vs-invoker).
+
+Apply migrations `20261022000100` and `20261022000200` first. They initially deny everyone. To configure access in a new project, find the verified Google account in **Supabase → Authentication → Users**, then use a privileged SQL connection (never a browser key):
+
+```sql
+-- Replace this placeholder with the verified account's Auth user ID.
+insert into public.matchmaking_admin_access (user_id)
+values ('OWNER_AUTH_USER_ID')
+on conflict (singleton) do update set user_id = excluded.user_id, granted_at = now();
+```
+
+Deleting the row revokes access on the next request. Deleting the Auth account also removes its admin grant. Recreating an account with the same email does not inherit access. Owner configuration is held only in the database, not in repository migrations.
+
+The dashboard counts completed profiles, including paused profiles, exactly once per member. Accounts that have not completed a profile have no demographic data and are excluded. Ages are calculated on the server from birthdays, with bands from 18–24 through 80+. Gender is collected only for romance; members without romance selected appear as **Not provided**. Connection-type counts include each member once per selected type, so these counts can overlap. Location totals use the canonical city catalog. Location search and pagination retain percentages of the full community, and Refresh retrieves a fresh snapshot.
+
+The member directory shows books immediately and opens each person's current answers on demand. Search by name, city/region/country, book title, or author, and optionally filter by connection type. Results include paused profiles, sorted newest first, with 20 profiles per page and a server maximum of 50. The two endpoints are read-only; no editing, exports, or messages are sent from this page. Nothing from either response is saved to browser storage; sign-out, account changes, errors, and page navigation clear rendered data, and stale responses cannot restore it.
+
+```sh
+npm run test:admin
+npm run build:admin
+```
+
+Source is in `admin/src/`; rebuild and include `admin/app.js` when publishing. A migration alone does not publish the static page. Local preview is `http://127.0.0.1:8080/admin/` after signing in on that same origin. Tests cover both endpoints' access denial, self-grant prevention, revocation, profile RLS, age boundaries, empty data, demographic totals, overlapping types, complete answers, bounded pagination, filtering, unsafe content, and delayed responses after account changes.
+
 ## Backend changes
 
 The Supabase CLI is installed in this project. Use local login; do not paste access tokens or database passwords into source files.
