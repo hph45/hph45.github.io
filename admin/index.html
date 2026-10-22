@@ -8,7 +8,7 @@
   <link rel="icon" type="image/jpeg" href="/zebra%20white.jpeg">
   <title>Admin | Zebra Book Club</title>
   <link rel="stylesheet" href="/matchmaking/styles.css?v=20261022.1">
-  <link rel="stylesheet" href="./styles.css?v=20261022.1">
+  <link rel="stylesheet" href="./styles.css?v=20261022.2">
 </head>
 <body>
   <header class="site-header">
@@ -94,7 +94,13 @@
         <div class="member-filters">
           <label><span class="visually-hidden">Search members by name, email, city, or book</span><input id="member-search" type="search" placeholder="Search name, email, city, or book" autocomplete="off" maxlength="200" aria-controls="member-list" disabled></label>
           <label><span class="visually-hidden">Filter members by connection type</span><select id="member-intent" aria-controls="member-list" disabled><option value="">All connection types</option><option value="romance">Romance</option><option value="friends">Friends</option><option value="business_partners">Business partners</option></select></label>
+          <label><span class="visually-hidden">Filter members by gender</span><select id="member-gender" aria-controls="member-list" disabled><option value="">All genders</option><option value="woman">Woman</option><option value="man">Man</option><option value="other">Other</option><option value="not_provided">Not provided</option></select></label>
+          <fieldset class="member-age-filter"><legend class="visually-hidden">Filter members by age</legend>
+            <label><span class="visually-hidden">Minimum age</span><input id="member-min-age" type="number" min="18" max="120" step="1" inputmode="numeric" placeholder="Min age" aria-controls="member-list" aria-describedby="member-filter-error" disabled></label>
+            <label><span class="visually-hidden">Maximum age</span><input id="member-max-age" type="number" min="18" max="120" step="1" inputmode="numeric" placeholder="Max age" aria-controls="member-list" aria-describedby="member-filter-error" disabled></label>
+          </fieldset>
         </div>
+        <p id="member-filter-error" class="member-filter-error" role="alert" hidden></p>
         <p id="members-loading" class="directory-message" role="status" hidden>Loading profiles…</p>
         <div id="members-error" class="directory-message" role="alert" hidden><p>We couldn’t load the profiles. Please try again.</p><button id="retry-members" class="button button-secondary" type="button">Try again</button></div>
         <p id="members-empty" class="directory-message" hidden>No matching profiles.</p>
@@ -106,6 +112,6 @@
   </main>
   <footer class="admin-footer"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a></footer>
   <noscript><p class="notice">Please enable JavaScript, then return to <a href="/matchmaking/">matchmaking</a> to sign in.</p><meta http-equiv="refresh" content="0;url=/matchmaking/"></noscript>
-  <script type="module" src="./app.js?v=20261022.1"></script>
+  <script type="module" src="./app.js?v=20261022.2"></script>
 </body>
 </html>

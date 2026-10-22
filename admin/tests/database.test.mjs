@@ -25,7 +25,7 @@ test("admin statistics enforce server-owned access and accurate, aggregate-only 
     await db.exec(await readFile(new URL(file, migrations), "utf8"));
   }
   const rpc = async () => (await db.query("select public.get_matchmaking_admin_stats() as data")).rows[0].data;
-  const profiles = async (search = "", intent = null, page = 1, size = 20) => (await db.query("select public.get_matchmaking_admin_profiles($1,$2,$3,$4) as data", [search, intent, page, size])).rows[0].data;
+  const profiles = async (search = "", intent = null, page = 1, size = 20, { minAge = null, maxAge = null, gender = null } = {}) => (await db.query("select public.get_matchmaking_admin_profiles($1,$2,$3,$4,$5,$6,$7) as data", [search, intent, page, size, minAge, maxAge, gender])).rows[0].data;
   async function asUser(id, action, role = "authenticated") {
     await db.exec(`set role ${role}`);
     await db.query("select set_config('request.jwt.claim.sub', $1, false)", [id || ""]);
@@ -200,6 +200,56 @@ test("admin statistics enforce server-owned access and accurate, aggregate-only 
     await asUser(owner, async () => {
       await db.query("select set_config('request.jwt.claims', $1, false)", [JSON.stringify({ user_metadata: { email: "fake.metadata@example.invalid" } })]);
       assert.equal((await profiles("fake.metadata@example.invalid")).total_count, 0, "editable metadata cannot spoof an account's searchable email");
+    });
+  });
+
+  await t.test("age filters use inclusive current ages, support open bounds, and include readers over 80", async () => {
+    const range = async filters => (await asUser(owner, () => profiles("", null, 1, 20, filters))).profiles.map(p => p.age).sort((a, b) => a - b);
+    assert.deepEqual(await range({ minAge: 18, maxAge: 24 }), [18, 24, 24], "tomorrow's 25th birthday is still age 24");
+    assert.deepEqual(await range({ minAge: 24, maxAge: 24 }), [24, 24]);
+    assert.deepEqual(await range({ maxAge: 34 }), [18, 24, 24, 34]);
+    assert.deepEqual(await range({ minAge: 80 }), [80, 100]);
+    assert.deepEqual(await range({ minAge: 100, maxAge: 120 }), [100]);
+    assert.deepEqual(await range({ minAge: 120, maxAge: 120 }), []);
+  });
+
+  await t.test("gender filters ignore retired answers and combine with age, search, types, and pagination", async () => {
+    for (const [gender, count] of [["woman", 4], ["man", 4], ["other", 3], ["not_provided", 3]]) {
+      const result = await asUser(owner, () => profiles("", null, 1, 20, { gender }));
+      assert.equal(result.total_count, count);
+      assert.ok(result.profiles.every(p => (p.gender || "not_provided") === gender));
+    }
+    const retired = await asUser(owner, () => profiles("Private reader 3", "business_partners", 1, 20, { minAge: 34, maxAge: 34, gender: "not_provided" }));
+    assert.equal(retired.total_count, 1, "a stale romance gender is not treated as current");
+    assert.equal((await asUser(owner, () => profiles("Private reader 3", null, 1, 20, { gender: "woman" }))).total_count, 0);
+    const filter = { minAge: 24, maxAge: 65, gender: "man" };
+    const first = await asUser(owner, () => profiles("@EXAMPLE.INVALID", "friends", 1, 1, filter));
+    const second = await asUser(owner, () => profiles("@EXAMPLE.INVALID", "friends", 2, 1, filter));
+    assert.equal(second.total_count, 3); assert.equal(second.page, 2); assert.equal(second.profiles.length, 1);
+    assert.notEqual(first.profiles[0].display_name, second.profiles[0].display_name);
+    assert.ok(second.profiles.every(p => p.age >= 24 && p.age <= 65 && p.gender === "man" && p.intents.includes("friends")));
+    assert.equal((await asUser(owner, () => profiles("", "friends", 99, 1, filter))).page, 3);
+    const exact = await asUser(owner, () => profiles("LONDON", "romance", 1, 20, { minAge: 24, maxAge: 65, gender: "other" }));
+    assert.equal(exact.total_count, 1); assert.equal(exact.profiles[0].display_name, "Private reader 2");
+  });
+
+  await t.test("invalid demographic filters fail only after authorization", async () => {
+    for (const filter of [{ minAge: 17 }, { maxAge: 121 }, { minAge: 40, maxAge: 39 }, { minAge: -1 }, { gender: "unknown" }]) {
+      await assert.rejects(asUser(owner, () => profiles("", null, 1, 20, filter)), error => error.code === "22023");
+      await assert.rejects(asUser(other, () => profiles("", null, 1, 20, filter)), /ADMIN_ONLY/);
+      await assert.rejects(asUser(null, () => profiles("", null, 1, 20, filter), "anon"), permissionDenied);
+    }
+  });
+
+  await t.test("one RPC signature supports previous clients and optional named filters", async () => {
+    const signatures = await db.query("select oid from pg_proc where pronamespace='public'::regnamespace and proname='get_matchmaking_admin_profiles'");
+    assert.equal(signatures.rows.length, 1);
+    await asUser(owner, async () => {
+      for (const sql of ["select public.get_matchmaking_admin_profiles() as data", "select public.get_matchmaking_admin_profiles('',null,1,20) as data"]) {
+        assert.equal((await db.query(sql)).rows[0].data.total_count, 14);
+      }
+      const named = (await db.query("select public.get_matchmaking_admin_profiles(p_min_age => 80, p_gender => 'man') as data")).rows[0].data;
+      assert.equal(named.total_count, 1); assert.equal(named.profiles[0].age, 100);
     });
   });
 

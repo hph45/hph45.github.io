@@ -180,7 +180,7 @@ test("directory searches, type filters, and page changes call the protected endp
   const { $, event, state } = await setup(t);
   state.profileResponse = { data: { total_count: 25, page: 1, page_size: 20, profiles: Array.from({ length: 20 }, () => structuredClone(sampleProfile)) }, error: null };
   $("#member-search").value = "  Reader.0+club@Example.invalid  "; await event("#member-search", "input");
-  assert.deepEqual(state.requests.at(-1).args, { p_search: "Reader.0+club@Example.invalid", p_intent: null, p_page: 1, p_page_size: 20 });
+  assert.deepEqual(state.requests.at(-1).args, { p_search: "Reader.0+club@Example.invalid", p_intent: null, p_page: 1, p_page_size: 20, p_min_age: null, p_max_age: null, p_gender: null });
   assert.equal($("#next-members").disabled, false);
   state.profileResponse.data.page = 2; state.profileResponse.data.profiles.length = 5;
   await event("#next-members");
@@ -193,6 +193,74 @@ test("directory searches, type filters, and page changes call the protected endp
   state.profileResponse = { data: { total_count: 0, page: 1, page_size: 20, profiles: [] }, error: null };
   $("#member-search").value = "Nobody"; await event("#member-search", "input");
   assert.equal($("#members-empty").hidden, false);
+  assert.equal($("#member-list").children.length, 0);
+});
+
+test("age and gender combine with existing filters, reset pagination, and persist through refresh", async t => {
+  const { $, event, state } = await setup(t);
+  state.profileResponse = { data: { total_count: 25, page: 1, page_size: 20, profiles: Array.from({ length: 20 }, () => structuredClone(sampleProfile)) }, error: null };
+  $("#member-search").value = " @example.invalid ";
+  $("#member-intent").value = "friends";
+  $("#member-min-age").value = "25"; $("#member-max-age").value = "40";
+  $("#member-gender").value = "other"; await event("#member-gender", "change");
+  const args = { p_search: "@example.invalid", p_intent: "friends", p_min_age: 25, p_max_age: 40, p_gender: "other", p_page: 1, p_page_size: 20 };
+  assert.deepEqual(state.requests.at(-1).args, args);
+  state.profileResponse.data.page = 2; state.profileResponse.data.profiles.length = 5;
+  await event("#next-members");
+  assert.deepEqual(state.requests.at(-1).args, { ...args, p_page: 2 });
+  state.profileResponse = membersSuccess();
+  $("#member-min-age").value = "30"; await event("#member-min-age", "input");
+  assert.deepEqual(state.requests.at(-1).args, { ...args, p_min_age: 30 });
+  await event("#refresh");
+  assert.deepEqual(state.requests.at(-1).args, { ...args, p_min_age: 30 });
+  $("#member-min-age").value = ""; $("#member-max-age").value = "";
+  $("#member-gender").value = ""; await event("#member-gender", "change");
+  assert.deepEqual(state.requests.at(-1).args, { ...args, p_min_age: null, p_max_age: null, p_gender: null });
+  $("#member-gender").value = "not_provided"; await event("#member-gender", "change");
+  assert.equal(state.requests.at(-1).args.p_gender, "not_provided");
+});
+
+test("invalid ages show an inline error without a request, and corrected or open bounds recover", async t => {
+  const { $, event, state } = await setup(t);
+  const requests = state.requests.length;
+  for (const [min, max] of [["17", ""], ["", "121"], ["25.5", ""], ["40", "30"]]) {
+    $("#member-min-age").value = min; $("#member-max-age").value = max;
+    await event("#member-max-age", "input");
+    assert.equal(state.requests.length, requests);
+    assert.equal($("#member-filter-error").hidden, false);
+    assert.equal($("#member-list").children.length, 0);
+    assert.equal($("#members-loading").hidden, true);
+    assert.equal($("#next-members").disabled, true);
+  }
+  assert.match($("#member-filter-error").textContent, /Minimum age/);
+  assert.equal($("#member-min-age").getAttribute("aria-invalid"), "true");
+  $("#member-min-age").value = ""; await event("#member-min-age", "input");
+  assert.equal($("#member-filter-error").hidden, true);
+  assert.equal($("#member-min-age").hasAttribute("aria-invalid"), false);
+  assert.equal(state.requests.at(-1).args.p_min_age, null);
+  assert.equal(state.requests.at(-1).args.p_max_age, 30);
+  assert.equal($("#member-list").children.length, 1);
+  $("#member-min-age").value = "80"; $("#member-max-age").value = "";
+  await event("#member-max-age", "input");
+  assert.equal(state.requests.at(-1).args.p_min_age, 80);
+  assert.equal(state.requests.at(-1).args.p_max_age, null);
+});
+
+test("changing demographics cancels stale results and sign-out disables all filters", async t => {
+  const { $, app, event, state, auth, window } = await setup(t);
+  const old = deferred(); state.profileResponse = old.promise;
+  $("#member-gender").value = "woman";
+  $("#member-gender").dispatchEvent(new window.Event("change"));
+  $("#member-min-age").value = "40"; $("#member-max-age").value = "30";
+  $("#member-min-age").dispatchEvent(new window.Event("input"));
+  old.resolve(membersSuccess()); await app.settled();
+  assert.equal($("#member-list").children.length, 0);
+  assert.equal($("#member-filter-error").hidden, false);
+  state.profileResponse = membersSuccess();
+  $("#member-max-age").value = ""; await event("#member-max-age", "input");
+  assert.equal($("#member-list").children.length, 1);
+  auth("SIGNED_OUT"); await app.settled();
+  for (const id of ["member-search", "member-intent", "member-min-age", "member-max-age", "member-gender"]) assert.equal($(`#${id}`).disabled, true);
   assert.equal($("#member-list").children.length, 0);
 });
 

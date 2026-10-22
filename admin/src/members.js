@@ -3,6 +3,7 @@ import { INTENTS, GENDERS, ageRangeLabel, normalizeLinkedInURL } from "../../mat
 export function createMemberDirectory({ client, document, window, onDenied, isDenied }) {
   const $ = selector => document.querySelector(selector);
   const pending = new Set(), removers = [];
+  const filters = ["member-search", "member-intent", "member-gender", "member-min-age", "member-max-age"].map(id => $(`#${id}`));
   let generation = 0, page = 1, active = false, destroyed = false, timer = null;
   const element = (tag, className, text) => {
     const node = document.createElement(tag);
@@ -22,6 +23,9 @@ export function createMemberDirectory({ client, document, window, onDenied, isDe
     $("#member-status").textContent = "";
     for (const id of ["members-loading", "members-error", "members-empty"]) $(`#${id}`).hidden = true;
     $("#previous-members").disabled = $("#next-members").disabled = true;
+    $("#member-filter-error").hidden = true;
+    $("#member-filter-error").textContent = "";
+    for (const id of ["member-min-age", "member-max-age"]) $(`#${id}`).removeAttribute("aria-invalid");
   }
   function cancelSearch() {
     if (timer !== null) window.clearTimeout(timer);
@@ -29,7 +33,23 @@ export function createMemberDirectory({ client, document, window, onDenied, isDe
   }
   function clear() {
     generation++; active = false; cancelSearch(); clearContents();
-    $("#member-search").disabled = $("#member-intent").disabled = true;
+    filters.forEach(input => { input.disabled = true; });
+  }
+  function readFilters() {
+    const inputs = [$("#member-min-age"), $("#member-max-age")];
+    const ages = inputs.map(input => input.value === "" ? null : Number(input.value));
+    const invalid = inputs.filter((input, i) => input.validity.badInput || (ages[i] !== null && (!Number.isInteger(ages[i]) || ages[i] < 18 || ages[i] > 120)));
+    const reversed = ages[0] !== null && ages[1] !== null && ages[0] > ages[1];
+    if (invalid.length || reversed) {
+      for (const input of invalid.length ? invalid : inputs) input.setAttribute("aria-invalid", "true");
+      $("#member-filter-error").textContent = invalid.length ? "Enter whole-number ages between 18 and 120, or leave them blank." : "Minimum age must be no greater than maximum age.";
+      $("#member-filter-error").hidden = false;
+      return null;
+    }
+    return {
+      p_search: $("#member-search").value.trim(), p_intent: $("#member-intent").value || null,
+      p_min_age: ages[0], p_max_age: ages[1], p_gender: $("#member-gender").value || null,
+    };
   }
   function answers(title, rows) {
     const section = element("section");
@@ -100,11 +120,13 @@ export function createMemberDirectory({ client, document, window, onDenied, isDe
     if (!active || destroyed) return;
     cancelSearch();
     const request = ++generation;
-    clearContents(); $("#members-loading").hidden = false;
+    clearContents();
+    const filterValues = readFilters();
+    if (!filterValues) return;
+    $("#members-loading").hidden = false;
     try {
       const result = await client.rpc("get_matchmaking_admin_profiles", {
-        p_search: $("#member-search").value.trim(), p_intent: $("#member-intent").value || null,
-        p_page: page, p_page_size: 20,
+        ...filterValues, p_page: page, p_page_size: 20,
       });
       if (request !== generation || !active || destroyed) return;
       if (result.error) throw result.error;
@@ -116,12 +138,13 @@ export function createMemberDirectory({ client, document, window, onDenied, isDe
       else $("#members-error").hidden = false;
     }
   }
-  listen($("#member-search"), "input", () => {
+  function queueFilterChange() {
     if (!active) return;
     page = 1; generation++; cancelSearch(); clearContents(); $("#members-loading").hidden = false;
     timer = window.setTimeout(() => { timer = null; void track(load()); }, 250);
-  });
-  listen($("#member-intent"), "change", () => { page = 1; void track(load()); });
+  }
+  for (const id of ["member-search", "member-min-age", "member-max-age"]) listen($(`#${id}`), "input", queueFilterChange);
+  for (const id of ["member-intent", "member-gender"]) listen($(`#${id}`), "change", () => { page = 1; void track(load()); });
   listen($("#previous-members"), "click", () => { page = Math.max(1, page - 1); void track(load()); });
   listen($("#next-members"), "click", () => { page++; void track(load()); });
   listen($("#retry-members"), "click", () => { void track(load()); });
@@ -129,7 +152,7 @@ export function createMemberDirectory({ client, document, window, onDenied, isDe
     start() {
       if (destroyed) return Promise.resolve();
       active = true;
-      $("#member-search").disabled = $("#member-intent").disabled = false;
+      filters.forEach(input => { input.disabled = false; });
       return track(load());
     },
     clear,
