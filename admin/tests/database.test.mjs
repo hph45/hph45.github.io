@@ -13,7 +13,7 @@ test("admin statistics enforce server-owned access and accurate, aggregate-only 
   t.after(() => db.close());
   await db.exec(`
     create role anon; create role authenticated; create role service_role bypassrls;
-    create schema auth; create table auth.users (id uuid primary key);
+    create schema auth; create table auth.users (id uuid primary key, email text);
     create function auth.uid() returns uuid language sql stable as $$
       select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
     $$;
@@ -34,7 +34,8 @@ test("admin statistics enforce server-owned access and accurate, aggregate-only 
   await db.exec("insert into public.matchmaking_books(work_id,title,author) values ('OL1W','Private favorite title','Private author'), ('OL2W','Second favorite','Second author'), ('OL3W','Third favorite','Third author')");
   const ages = [18, 24, 25, 34, 35, 44, 45, 54, 55, 64, 65, 79, 80, 100];
   for (const [i, id] of ids.entries()) {
-    await db.query("insert into auth.users(id) values ($1)", [id]);
+    const email = i === 3 ? null : i === 1 ? "reader_1+club@example.invalid" : i === 2 ? "Reader.2+Club@Example.invalid" : `reader.${i}+club@example.invalid`;
+    await db.query("insert into auth.users(id,email) values ($1,$2)", [id, email]);
     const birth = (await db.query("select (current_date - make_interval(years => $1))::date::text as birth", [ages[i]])).rows[0].birth;
     const values = { user_id: id, ...makeProfile({
       display_name: `Private reader ${i}`, birth_date: birth, city_id: [5378538, 5128581, 2643743][i % 3],
@@ -174,6 +175,32 @@ test("admin statistics enforce server-owned access and accurate, aggregate-only 
     assert.equal((await asUser(owner, () => profiles("", null, 1, 0))).page_size, 1);
     await assert.rejects(asUser(owner, () => profiles("", "unknown")), error => error.code === "22023");
     await assert.rejects(asUser(other, () => profiles("", "unknown")), /ADMIN_ONLY/, "authorization happens before search processing");
+  });
+
+  await t.test("email search uses the current Auth email, supports partial and mixed-case queries, and stays admin-only", async () => {
+    const full = await asUser(owner, () => profiles("  READER.0+CLUB@EXAMPLE.INVALID  "));
+    assert.equal(full.total_count, 1);
+    assert.equal(full.profiles[0].display_name, "Private reader 0");
+    assert.equal((await asUser(owner, () => profiles(".0+club@", "business_partners"))).total_count, 1);
+    const mixed = await asUser(owner, () => profiles("reader.2+club@example.invalid"));
+    assert.equal(mixed.total_count, 1); assert.equal(mixed.profiles[0].display_name, "Private reader 2");
+    const literal = await asUser(owner, () => profiles("reader_1+club@"));
+    assert.equal(literal.total_count, 1); assert.equal(literal.profiles[0].display_name, "Private reader 1");
+    const domain = await asUser(owner, () => profiles("@example.invalid", null, 2, 5));
+    assert.equal(domain.total_count, 13); assert.equal(domain.profiles.length, 5); assert.equal(domain.page, 2);
+    assert.equal((await asUser(owner, () => profiles("Private reader 3"))).total_count, 1, "a null email does not hide an existing profile");
+    await db.query("insert into auth.users(id,email) values ($1,'unfinished@example.invalid')", ["00000000-0000-4000-8000-000000000099"]);
+    assert.equal((await asUser(owner, () => profiles("unfinished@example.invalid"))).total_count, 0, "accounts without profiles are not in the directory");
+    await assert.rejects(asUser(other, () => profiles("reader.0+club@example.invalid")), /ADMIN_ONLY/);
+    await assert.rejects(asUser(null, () => profiles("@example.invalid"), "anon"), permissionDenied);
+    assert.ok(full.profiles.every(profile => !("email" in profile)));
+    await db.query("update auth.users set email='updated.reader@example.invalid' where id=$1", [owner]);
+    assert.equal((await asUser(owner, () => profiles("reader.0+club@example.invalid"))).total_count, 0);
+    assert.equal((await asUser(owner, () => profiles("UPDATED.READER@example.invalid"))).total_count, 1);
+    await asUser(owner, async () => {
+      await db.query("select set_config('request.jwt.claims', $1, false)", [JSON.stringify({ user_metadata: { email: "fake.metadata@example.invalid" } })]);
+      assert.equal((await profiles("fake.metadata@example.invalid")).total_count, 0, "editable metadata cannot spoof an account's searchable email");
+    });
   });
 
   await t.test("revocation takes effect on the very next request", async () => {

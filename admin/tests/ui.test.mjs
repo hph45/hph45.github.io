@@ -179,8 +179,8 @@ test("the directory shows favorite books and answers for every selected type", a
 test("directory searches, type filters, and page changes call the protected endpoint", async t => {
   const { $, event, state } = await setup(t);
   state.profileResponse = { data: { total_count: 25, page: 1, page_size: 20, profiles: Array.from({ length: 20 }, () => structuredClone(sampleProfile)) }, error: null };
-  $("#member-search").value = "Oakland"; await event("#member-search", "input");
-  assert.deepEqual(state.requests.at(-1).args, { p_search: "Oakland", p_intent: null, p_page: 1, p_page_size: 20 });
+  $("#member-search").value = "  Reader.0+club@Example.invalid  "; await event("#member-search", "input");
+  assert.deepEqual(state.requests.at(-1).args, { p_search: "Reader.0+club@Example.invalid", p_intent: null, p_page: 1, p_page_size: 20 });
   assert.equal($("#next-members").disabled, false);
   state.profileResponse.data.page = 2; state.profileResponse.data.profiles.length = 5;
   await event("#next-members");
