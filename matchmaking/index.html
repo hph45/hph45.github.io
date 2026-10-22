@@ -7,7 +7,7 @@
   <title>Matchmaking | Zebra Book Club</title>
   <meta name="description" content="Meet through the books you love. Find romance, friends, or business partners with Zebra Book Club.">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <link rel="stylesheet" href="./styles.css?v=20261021.10">
+  <link rel="stylesheet" href="./styles.css?v=20261021.12">
 </head>
 <body>
   <header class="site-header">
@@ -151,15 +151,16 @@
           <div class="dashboard-heading"><div><p class="eyebrow">Your chapter</p><h1 id="dashboard-title" tabindex="-1">You’re in good company.</h1></div></div>
           <section class="community-map" aria-labelledby="map-title">
             <div class="map-heading"><div><p class="eyebrow">A world of readers</p><h2 id="map-title">On the same page.</h2></div><p class="member-total"><strong id="member-count">—</strong><span id="member-count-label">readers in the club</span></p></div>
-            <svg id="world-map" viewBox="0 0 1000 500" role="group" aria-labelledby="world-map-title" aria-describedby="map-help" tabindex="0"><title id="world-map-title">Member locations by city</title><g id="map-content"><image href="./world-outline.svg" width="1000" height="500"/><g id="map-markers"></g></g></svg>
-            <div class="map-toolbar">
-              <p id="map-help"><span class="map-help-desktop">Drag to explore · Ctrl + scroll to zoom</span><span class="map-help-touch">Use two fingers to zoom and move</span><span class="visually-hidden">. Or use the zoom buttons. With the map focused, use plus or minus to zoom, arrow keys to move, and 0 to reset.</span></p>
-              <div class="map-controls" role="group" aria-label="Map zoom">
-                <button id="map-zoom-out" type="button" aria-label="Zoom out" title="Zoom out" disabled><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14"/></svg></button>
-                <button id="map-zoom-in" type="button" aria-label="Zoom in" title="Zoom in"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14M12 5v14"/></svg></button>
-                <button id="map-reset" type="button" aria-label="Reset world map" title="Reset world map" disabled><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 4H4v4m12-4h4v4M4 16v4h4m12-4v4h-4"/></svg></button>
+            <div class="map-viewport">
+              <svg id="world-map" viewBox="0 0 1000 500" role="group" aria-labelledby="world-map-title" tabindex="0"><title id="world-map-title">Member locations by city</title><g id="map-content"><image href="./world-outline.svg" width="1000" height="500"/><g id="map-markers"></g></g></svg>
+              <div class="map-toolbar">
+                <div class="map-controls" role="group" aria-label="Map zoom">
+                  <button id="map-zoom-in" type="button" aria-label="Zoom in" title="Zoom in"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14M12 5v14"/></svg></button>
+                  <button id="map-zoom-out" type="button" aria-label="Zoom out" title="Zoom out" disabled><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14"/></svg></button>
+                  <button id="map-reset" type="button" aria-label="Reset world map" title="Reset world map" disabled><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 4H4v4m12-4h4v4M4 16v4h4m12-4v4h-4"/></svg></button>
+                </div>
+                <span id="map-zoom-status" class="visually-hidden" role="status"></span>
               </div>
-              <span id="map-zoom-status" class="visually-hidden" role="status"></span>
             </div>
             <div class="map-caption"><p id="map-selection" role="status">Loading our community…</p></div>
           </section>
@@ -193,6 +194,6 @@
   <dialog id="delete-dialog" aria-labelledby="delete-title"><form id="delete-form"><p class="eyebrow">Close this chapter</p><h2 id="delete-title">Delete your account?</h2><p>This permanently removes your matchmaking profile, preferences, and match memberships. Your Google account is unchanged.</p><label>Type DELETE to confirm<input id="delete-confirmation" autocomplete="off" required pattern="DELETE"></label><p id="delete-error" class="form-error" role="alert" hidden></p><div class="form-actions"><button id="cancel-delete" class="text-button" type="button">Keep my account</button><button id="confirm-delete" class="button" type="submit">Delete account</button></div></form></dialog>
   <footer class="site-footer"><span>© 2026 Zebra Book Club</span><nav class="legal-links" aria-label="Legal"><a href="/privacy/" target="_blank" rel="noopener">Privacy</a><a href="/terms/" target="_blank" rel="noopener">Terms</a></nav><span class="data-credits">Books: <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">Open Library</a> · Cities: <a href="https://www.geonames.org" target="_blank" rel="noopener noreferrer">GeoNames</a> · Map: <a href="https://naturalearthdata.com" target="_blank" rel="noopener noreferrer">Natural Earth</a></span></footer>
   <noscript><p class="notice">Please enable JavaScript to sign in and create your matchmaking profile.</p></noscript>
-  <script type="module" src="./app.js?v=20261021.9"></script>
+  <script type="module" src="./app.js?v=20261021.10"></script>
 </body>
 </html>

@@ -49,6 +49,8 @@ test("normal wheel scrolling passes through; trackpad pinch zooms at the pointer
   assert.equal(scroll.defaultPrevented, false);
   assert.deepEqual(view(), [0, 0, 1]);
   const pinch = new window.WheelEvent("wheel", { deltaY: -Math.log(2) * 100, ctrlKey: true, clientX: 760, clientY: 145, cancelable: true });
+  // Happy DOM's WheelEvent omits the MouseEvent fields present in browsers.
+  Object.assign(pinch, { ctrlKey: true, clientX: 760, clientY: 145 });
   svg.dispatchEvent(pinch);
   assert.equal(pinch.defaultPrevented, true);
   assert.deepEqual(view(), [-750, -125, 2]);

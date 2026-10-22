@@ -102,7 +102,7 @@ The city catalog contains 34,174 records from the [GeoNames cities15000 extract]
 
 The world outline uses [Natural Earth 1:110m countries](https://www.naturalearthdata.com/downloads/110m-cultural-vectors/110m-admin-0-countries/), a public-domain dataset. Country geometry comes from the [Natural Earth source repository](https://github.com/nvkelso/natural-earth-vector). Both outlines and dots use D3's Natural Earth projection. `scripts/build-matchmaking-geography.mjs` records the transformation; do not regenerate its migration after deployment. Source credits also appear in the site footer.
 
-The community map zooms from 1× to 8× with shared transforms for the outline and city dots. Desktop supports the zoom/reset buttons, dragging, trackpad pinch, and Ctrl+scroll. On touchscreens, two fingers pinch and pan while one finger retains normal page scrolling. Keyboard users can focus the map and use +/−, arrow keys, and 0/Home/Escape to reset. Zoom stays local to the page and resets on sign-out; it requests no additional location data.
+The community map zooms from 1× to 8× with shared transforms for the outline and city dots. Desktop has a compact +/− control at the map's top right, mouse dragging, trackpad pinch, and Ctrl+scroll. Touchscreens get larger controls and a reset button; two fingers pinch and pan while one finger retains normal page scrolling. No gesture instructions appear on either layout. Keyboard users can focus the map and use +/−, arrow keys, and 0/Home/Escape to reset. Zoom stays local to the page and resets on sign-out; it requests no additional location data.
 
 ## Next stage
 
