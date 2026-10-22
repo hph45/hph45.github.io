@@ -17,6 +17,10 @@ const fixture = makeProfile({
   location_preference: "same_city",
   friendship_interests: "Coffee and conversation",
 });
+// Keep exercising the legacy single-choice client as well as the array-based
+// requests covered in multi-intent-database.test.mjs.
+delete fixture.intents;
+fixture.intent = "friends";
 
 test("Postgres enforces ownership, validation, and released-match privacy", async (t) => {
   const db = new PGlite();

@@ -1,5 +1,5 @@
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, PROFILE_TABLE, getAuthRedirect } from "./config.js";
-import { INTENTS, ageOn, birthdayBounds, makeProfile, validateProfile, locationLabel, preferenceDetails, bookEditTime, favoriteBooks, normalizeLinkedInURL } from "./profile.js";
+import { INTENTS, profileIntents, ageOn, birthdayBounds, makeProfile, validateProfile, locationLabel, preferenceDetails, bookEditTime, favoriteBooks, normalizeLinkedInURL } from "./profile.js";
 import { attachAutocomplete } from "./autocomplete.js";
 import { attachAgeRange } from "./age-range.js";
 import { renderCommunityMap } from "./map.js";
@@ -24,7 +24,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   let authReady = false;
   let subscription;
   let mutationPending = false;
-  let selectedIntent = "";
+  let selectedIntents = [];
   let bookTimer;
   let communityRequest = 0;
   const autocompletes = [];
@@ -33,8 +33,12 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   const loadCover = createCoverLookup(client, window);
   let reviewCatalog;
 
-  try { selectedIntent = window.localStorage.getItem("zebra-matchmaking-intent") || ""; } catch { /* Storage is optional. */ }
-  if (!Object.hasOwn(INTENTS, selectedIntent)) selectedIntent = "";
+  try {
+    const stored = window.localStorage.getItem("zebra-matchmaking-intents");
+    selectedIntents = profileIntents(stored === null
+      ? { intent: window.localStorage.getItem("zebra-matchmaking-intent") }
+      : { intents: JSON.parse(stored) });
+  } catch { /* Storage is optional. */ }
 
   function notice(message = "") {
     text("#notice", message);
@@ -58,12 +62,12 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     });
   }
 
-  function rememberIntent(intent) {
-    selectedIntent = intent;
-    try { window.localStorage.setItem("zebra-matchmaking-intent", intent); } catch { /* No personal answers are stored here. */ }
-    $$("[data-intent]").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.intent === intent)));
+  function rememberIntents(intents) {
+    selectedIntents = Object.keys(INTENTS).filter(intent => intents.includes(intent));
+    try { window.localStorage.setItem("zebra-matchmaking-intents", JSON.stringify(selectedIntents)); } catch { /* No personal answers are stored here. */ }
+    $$("[data-intent]").forEach((button) => button.setAttribute("aria-pressed", String(selectedIntents.includes(button.dataset.intent))));
   }
-  rememberIntent(selectedIntent);
+  rememberIntents(selectedIntents);
 
   async function checkGoogle() {
     text("#google-button-label", "Continue with Google");
@@ -85,9 +89,9 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   }
 
   function updatePreferenceFields() {
-    const intent = field("intent").value;
+    const intents = $$('#profile-form [name="intents"]:checked').map(input => input.value);
     $$("[data-preferences]").forEach((group) => {
-      group.hidden = group.dataset.preferences !== intent;
+      group.hidden = !intents.includes(group.dataset.preferences);
       group.disabled = currentStep !== 2 || group.hidden;
     });
   }
@@ -108,10 +112,17 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     $("#previous-step").hidden = index === 0;
     $("#cancel-edit").hidden = !profile;
     $("#form-error").hidden = true;
+    form.querySelectorAll('[aria-invalid="true"]').forEach(input => {
+      input.removeAttribute("aria-invalid");
+      input.removeAttribute("aria-errormessage");
+    });
     updatePreferenceFields();
     updateBookLock();
     autocompletes.forEach(control => control.close());
-    if (focus) $("#onboarding-title").focus();
+    if (focus) {
+      $("#onboarding-title").focus();
+      window.scrollTo(0, 0);
+    }
   }
 
   function updateBookLock() {
@@ -133,13 +144,14 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     notice();
     resetForm();
     const values = profile || {
-      intent: selectedIntent,
+      intents: selectedIntents,
       display_name: user?.user_metadata?.given_name || user?.user_metadata?.full_name?.split(" ")[0] || "",
       age_min: 18, age_max: 80,
     };
     for (const input of form.querySelectorAll("[name]")) {
       if (input.type === "checkbox") {
-        input.checked = input.name === "interested_in" ? (values.interested_in || []).includes(input.value)
+        input.checked = input.name === "intents" ? profileIntents(values).includes(input.value)
+          : input.name === "interested_in" ? (values.interested_in || []).includes(input.value)
           : input.name === "profile_consent" ? Boolean(profile) : values[input.name] === true;
       } else if (values[input.name] !== undefined) input.value = values[input.name] ?? (input.type === "range" ? input.defaultValue : "");
     }
@@ -147,6 +159,9 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     text("#form-eyebrow", profile ? "Edit your chapter" : "Your first chapter");
     showStep(0, false);
     showView("onboarding-view", "#onboarding-title");
+    // The desktop intro is sticky: focusing it alone can leave the form's first
+    // questions above the viewport when editing from a scrolled dashboard.
+    window.scrollTo(0, 0);
   }
 
   function resetForm() {
@@ -161,8 +176,9 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     const values = {};
     // FormData omits disabled earlier steps, so collect the known controls directly.
     for (const input of form.querySelectorAll("[name]")) {
-      if (input.name !== "interested_in") values[input.name] = input.type === "checkbox" ? input.checked : input.value;
+      if (!["intents", "interested_in"].includes(input.name)) values[input.name] = input.type === "checkbox" ? input.checked : input.value;
     }
+    values.intents = [...form.querySelectorAll('[name="intents"]:checked')].map(input => input.value);
     values.interested_in = [...form.querySelectorAll('[name="interested_in"]:checked')].map((input) => input.value);
     return makeProfile(values, { isActive: profile?.is_active ?? true });
   }
@@ -180,7 +196,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
 
   function linkedInDetail(container, profile) {
     const url = normalizeLinkedInURL(profile.business_linkedin_url);
-    if (profile.intent !== "business_partners" || !url) return;
+    if (!profileIntents(profile).includes("business_partners") || !url) return;
     const group = document.createElement("div");
     const heading = document.createElement("h3");
     heading.textContent = "LinkedIn";
@@ -203,7 +219,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
 
   function renderDashboard(focus = false) {
     text("#account-name", profile.display_name);
-    text("#profile-category", INTENTS[profile.intent]);
+    text("#profile-category", profileIntents(profile).map(intent => INTENTS[intent]).join(" · "));
     text("#dashboard-title", `Hello, ${profile.display_name}.`);
     text("#profile-name", `${profile.display_name}, ${ageOn(profile.birth_date)}`);
     text("#profile-location", locationLabel(profile));
@@ -374,7 +390,10 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       showStep(invalid.step, false);
       text("#form-error", invalid.message);
       $("#form-error").hidden = false;
-      field(invalid.field)?.focus();
+      const input = field(invalid.field);
+      input?.setAttribute("aria-invalid", "true");
+      input?.setAttribute("aria-errormessage", "form-error");
+      input?.focus();
       return;
     }
     const controls = [...steps[currentStep].querySelectorAll("input, select, textarea")]
@@ -393,7 +412,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       if (version !== generation) return;
       if (error) throw error;
       profile = data;
-      rememberIntent(profile.intent);
+      rememberIntents(profileIntents(profile));
       renderDashboard(true);
       notice("Your profile is saved.");
       await Promise.all([loadMatches(version), loadCommunity(version)]);
@@ -411,8 +430,11 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     }
   });
 
-  $$("[data-intent]").forEach((button) => action(button, "click", () => rememberIntent(button.dataset.intent)));
-  action(field("intent"), "change", updatePreferenceFields);
+  $$("[data-intent]").forEach((button) => action(button, "click", () => {
+    const intent = button.dataset.intent;
+    rememberIntents(selectedIntents.includes(intent) ? selectedIntents.filter(value => value !== intent) : [...selectedIntents, intent]);
+  }));
+  $$('#profile-form [name="intents"]').forEach(input => action(input, "change", updatePreferenceFields));
   action($("#previous-step"), "click", () => showStep(Math.max(0, currentStep - 1)));
   action($("#edit-profile"), "click", openForm);
   action($("#cancel-edit"), "click", () => { resetForm(); renderDashboard(true); });

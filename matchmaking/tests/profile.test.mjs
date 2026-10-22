@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { ageOn, birthdayBounds, makeProfile, validateProfile, normalizeLinkedInURL, ageRangeLabel } from "../src/profile.js";
+import { INTENTS, profileIntents, preferenceDetails, ageOn, birthdayBounds, makeProfile, validateProfile, normalizeLinkedInURL, ageRangeLabel } from "../src/profile.js";
 import { getAuthRedirect } from "../src/config.js";
 
 const today = new Date("2026-10-21T12:00:00Z");
@@ -11,6 +11,45 @@ const basics = {
   favorite_book: "Parable of the Sower", favorite_author: "Octavia Butler",
   location_preference: "same_city", friendship_interests: "Coffee and bookshops",
 };
+
+test("every combination keeps and requires the answers for all selected connection types", () => {
+  const types = Object.keys(INTENTS);
+  const answers = { ...basics, gender: "other", interested_in: ["woman", "other"], age_min: 25, age_max: 80,
+    romance_ideal_match: "Someone curious and kind", business_about: "A neighborhood bookshop",
+    business_skills: "Events and community", business_seeking: "An operations partner", business_linkedin_url: "linkedin.com/in/reader" };
+  for (let mask = 1; mask < 8; mask++) {
+    const intents = types.filter((_, index) => mask & (1 << index));
+    const profile = makeProfile({ ...answers, intents });
+    assert.deepEqual(profile.intents, intents);
+    assert.ok(!("intent" in profile), "new writes use the array only");
+    assert.deepEqual(validateProfile(profile, { consent: true, today }), [], intents.join(", "));
+    for (const [intent, field] of [["romance", "gender"], ["friends", "friendship_interests"], ["business_partners", "business_skills"]]) {
+      assert.equal(Boolean(profile[field]), intents.includes(intent), field);
+      const errors = validateProfile({ ...profile, [field]: "" }, { consent: true, today });
+      assert.equal(errors.some(error => error.field === field), intents.includes(intent), `${intents}: ${field}`);
+    }
+    assert.equal(preferenceDetails(profile).some(([title]) => title === "Your ideal match"), intents.includes("romance"));
+    assert.equal(preferenceDetails(profile).some(([title]) => title === "Time well spent"), intents.includes("friends"));
+    assert.equal(preferenceDetails(profile).some(([title]) => title === "What you’re building"), intents.includes("business_partners"));
+  }
+  const all = makeProfile({ ...answers, intents: types });
+  const removed = makeProfile({ ...all, intents: ["friends"] });
+  assert.equal(removed.friendship_interests, all.friendship_interests);
+  assert.equal(removed.gender, null);
+  assert.deepEqual(removed.interested_in, []);
+  assert.equal(removed.romance_ideal_match, "");
+  assert.equal(removed.business_about, "");
+  assert.equal(removed.business_linkedin_url, "");
+});
+
+test("a selection is required, old profiles restore, and an explicit array takes precedence", () => {
+  assert.deepEqual(profileIntents({ intent: "friends" }), ["friends"]);
+  assert.deepEqual(profileIntents({ intent: "friends", intents: [] }), []);
+  assert.deepEqual(profileIntents({ intent: "romance", intents: ["friends", "friends"] }), ["friends"]);
+  for (const intents of [[], ["unknown"], ["friends", "unknown"], "friends"]) {
+    assert.ok(validateProfile(makeProfile({ ...basics, intents }), { consent: true, today }).some(error => error.field === "intents"));
+  }
+});
 
 test("age checks the exact eighteenth birthday, invalid dates, and leap birthdays", () => {
   assert.equal(ageOn("2008-10-21", today), 18);

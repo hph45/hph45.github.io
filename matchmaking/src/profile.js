@@ -10,6 +10,13 @@ export const GENDERS = {
   other: "Other",
 };
 
+// The array is authoritative, including an empty selection. Accept the old
+// single choice when restoring a profile or a pre-sign-in preference.
+export function profileIntents(profile) {
+  const intents = profile.intents ?? (profile.intent ? [profile.intent] : []);
+  return Array.isArray(intents) ? [...new Set(intents)] : [];
+}
+
 export function ageRangeLabel(minimum, maximum) {
   return minimum >= 80 ? "80+" : `${minimum}–${maximum >= 80 ? "80+" : maximum}`;
 }
@@ -53,17 +60,17 @@ export function birthdayBounds(today = new Date()) {
 }
 
 // Build an explicit allowlist of writable fields. Irrelevant category answers are
-// cleared when someone changes their intent; timestamps and account IDs stay out.
+// cleared when someone deselects a type; timestamps and account IDs stay out.
 export function makeProfile(values, { isActive = true } = {}) {
   const text = (key) => String(values[key] ?? "").trim();
-  const intent = text("intent");
-  const romance = intent === "romance";
-  const business = intent === "business_partners";
+  const intents = profileIntents(values);
+  const romance = intents.includes("romance");
+  const business = intents.includes("business_partners");
   return {
     display_name: text("display_name"),
     birth_date: text("birth_date"),
     city_id: Number(values.city_id) || null,
-    city: text("city"), region: text("region"), country: text("country"), intent,
+    city: text("city"), region: text("region"), country: text("country"), intents,
     favorite_book_id: text("favorite_book_id") || null,
     favorite_book: text("favorite_book"), favorite_author: text("favorite_author"),
     favorite_book_2_id: text("favorite_book_2_id") || null,
@@ -77,7 +84,7 @@ export function makeProfile(values, { isActive = true } = {}) {
     // The slider's 80+ endpoint includes every older member the platform allows.
     age_max: romance && text("age_max") ? (Number(values.age_max) === 80 ? 120 : Number(values.age_max)) : null,
     romance_ideal_match: romance ? text("romance_ideal_match") : "",
-    friendship_interests: intent === "friends" ? text("friendship_interests") : "",
+    friendship_interests: intents.includes("friends") ? text("friendship_interests") : "",
     business_about: business ? text("business_about") : "",
     business_skills: business ? text("business_skills") : "",
     business_seeking: business ? text("business_seeking") : "",
@@ -88,12 +95,13 @@ export function makeProfile(values, { isActive = true } = {}) {
 
 export function validateProfile(profile, { consent, today = new Date() } = {}) {
   const errors = [];
+  const intents = profileIntents(profile);
   const error = (field, step, message) => errors.push({ field, step, message });
   const length = (field, min, max, step, label) => {
     const size = String(profile[field] ?? "").trim().length;
     if (size < min || size > max) error(field, step, `${label} should be ${min}–${max} characters.`);
   };
-  if (!Object.hasOwn(INTENTS, profile.intent)) error("intent", 0, "Choose the kind of connection you’re looking for.");
+  if (!intents.length || intents.some(intent => !Object.hasOwn(INTENTS, intent))) error("intents", 0, "Choose at least one kind of connection. You can select more than one.");
   length("display_name", 1, 60, 0, "Your name");
   const age = ageOn(profile.birth_date, today);
   if (!Number.isInteger(age) || age < 18 || age > 120) error("birth_date", 0, "Enter a valid birthday. Matchmaking is for people 18 and over.");
@@ -114,7 +122,7 @@ export function validateProfile(profile, { consent, today = new Date() } = {}) {
   }
   if (profile.favorite_book_3_id && !profile.favorite_book_2_id) error("favorite_book_2", 1, "Add your second favorite before your third.");
   if (!["same_city", "anywhere"].includes(profile.location_preference)) error("location_preference", 2, "Choose where you’d like to connect.");
-  if (profile.intent === "romance") {
+  if (intents.includes("romance")) {
     if (!Object.hasOwn(GENDERS, profile.gender ?? "")) error("gender", 2, "Choose how you describe your gender.");
     if (!Array.isArray(profile.interested_in) || !profile.interested_in.length || profile.interested_in.some((value) => !Object.hasOwn(GENDERS, value))) {
       error("interested_in", 2, "Choose at least one group of people you’d like to meet.");
@@ -125,8 +133,8 @@ export function validateProfile(profile, { consent, today = new Date() } = {}) {
     if (profile.age_min > profile.age_max) error("age_max", 2, "The maximum age must be at least the minimum age.");
     length("romance_ideal_match", 0, 600, 2, "Your ideal-match answer");
   }
-  if (profile.intent === "friends") length("friendship_interests", 5, 600, 2, "Your friendship answer");
-  if (profile.intent === "business_partners") {
+  if (intents.includes("friends")) length("friendship_interests", 5, 600, 2, "Your friendship answer");
+  if (intents.includes("business_partners")) {
     length("business_about", 5, 600, 2, "Your project answer");
     length("business_skills", 5, 600, 2, "Your skills answer");
     length("business_seeking", 5, 600, 2, "Your partner answer");
@@ -155,14 +163,17 @@ export function favoriteBooks(profile) {
 }
 
 export function preferenceDetails(profile) {
+  const intents = profileIntents(profile);
   const details = [["Where", profile.location_preference === "same_city" ? "My city or metro area" : "Open to anywhere"]];
-  if (profile.intent === "romance") {
+  if (intents.includes("romance")) {
     details.push(["Who you’d like to meet", profile.interested_in.map((gender) => GENDERS[gender]).join(", ")]);
     details.push(["Age range", ageRangeLabel(profile.age_min, profile.age_max)]);
     if (profile.romance_ideal_match) details.push(["Your ideal match", profile.romance_ideal_match]);
-  } else if (profile.intent === "friends") {
+  }
+  if (intents.includes("friends")) {
     details.push(["Time well spent", profile.friendship_interests]);
-  } else if (profile.intent === "business_partners") {
+  }
+  if (intents.includes("business_partners")) {
     details.push(["What you’re building", profile.business_about], ["What you bring", profile.business_skills], ["Your ideal partner", profile.business_seeking]);
   }
   return details;

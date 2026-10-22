@@ -7,7 +7,7 @@
   <title>Matchmaking | Zebra Book Club</title>
   <meta name="description" content="Meet through the books you love. Find romance, friends, or business partners with Zebra Book Club.">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <link rel="stylesheet" href="./styles.css?v=20261021.12">
+  <link rel="stylesheet" href="./styles.css?v=20261022.1">
 </head>
 <body>
   <header class="site-header">
@@ -28,7 +28,7 @@
           <p class="eyebrow">A meeting of minds</p>
           <h1 id="welcome-title">Good books.<br><em>Better company.</em></h1>
           <p class="lede">Some connections begin with a hello.<br>Ours begin with a favorite book.</p>
-          <p class="choice-label" id="intent-label">What are you looking for?</p>
+          <p class="choice-label" id="intent-label">What are you looking for? <span class="field-help">Choose all that apply.</span></p>
           <div class="intent-choices" role="group" aria-labelledby="intent-label">
             <button type="button" class="intent-choice" data-intent="romance" aria-pressed="false"><span aria-hidden="true">♡</span>Romance</button>
             <button type="button" class="intent-choice" data-intent="friends" aria-pressed="false"><svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="/assets/icons.svg#arrow-both"/></svg>Friends</button>
@@ -79,12 +79,20 @@
           <li data-progress="1"><span>02</span>Your books</li>
           <li data-progress="2"><span>03</span>Your people</li>
         </ol>
-        <p class="privacy-note">Your birthday and email stay private. The member map shows anonymous city totals, and the community shelf counts favorite books. Your name and introduction answers are shared only with your matches.</p>
+        <p class="privacy-note">Your birthday, email, and romance preferences stay private. Introduction answers are shared only with your matches.</p>
       </div>
       <form id="profile-form" class="profile-form">
         <fieldset data-step="0">
           <legend class="visually-hidden">About you</legend>
-          <label>What are you looking for?<select name="intent" id="profile-intent" required><option value="">Choose your connection</option><option value="romance">Romance</option><option value="friends">Friends</option><option value="business_partners">Business partners</option></select></label>
+          <fieldset class="connection-choices" aria-describedby="connections-help">
+            <legend>What are you looking for?</legend>
+            <p id="connections-help" class="field-help">Choose all that apply.</p>
+            <div class="connection-options">
+              <label><input type="checkbox" name="intents" value="romance">Romance</label>
+              <label><input type="checkbox" name="intents" value="friends">Friends</label>
+              <label><input type="checkbox" name="intents" value="business_partners">Business partners</label>
+            </div>
+          </fieldset>
           <label>What should we call you?<input name="display_name" autocomplete="given-name" maxlength="60" required placeholder="Your first name"></label>
           <label>Birthday<input name="birth_date" type="date" required aria-describedby="birthday-help"><span id="birthday-help" class="field-help">You must be 18 or older. Only your age is shown to a match.</span></label>
           <input name="city_id" type="hidden">
@@ -109,7 +117,7 @@
           <legend class="visually-hidden">Your connection preferences</legend>
           <label>Where would you like to connect?<select name="location_preference" required><option value="same_city">In my city or metro area</option><option value="anywhere">I’m open to anywhere</option></select></label>
           <fieldset data-preferences="romance" hidden disabled>
-            <legend class="visually-hidden">Romance preferences</legend>
+            <legend class="preference-heading">Romance</legend>
             <label>Your gender<select name="gender" id="gender" required><option value="">Choose an option</option><option value="woman">Woman</option><option value="man">Man</option><option value="other">Other</option></select></label>
             <fieldset class="checkbox-group"><legend>Who would you like to meet?</legend>
               <label><input type="checkbox" name="interested_in" value="woman">Woman</label><label><input type="checkbox" name="interested_in" value="man">Man</label><label><input type="checkbox" name="interested_in" value="other">Other</label>
@@ -126,9 +134,9 @@
             </div>
             <label>Tell us about your ideal match.<textarea name="romance_ideal_match" rows="4" maxlength="600" aria-describedby="ideal-match-help"></textarea><span id="ideal-match-help" class="field-help">Optional. This answer stays private.</span></label>
           </fieldset>
-          <fieldset data-preferences="friends" hidden disabled><legend class="visually-hidden">Friendship preferences</legend><label>What would you enjoy doing together?<textarea name="friendship_interests" rows="4" minlength="5" maxlength="600" required placeholder="Bookshop afternoons, hiking, spirited debates over coffee…"></textarea></label></fieldset>
+          <fieldset data-preferences="friends" hidden disabled><legend class="preference-heading">Friends</legend><label>What would you enjoy doing together?<textarea name="friendship_interests" rows="4" minlength="5" maxlength="600" required placeholder="Bookshop afternoons, hiking, spirited debates over coffee…"></textarea></label></fieldset>
           <fieldset data-preferences="business_partners" hidden disabled>
-            <legend class="visually-hidden">Business partner preferences</legend>
+            <legend class="preference-heading">Business partners</legend>
             <label>What are you working on, or hoping to build?<textarea name="business_about" rows="3" minlength="5" maxlength="600" required></textarea></label>
             <label>What skills or experience do you bring?<textarea name="business_skills" rows="3" minlength="5" maxlength="600" required></textarea></label>
             <label>What are you looking for in a partner?<textarea name="business_seeking" rows="3" minlength="5" maxlength="600" required></textarea></label>
@@ -194,6 +202,6 @@
   <dialog id="delete-dialog" aria-labelledby="delete-title"><form id="delete-form"><p class="eyebrow">Close this chapter</p><h2 id="delete-title">Delete your account?</h2><p>This permanently removes your matchmaking profile, preferences, and match memberships. Your Google account is unchanged.</p><label>Type DELETE to confirm<input id="delete-confirmation" autocomplete="off" required pattern="DELETE"></label><p id="delete-error" class="form-error" role="alert" hidden></p><div class="form-actions"><button id="cancel-delete" class="text-button" type="button">Keep my account</button><button id="confirm-delete" class="button" type="submit">Delete account</button></div></form></dialog>
   <footer class="site-footer"><span>© 2026 Zebra Book Club</span><nav class="legal-links" aria-label="Legal"><a href="/privacy/" target="_blank" rel="noopener">Privacy</a><a href="/terms/" target="_blank" rel="noopener">Terms</a></nav><span class="data-credits">Books: <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">Open Library</a> · Cities: <a href="https://www.geonames.org" target="_blank" rel="noopener noreferrer">GeoNames</a> · Map: <a href="https://naturalearthdata.com" target="_blank" rel="noopener noreferrer">Natural Earth</a></span></footer>
   <noscript><p class="notice">Please enable JavaScript to sign in and create your matchmaking profile.</p></noscript>
-  <script type="module" src="./app.js?v=20261021.10"></script>
+  <script type="module" src="./app.js?v=20261022.1"></script>
 </body>
 </html>

@@ -45,12 +45,20 @@ async function setup(t, options = {}) {
   const window = new Window({ url: "http://127.0.0.1:8080/matchmaking/", settings: { disableCSSFileLoading: true, disableJavaScriptFileLoading: true, enableJavaScriptEvaluation: false } });
   window.document.write(html);
   if (options.intent) window.localStorage.setItem("zebra-matchmaking-intent", options.intent);
+  if (options.intents) window.localStorage.setItem("zebra-matchmaking-intents", JSON.stringify(options.intents));
   const mock = mockClient(options);
   const app = createMatchmakingApp({ ...mock, document: window.document, window, fetch: async () => ({ ok: true, json: async () => ({ external: { google: options.googleEnabled ?? true } }) }) });
   await app.start();
   t.after(async () => { app.destroy(); await window.happyDOM.close(); });
   const $ = selector => window.document.querySelector(selector);
-  const set = (name, value) => { const input = $(`[name="${name}"]`); if (input.type === "checkbox") input.checked = value; else input.value = value; };
+  const set = (name, value) => {
+    if (Array.isArray(value)) {
+      window.document.querySelectorAll(`[name="${name}"]`).forEach(input => { input.checked = value.includes(input.value); });
+    } else {
+      const input = $(`[name="${name}"]`);
+      if (input.type === "checkbox") input.checked = value; else input.value = value;
+    }
+  };
   const event = async (selector, name = "click") => { $(selector).dispatchEvent(new window.Event(name, { bubbles: true, cancelable: true })); await app.settled(); };
   return { ...mock, app, window, $, set, event };
 }
@@ -58,7 +66,7 @@ async function setup(t, options = {}) {
 test("a new member can finish all three steps with one book and no explanation", async t => {
   const { $, set, event, state } = await setup(t, { intent: "friends" });
   assert.equal($("#onboarding-view").hidden, false);
-  assert.equal($('[name="intent"]').value, "friends");
+  assert.equal($('[name="intents"][value="friends"]').checked, true);
   assert.equal($('[name="display_name"]').value, "Reader");
   for (const [key, value] of Object.entries({ birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States" })) set(key, value);
   await event("#profile-form", "submit");
@@ -86,18 +94,121 @@ test("a new member can finish all three steps with one book and no explanation",
   assert.equal(state.profile.favorite_book_2_id, null);
   assert.equal(state.profile.favorite_book_3_id, null);
   assert.ok(!("book_reason" in state.profile));
-  assert.equal(state.profile.intent, "friends");
+  assert.deepEqual(state.profile.intents, ["friends"]);
   assert.equal(state.profile.email_matches, false);
   assert.equal(state.profile.user_id, member.id);
   assert.equal(state.calls.at(-1).action, "insert");
 });
 
+test("signup stays three steps and requires the questions for every selected type", async t => {
+  const types = ["romance", "friends", "business_partners"];
+  const { $, set, event, state, window } = await setup(t, { intents: types });
+  assert.equal(window.document.querySelectorAll("[data-progress]").length, 3);
+  for (const type of types) assert.equal($(`[name="intents"][value="${type}"]`).checked, true);
+  set("intents", []);
+  await event("#profile-form", "submit");
+  assert.match($("#form-error").textContent, /at least one/);
+  assert.equal(window.document.activeElement, $('[name="intents"]'));
+  assert.equal($('[name="intents"]').getAttribute("aria-invalid"), "true");
+  set("intents", types);
+  for (const [key, value] of Object.entries({ birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States" })) set(key, value);
+  await event("#profile-form", "submit");
+  set("favorite_book_id", "OL1W"); set("favorite_book", "A book"); set("favorite_author", "An author");
+  await event("#profile-form", "submit");
+  for (const type of types) {
+    assert.equal($(`[data-preferences="${type}"]`).hidden, false);
+    assert.equal($(`[data-preferences="${type}"]`).disabled, false);
+  }
+  set("profile_consent", true);
+  await event("#profile-form", "submit");
+  assert.equal(window.document.activeElement, $('[name="gender"]'));
+  set("gender", "other"); set("interested_in", ["woman", "other"]);
+  await event("#profile-form", "submit");
+  assert.equal(window.document.activeElement, $('[name="friendship_interests"]'));
+  set("friendship_interests", "Afternoons in bookshops");
+  await event("#profile-form", "submit");
+  assert.equal(window.document.activeElement, $('[name="business_about"]'));
+  set("business_about", "A community bookstore"); set("business_skills", "Planning great events");
+  await event("#profile-form", "submit");
+  assert.equal(window.document.activeElement, $('[name="business_seeking"]'));
+  assert.equal(state.calls.length, 0, "no partially completed multi-type profile is submitted");
+  set("business_seeking", "An operations partner");
+  // Going back to adjust choices never clears in-progress answers.
+  await event("#previous-step"); await event("#previous-step");
+  set("intents", ["romance", "friends"]); await event('[name="intents"]', "change");
+  set("intents", types); await event('[name="intents"]', "change");
+  await event("#profile-form", "submit"); await event("#profile-form", "submit");
+  assert.equal($('[name="business_seeking"]').value, "An operations partner");
+  await event("#profile-form", "submit");
+  assert.equal(state.calls.length, 1);
+  assert.deepEqual(state.profile.intents, types);
+  assert.equal(state.profile.romance_ideal_match, "", "existing optional answers remain optional");
+  assert.equal(state.profile.business_linkedin_url, "");
+  assert.equal(state.profile.favorite_book_2_id, null, "shared books are only entered once");
+  assert.equal($("#dashboard-view").hidden, false);
+  assert.equal($("#profile-category").textContent, "Romance · Friends · Business partners");
+  assert.match($("#profile-preferences").textContent, /Afternoons in bookshops/);
+  assert.match($("#profile-preferences").textContent, /An operations partner/);
+  await event("#edit-profile");
+  for (const type of types) assert.equal($(`[name="intents"][value="${type}"]`).checked, true);
+});
+
+test("editing a legacy profile can add a type without losing its existing answers or book lock", async t => {
+  const legacy = { ...profile, intent: "friends", books_updated_at: new Date().toISOString() };
+  delete legacy.intents;
+  const { $, set, event, state } = await setup(t, { initialProfile: legacy, intents: ["business_partners"] });
+  await event("#edit-profile");
+  assert.equal($('[name="intents"][value="friends"]').checked, true, "the saved profile wins over welcome selections");
+  assert.equal($('[name="intents"][value="business_partners"]').checked, false);
+  set("intents", ["romance", "friends"]);
+  await event("#profile-form", "submit");
+  assert.equal($('[data-step="1"]').disabled, true);
+  await event("#profile-form", "submit");
+  assert.equal($('[name="friendship_interests"]').value, profile.friendship_interests);
+  set("gender", "man"); set("interested_in", ["woman"]);
+  set("romance_ideal_match", "Someone who loves stories");
+  await event("#profile-form", "submit");
+  assert.deepEqual(state.profile.intents, ["romance", "friends"]);
+  assert.equal(state.profile.friendship_interests, profile.friendship_interests);
+  assert.equal(state.profile.favorite_book_id, profile.favorite_book_id);
+  await event("#edit-profile");
+  set("intents", ["friends"]);
+  await event("#cancel-edit");
+  assert.deepEqual(state.profile.intents, ["romance", "friends"], "cancel discards the draft");
+  await event("#edit-profile");
+  assert.equal($('[name="intents"][value="romance"]').checked, true);
+  set("intents", ["friends"]);
+  await event("#profile-form", "submit"); await event("#profile-form", "submit");
+  assert.equal($('[data-preferences="romance"]').disabled, true);
+  assert.equal($('[data-preferences="romance"]').hidden, true);
+  await event("#profile-form", "submit");
+  assert.deepEqual(state.profile.intents, ["friends"]);
+  assert.equal(state.profile.gender, null);
+  assert.equal(state.profile.romance_ideal_match, "");
+  assert.equal(state.profile.friendship_interests, profile.friendship_interests);
+});
+
+test("welcome choices toggle independently and survive the Google sign-in redirect", async t => {
+  const { $, event, window } = await setup(t, { signedIn: false });
+  await event('[data-intent="romance"]'); await event('[data-intent="friends"]');
+  await event('[data-intent="business_partners"]'); await event('[data-intent="friends"]');
+  assert.equal($('[data-intent="romance"]').getAttribute("aria-pressed"), "true");
+  assert.equal($('[data-intent="friends"]').getAttribute("aria-pressed"), "false");
+  assert.equal($('[data-intent="business_partners"]').getAttribute("aria-pressed"), "true");
+  const intents = JSON.parse(window.localStorage.getItem("zebra-matchmaking-intents"));
+  assert.deepEqual(intents, ["romance", "business_partners"]);
+  const returned = await setup(t, { intents });
+  assert.equal(returned.$('[name="intents"][value="romance"]').checked, true);
+  assert.equal(returned.$('[name="intents"][value="business_partners"]').checked, true);
+  assert.equal(returned.$('[name="intents"][value="friends"]').checked, false);
+});
+
 test("editing intent clears old preferences, preserves a pause, and writes only the owner row", async t => {
-  const romance = { ...profile, intent: "romance", gender: "man", interested_in: ["woman"], age_min: 25, age_max: 40, romance_ideal_match: "Someone curious and kind", is_active: false };
+  const romance = { ...profile, intents: ["romance"], gender: "man", interested_in: ["woman"], age_min: 25, age_max: 40, romance_ideal_match: "Someone curious and kind", is_active: false };
   const { $, set, event, state } = await setup(t, { initialProfile: romance });
   await event("#edit-profile");
-  set("intent", "business_partners");
-  await event("#profile-intent", "change");
+  set("intents", ["business_partners"]);
+  await event('[name="intents"]', "change");
   await event("#profile-form", "submit");
   await event("#profile-form", "submit");
   assert.equal($('[data-preferences="romance"]').disabled, true);
@@ -126,7 +237,7 @@ test("editing intent clears old preferences, preserves a pause, and writes only 
 });
 
 test("romance sliders restore saved ages, cannot cross, and save the private open answer", async t => {
-  const romance = { ...profile, intent: "romance", gender: "other", interested_in: ["woman", "other"], age_min: 25, age_max: 40 };
+  const romance = { ...profile, intents: ["romance"], gender: "other", interested_in: ["woman", "other"], age_min: 25, age_max: 40 };
   const { $, set, event, state } = await setup(t, { initialProfile: romance });
   await event("#edit-profile");
   await event("#profile-form", "submit");
@@ -263,4 +374,17 @@ test("books stay locked for 24 hours while other profile details remain editable
   await event("#profile-form", "submit");
   assert.equal(state.profile.display_name, "A new name");
   assert.equal(state.profile.favorite_book_id, "OL1W");
+});
+
+test("opening the editor and navigating steps returns to the start of the form", async t => {
+  const { window, event } = await setup(t, { initialProfile: profile });
+  window.scrollTo(0, 900);
+  await event("#edit-profile");
+  assert.equal(window.scrollY, 0, "editing from a scrolled dashboard reveals the connection choices");
+  window.scrollTo(0, 600);
+  await event("#profile-form", "submit");
+  assert.equal(window.scrollY, 0);
+  window.scrollTo(0, 600);
+  await event("#previous-step");
+  assert.equal(window.scrollY, 0);
 });

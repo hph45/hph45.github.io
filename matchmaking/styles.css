@@ -31,6 +31,20 @@ input[type=hidden] { display: none !important; }
 .age-range-at-end input[name=age_min] { z-index: 4; }
 .age-range-scale { display: flex; justify-content: space-between; padding-inline: 5px; color: var(--muted); font-size: 12px; }
 input[readonly], fieldset:disabled input, fieldset:disabled textarea { background: var(--wash); color: var(--muted); }
+.connection-choices { margin-bottom: 24px; }
+.connection-choices legend { font-size: 16px; }
+.connection-choices .field-help { margin: 6px 0 12px; }
+.connection-options { display: flex; flex-wrap: wrap; gap: 8px; }
+.connection-options label { display: flex; align-items: center; flex: 1 0 auto; gap: 9px; min-height: 46px; margin: 0; padding: 9px 12px; border: 1px solid var(--line); font-size: 15px; cursor: pointer; }
+.connection-options input { margin: 0; }
+.connection-options label:has(input:checked) { border-color: var(--ink); background: var(--wash); }
+.connection-options label:has(input:focus-visible) { outline: 2px solid var(--ink); outline-offset: 3px; }
+.connection-options input:focus-visible { outline: none; }
+.preference-heading { width: 100%; padding: 20px 0 16px; border-top: 1px solid var(--line); font-size: 25px; line-height: 1.2; }
+[data-preferences] { margin-top: 8px; }
+@media (max-width: 680px) {
+  .connection-options { flex-direction: column; }
+}
 .autocomplete { position: relative; }
 .autocomplete > .field-help:empty { display: none; }
 .suggestions { position: absolute; z-index: 10; top: 100%; left: 0; right: 0; max-height: 300px; overflow-y: auto; background: white; border: 1px solid var(--ink); box-shadow: 0 8px 18px #0000000d; }
