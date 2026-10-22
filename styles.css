@@ -209,6 +209,48 @@ h1 {
   padding: 10px 0 4px;
 }
 
+.hero-scroll {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 24px;
+  padding: 8px 12px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+}
+
+.hero-scroll:hover,
+.hero-scroll:focus-visible {
+  color: var(--text);
+}
+
+.hero-scroll:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 4px;
+}
+
+.hero-scroll-arrow {
+  width: 18px;
+  height: 18px;
+  animation: scroll-cue 2400ms ease-in-out infinite;
+}
+
+@keyframes scroll-cue {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.55;
+  }
+
+  50% {
+    transform: translateY(5px);
+    opacity: 1;
+  }
+}
+
 h2 {
   max-width: 14ch;
   font-size: clamp(2.2rem, 5vw, 3.8rem);
@@ -249,17 +291,6 @@ h2 {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
-}
-
-.reviews-disclaimer {
-  margin: 18px auto 0;
-  padding: 12px 22px;
-  width: 100%;
-  max-width: 72ch;
-  font-size: 0.88rem;
-  color: var(--muted);
-  border: 1px solid var(--line-soft);
-  text-align: center;
 }
 
 .tbr-trigger-slot {
@@ -867,6 +898,10 @@ h2 {
   text-underline-offset: 4px;
 }
 
+.site-footer .legal-links a {
+  color: inherit;
+}
+
 @keyframes slideDown {
   from {
     opacity: 0;
@@ -904,7 +939,8 @@ h2 {
   }
 
   .site-header,
-  .reveal {
+  .reveal,
+  .hero-scroll-arrow {
     animation: none;
     transition: none;
   }
