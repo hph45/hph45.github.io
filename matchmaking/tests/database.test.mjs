@@ -65,7 +65,7 @@ test("Postgres enforces ownership, validation, and released-match privacy", asyn
       await db.exec("delete from public.matchmaking_books where work_id='OL99999W'");
     }
   }
-  await db.exec("insert into public.matchmaking_books (work_id,title,author) values ('OL1W','A good book','An author'),('OL2W','Another good book','Another author'),('OL3W','A third book','A third author')");
+  await db.exec("insert into public.matchmaking_books (work_id,title,author) values ('OL1W','A good book','An author'),('OL2W','Another good book','Another author'),('OL3W','A third book','A third author'),('OL4W','A current read','A current author')");
   await db.query("insert into auth.users(id) values ($1), ($2), ($3), ($4)", [A, B, C, D]);
   const insert = (id, changes = {}) => {
     const values = { user_id: id, ...fixture, ...changes };
@@ -115,7 +115,7 @@ test("Postgres enforces ownership, validation, and released-match privacy", asyn
       await assert.rejects(insert(C, { favorite_book_id: null }), /Choose a book/);
       await denied(insert(C, { book_reason: "The removed question cannot be submitted" }));
       await denied(insert(C, { gender_description: "The retired gender question cannot be submitted" }));
-      await insert(C);
+      await insert(C, { current_book_id: "OL4W" });
     });
     await insert(D, { books_updated_at: "2000-01-01T00:00:00Z" });
   });
@@ -137,6 +137,53 @@ test("Postgres enforces ownership, validation, and released-match privacy", asyn
       const unchanged = (await db.query("update public.matchmaking_profiles set is_active=false where user_id=$1 returning books_updated_at", [D])).rows[0];
       assert.deepEqual(unchanged.books_updated_at, saved.books_updated_at, "other settings do not reset the book clock");
     });
+  });
+
+  await t.test("current reads have an independent server-owned 24-hour limit, including clearing", async () => {
+    const before = (await db.query("select * from public.matchmaking_profiles where user_id=$1", [A])).rows[0];
+    assert.deepEqual([before.current_book_id, before.current_book, before.current_author, before.current_book_updated_at], [null, "", "", null]);
+    const selections = (await db.query("select * from public.matchmaking_favorite_selections order by user_id,work_id")).rows;
+    const community = async () => (await asUser(A, () => db.query("select public.get_matchmaking_community() as data"))).rows[0].data;
+    const ranking = await community();
+    async function unlockCurrentRead() {
+      await db.exec("alter table public.matchmaking_profiles disable trigger matchmaking_current_reading");
+      await db.query("update public.matchmaking_profiles set current_book_updated_at=now()-interval '24 hours' where user_id=$1", [A]);
+      await db.exec("alter table public.matchmaking_profiles enable trigger matchmaking_current_reading");
+    }
+    for (const [index, id] of ["OL4W", "OL2W", "OL1W", null].entries()) {
+      if (index) await unlockCurrentRead();
+      await asUser(A, async () => {
+        const saved = (await db.query("update public.matchmaking_profiles set current_book_id=$2, current_book='Forged', current_author='Wrong author', favorite_book_id=favorite_book_id where user_id=$1 returning *", [A, id])).rows[0];
+        assert.equal(saved.current_book_id, id);
+        assert.equal(saved.current_book, id === "OL4W" ? "A current read" : id === "OL2W" ? "Another good book" : id === "OL1W" ? "A good book" : "");
+        assert.notEqual(saved.current_author, "Wrong author");
+        assert.deepEqual(saved.books_updated_at, before.books_updated_at);
+        assert.ok(Date.now() - new Date(saved.current_book_updated_at).getTime() < 5000);
+        const replacement = id === "OL4W" ? "OL2W" : "OL4W";
+        await assert.rejects(db.query("update public.matchmaking_profiles set current_book_id=$2 where user_id=$1", [A, replacement]), /CURRENT_READING_LOCKED/);
+        if (id) await assert.rejects(db.query("update public.matchmaking_profiles set current_book_id=null where user_id=$1", [A]), /CURRENT_READING_LOCKED/);
+        const unchanged = (await db.query("update public.matchmaking_profiles set current_book_id=current_book_id, current_book='Forged', email_matches=true where user_id=$1 returning *", [A])).rows[0];
+        assert.deepEqual(unchanged.current_book_updated_at, saved.current_book_updated_at, "unchanged reads and other profile edits do not reset the timer");
+        assert.equal(unchanged.current_book, saved.current_book);
+      });
+    }
+    await unlockCurrentRead();
+    await asUser(A, async () => {
+      await db.query("update public.matchmaking_profiles set current_book_id='OL4W' where user_id=$1", [A]);
+      await assert.rejects(db.query("update public.matchmaking_profiles set current_book_id='OL999999W' where user_id=$1", [A]), error => error.code === "22023");
+      assert.equal((await db.query("update public.matchmaking_profiles set current_book_id='OL4W' where user_id=$1 returning user_id", [B])).rows.length, 0);
+      await assert.rejects(db.query("update public.matchmaking_profiles set favorite_book_2_id='OL2W' where user_id=$1", [A]), /BOOKS_LOCKED/);
+      await denied(db.query("update public.matchmaking_profiles set current_book_updated_at=null where user_id=$1", [A]));
+      await denied(db.query("select public.normalize_matchmaking_current_reading()"));
+    });
+    const createdWithRead = (await db.query("select current_book_updated_at from public.matchmaking_profiles where user_id=$1", [C])).rows[0];
+    assert.ok(createdWithRead.current_book_updated_at, "selecting a current read during signup starts its clock");
+    await asUser(C, async () => {
+      await assert.rejects(db.query("update public.matchmaking_profiles set current_book_id=null where user_id=$1", [C]), /CURRENT_READING_LOCKED/);
+    });
+    await asUser(B, () => db.query("update public.matchmaking_profiles set current_book_id='OL4W' where user_id=$1", [B]));
+    assert.deepEqual(await community(), ranking);
+    assert.deepEqual((await db.query("select * from public.matchmaking_favorite_selections order by user_id,work_id")).rows, selections);
   });
 
   await t.test("community map and top ten use anonymous totals and canonical book IDs", async () => {
@@ -179,8 +226,10 @@ test("Postgres enforces ownership, validation, and released-match privacy", asyn
     assert.equal(result.length, 1);
     assert.equal(result[0].display_name, "Bob");
     assert.equal(result[0].favorite_book, fixture.favorite_book);
+    assert.equal(result[0].current_book, "A current read");
+    assert.equal(result[0].current_author, "A current author");
     assert.equal(result[0].book_reason, "", "legacy explanations are never returned to matches");
-    for (const key of ["birth_date", "email", "user_id", "gender", "gender_description", "interested_in", "romance_ideal_match", "email_matches"]) assert.ok(!(key in result[0]), key);
+    for (const key of ["birth_date", "email", "user_id", "gender", "gender_description", "interested_in", "romance_ideal_match", "email_matches", "current_book_updated_at"]) assert.ok(!(key in result[0]), key);
     assert.equal(result[0].business_linkedin_url, "");
     assert.equal((await asUser(B, () => db.query("select * from public.get_my_matchmaking_matches()"))).rows[0].display_name, "Alice Reader");
     assert.equal((await asUser(C, () => db.query("select * from public.get_my_matchmaking_matches()"))).rows.length, 0);

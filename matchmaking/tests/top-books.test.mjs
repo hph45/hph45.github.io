@@ -107,7 +107,8 @@ test("ranked rows are accessible Amazon links and gracefully handle missing or f
   assert.equal(links[0].rel, "sponsored noopener noreferrer");
   assert.equal(links[0].target, "_blank");
   assert.equal(links[0].tabIndex, 0);
-  assert.match(links[0].textContent, /3 readers.*opens in a new tab/);
+  assert.match(links[0].textContent, /3 favorites.*opens in a new tab/);
+  assert.equal(links[1].querySelector(".book-votes").textContent, "1 favorite");
   assert.equal(links[0].querySelector("img").getAttribute("src"), "/assets/review-covers/review-01.jpg");
   assert.equal(links[1].querySelector("img").src, coverURL(1234));
   assert.equal(links[1].querySelector("script"), null);

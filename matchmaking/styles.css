@@ -54,6 +54,11 @@ input[readonly], fieldset:disabled input, fieldset:disabled textarea { backgroun
 .suggestions strong, .suggestions span { display: block; font-weight: normal; }
 .suggestions span { font-size: 13px; color: var(--muted); margin-top: 3px; }
 .book-lock-note { padding: 15px; border-left: 2px solid var(--ink); background: var(--wash); font-size: 15px; }
+.current-reading-field { padding-top: 24px; border-top: 1px solid var(--line); }
+.current-reading { padding: 24px 0; border-bottom: 1px solid var(--line); }
+.current-reading .eyebrow { margin-bottom: 12px; }
+.current-reading h3 { font-size: 25px; margin-bottom: 4px; overflow-wrap: anywhere; }
+.current-reading p:last-child { margin-bottom: 0; font-size: 16px; }
 .community-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 30px; align-items: start; margin-bottom: 30px; }
 .community-overview { min-width: 0; }
 .icon-arrow { display: inline-block; width: 1em; height: 1em; vertical-align: -.12em; flex-shrink: 0; }

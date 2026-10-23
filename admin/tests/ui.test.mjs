@@ -269,10 +269,13 @@ test("profile text cannot inject HTML and unsafe LinkedIn links stay plain text"
   response.data.profiles[0].display_name = '<img src=x onerror="alert(1)">';
   response.data.profiles[0].romance_ideal_match = "<script>alert(1)</script>";
   response.data.profiles[0].business_linkedin_url = "javascript:alert(1)";
+  response.data.profiles[0].current_book = '<img src=x onerror="alert(1)">';
+  response.data.profiles[0].current_author = "Current author";
   const { $ } = await setup(t, { profileResponse: response });
   assert.equal($("#member-list img"), null); assert.equal($("#member-list script"), null);
   assert.equal($("#member-list a"), null);
   assert.match($("#member-list").textContent, /<script>/);
+  assert.match($("#member-list").textContent, /Currently reading.*Current author/);
 });
 
 test("directory errors clear profiles, retry recovers, and revoked access clears the entire dashboard", async t => {

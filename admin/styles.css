@@ -71,6 +71,7 @@
 .member-book { display: block; font-size: 16px; line-height: 1.35; }
 .member-book + .member-book { margin-top: 9px; }
 .member-book-author { display: block; font-size: 12px; margin-top: 3px; color: var(--muted); }
+.member-book-label { display: block; font: 10px/1.6 var(--sans); color: var(--muted); margin-bottom: 3px; }
 .member-chevron { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; }
 details[open] > summary .member-chevron { transform: rotate(180deg); }
 .member-answers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px 36px; padding: 26px; border-top: 1px solid var(--line); }
@@ -91,6 +92,8 @@ details[open] > summary .member-chevron { transform: rotate(180deg); }
   .member-filters > label:first-child { grid-column: 1 / -1; }
 }
 @media (max-width: 800px) {
+  .member-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .member-age-filter { grid-column: 1 / -1; }
   .demographics-grid, .locations-grid { grid-template-columns: 1fr; gap: 22px; }
   .admin-heading { align-items: start; }
   .admin-heading h1 { font-size: 52px; }

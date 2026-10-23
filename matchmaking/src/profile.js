@@ -77,6 +77,8 @@ export function makeProfile(values, { isActive = true } = {}) {
     favorite_book_2: text("favorite_book_2"), favorite_author_2: text("favorite_author_2"),
     favorite_book_3_id: text("favorite_book_3_id") || null,
     favorite_book_3: text("favorite_book_3"), favorite_author_3: text("favorite_author_3"),
+    current_book_id: text("current_book_id") || null,
+    current_book: text("current_book"), current_author: text("current_author"),
     location_preference: text("location_preference"),
     gender: romance ? text("gender") || null : null,
     interested_in: romance && Array.isArray(values.interested_in) ? [...new Set(values.interested_in)] : [],
@@ -121,6 +123,11 @@ export function validateProfile(profile, { consent, today = new Date() } = {}) {
     length(`favorite_author${suffix}`, 1, 300, 1, "The author’s name");
   }
   if (profile.favorite_book_3_id && !profile.favorite_book_2_id) error("favorite_book_2", 1, "Add your second favorite before your third.");
+  if (profile.current_book || profile.current_book_id || profile.current_author) {
+    if (!/^OL\d+W$/.test(profile.current_book_id || "")) error("current_book", 1, "Choose your current read from the suggestions, or leave it blank.");
+    length("current_book", 1, 300, 1, "The book’s title");
+    length("current_author", 1, 300, 1, "The author’s name");
+  }
   if (!["same_city", "anywhere"].includes(profile.location_preference)) error("location_preference", 2, "Choose where you’d like to connect.");
   if (intents.includes("romance")) {
     if (!Object.hasOwn(GENDERS, profile.gender ?? "")) error("gender", 2, "Choose how you describe your gender.");
@@ -152,6 +159,11 @@ export function locationLabel(profile) {
 
 export function bookEditTime(profile) {
   const lastEdit = Date.parse(profile?.books_updated_at);
+  return Number.isFinite(lastEdit) ? lastEdit + 24 * 60 * 60 * 1000 : 0;
+}
+
+export function currentReadEditTime(profile) {
+  const lastEdit = Date.parse(profile?.current_book_updated_at);
   return Number.isFinite(lastEdit) ? lastEdit + 24 * 60 * 60 * 1000 : 0;
 }
 

@@ -47,7 +47,7 @@ export function renderTopBooks(document, books, catalog, loadCover) {
     const title = document.createElement("span"); title.className = "ranked-book-title"; title.textContent = book.title;
     const author = document.createElement("span"); author.className = "ranked-book-author"; author.textContent = book.author;
     const destination = document.createElement("span"); destination.className = "visually-hidden"; destination.textContent = "Find on Amazon (opens in a new tab).";
-    const votes = document.createElement("span"); votes.className = "book-votes"; votes.textContent = `${book.votes} ${book.votes === 1 ? "reader" : "readers"}`;
+    const votes = document.createElement("span"); votes.className = "book-votes"; votes.textContent = `${book.votes} ${book.votes === 1 ? "favorite" : "favorites"}`;
     info.append(title, author); link.append(rank, cover.element, info, votes, destination); item.append(link); list.append(item);
     covers.push(cover.load());
   }

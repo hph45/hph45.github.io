@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { INTENTS, profileIntents, preferenceDetails, ageOn, birthdayBounds, makeProfile, validateProfile, normalizeLinkedInURL, ageRangeLabel } from "../src/profile.js";
+import { INTENTS, profileIntents, preferenceDetails, ageOn, birthdayBounds, makeProfile, validateProfile, normalizeLinkedInURL, ageRangeLabel, currentReadEditTime } from "../src/profile.js";
 import { getAuthRedirect } from "../src/config.js";
 
 const today = new Date("2026-10-21T12:00:00Z");
@@ -147,4 +147,25 @@ test("one to three books are valid, a first book is required, and the retired an
   for (const profile of [two, three]) assert.deepEqual(validateProfile(profile, { consent: true, today }), []);
   const empty = makeProfile({ ...basics, favorite_book_id: "", favorite_book: "", favorite_author: "" });
   assert.ok(validateProfile(empty, { consent: true, today }).some(error => error.field === "favorite_book"));
+});
+
+test("a current read is optional, requires a catalog selection, and may also be a favorite", () => {
+  const empty = makeProfile(basics);
+  assert.equal(empty.current_book_id, null);
+  assert.equal(empty.current_book, "");
+  assert.equal(empty.current_author, "");
+  assert.deepEqual(validateProfile(empty, { consent: true, today }), []);
+  const reading = makeProfile({ ...basics, current_book_id: " OL1W ", current_book: " Parable of the Sower ", current_author: " Octavia Butler " });
+  assert.equal(reading.current_book_id, "OL1W");
+  assert.equal(reading.current_book, basics.favorite_book);
+  assert.deepEqual(validateProfile(reading, { consent: true, today }), []);
+  for (const changes of [{ current_book_id: "" }, { current_book_id: "OL1M" }, { current_book: "" }, { current_author: "" }, { current_book: "a".repeat(301) }]) {
+    assert.ok(validateProfile({ ...reading, ...changes }, { consent: true, today }).some(error => error.step === 1));
+  }
+});
+
+test("the current-read clock handles empty profiles and cannot be supplied in a profile write", () => {
+  for (const value of [undefined, null, "", "invalid"]) assert.equal(currentReadEditTime({ current_book_updated_at: value }), 0);
+  assert.equal(currentReadEditTime({ current_book_updated_at: "2026-10-23T12:00:00Z", books_updated_at: "2026-10-22T00:00:00Z" }), Date.parse("2026-10-24T12:00:00Z"));
+  assert.ok(!("current_book_updated_at" in makeProfile({ ...basics, current_book_updated_at: "2000-01-01" })));
 });

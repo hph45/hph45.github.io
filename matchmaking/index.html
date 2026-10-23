@@ -7,7 +7,7 @@
   <title>Matchmaking | Zebra Book Club</title>
   <meta name="description" content="Meet through the books you love. Find romance, friends, or business partners with Zebra Book Club.">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <link rel="stylesheet" href="./styles.css?v=20261022.1">
+  <link rel="stylesheet" href="./styles.css?v=20261023.1">
 </head>
 <body>
   <header class="site-header">
@@ -100,19 +100,30 @@
           <div class="field-pair"><label>State / region<input name="region" maxlength="200" readonly></label><label>Country<input name="country" maxlength="200" readonly required></label></div>
         </fieldset>
         <fieldset data-step="1" hidden disabled>
-          <legend class="visually-hidden">Your favorite books</legend>
+          <legend class="visually-hidden">Your books</legend>
           <p class="field-help">Choose one to three favorite books. Only the first is required. Search by title or author, then choose a suggestion. You can change your picks once every 24 hours.</p>
-          <input name="favorite_book_id" type="hidden">
-          <label>01 — Your favorite book<input name="favorite_book" maxlength="300" required placeholder="Search for a book or author"></label>
-          <label>Author<input name="favorite_author" maxlength="300" required readonly></label>
-          <input name="favorite_book_2_id" type="hidden">
-          <label>02 — Another favorite <span class="optional">(optional)</span><input name="favorite_book_2" maxlength="300" placeholder="Search for a book or author"></label>
-          <label>Author<input name="favorite_author_2" maxlength="300" readonly></label>
-          <input name="favorite_book_3_id" type="hidden">
-          <label>03 — One more <span class="optional">(optional)</span><input name="favorite_book_3" maxlength="300" placeholder="Search for a book or author"></label>
-          <label>Author<input name="favorite_author_3" maxlength="300" readonly></label>
+          <fieldset id="favorite-book-fields">
+            <legend class="visually-hidden">Your favorite books</legend>
+            <input name="favorite_book_id" type="hidden">
+            <label>01 — Your favorite book<input name="favorite_book" maxlength="300" required placeholder="Search for a book or author"></label>
+            <label>Author<input name="favorite_author" maxlength="300" required readonly></label>
+            <input name="favorite_book_2_id" type="hidden">
+            <label>02 — Another favorite <span class="optional">(optional)</span><input name="favorite_book_2" maxlength="300" placeholder="Search for a book or author"></label>
+            <label>Author<input name="favorite_author_2" maxlength="300" readonly></label>
+            <input name="favorite_book_3_id" type="hidden">
+            <label>03 — One more <span class="optional">(optional)</span><input name="favorite_book_3" maxlength="300" placeholder="Search for a book or author"></label>
+            <label>Author<input name="favorite_author_3" maxlength="300" readonly></label>
+          </fieldset>
+          <p id="books-lock-note" class="book-lock-note" role="status" hidden></p>
+          <fieldset id="current-reading-fields" class="current-reading-field">
+            <legend class="visually-hidden">Currently reading</legend>
+            <input name="current_book_id" type="hidden">
+            <label>Currently reading <span class="optional">(optional)</span><input name="current_book" maxlength="300" placeholder="Search for a book or author" aria-describedby="current-reading-help"></label>
+            <label>Author<input name="current_author" maxlength="300" readonly></label>
+            <p id="current-reading-help" class="field-help">What’s on your nightstand? You can change this once every 24 hours.</p>
+          </fieldset>
+          <p id="current-reading-lock-note" class="book-lock-note" role="status" hidden></p>
         </fieldset>
-        <p id="books-lock-note" class="book-lock-note" role="status" hidden></p>
         <fieldset data-step="2" hidden disabled>
           <legend class="visually-hidden">Your connection preferences</legend>
           <label>Where would you like to connect?<select name="location_preference" required><option value="same_city">In my city or metro area</option><option value="anywhere">I’m open to anywhere</option></select></label>
@@ -185,6 +196,8 @@
           <div class="card-heading"><p class="eyebrow">Your profile</p><button id="edit-profile" class="text-button" type="button">Edit profile <svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="/assets/icons.svg#arrow-up-right"/></svg></button></div>
           <p id="profile-category" class="category-label"></p><h2 id="profile-name"></h2><p id="profile-location" class="muted"></p>
           <div class="favorite-book"><p class="eyebrow">Your bookshelf</p><h3 id="profile-book"></h3><p id="profile-author"></p><div id="profile-extra-books"></div><p id="book-edit-status" class="small-copy"></p></div>
+          <div id="profile-current-reading" class="current-reading" hidden></div>
+          <p id="profile-current-reading-status" class="small-copy" hidden></p>
           <div id="profile-preferences" class="profile-preferences"></div>
         </article>
         <aside class="preferences-card">
@@ -202,6 +215,6 @@
   <dialog id="delete-dialog" aria-labelledby="delete-title"><form id="delete-form"><p class="eyebrow">Close this chapter</p><h2 id="delete-title">Delete your account?</h2><p>This permanently removes your matchmaking profile, preferences, and match memberships. Your Google account is unchanged.</p><label>Type DELETE to confirm<input id="delete-confirmation" autocomplete="off" required pattern="DELETE"></label><p id="delete-error" class="form-error" role="alert" hidden></p><div class="form-actions"><button id="cancel-delete" class="text-button" type="button">Keep my account</button><button id="confirm-delete" class="button" type="submit">Delete account</button></div></form></dialog>
   <footer class="site-footer"><span>© 2026 Zebra Book Club</span><nav class="legal-links" aria-label="Legal"><a href="/privacy/" target="_blank" rel="noopener">Privacy</a><a href="/terms/" target="_blank" rel="noopener">Terms</a></nav><span class="data-credits">Books: <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">Open Library</a> · Cities: <a href="https://www.geonames.org" target="_blank" rel="noopener noreferrer">GeoNames</a> · Map: <a href="https://naturalearthdata.com" target="_blank" rel="noopener noreferrer">Natural Earth</a></span></footer>
   <noscript><p class="notice">Please enable JavaScript to sign in and create your matchmaking profile.</p></noscript>
-  <script type="module" src="./app.js?v=20261022.1"></script>
+  <script type="module" src="./app.js?v=20261023.2"></script>
 </body>
 </html>

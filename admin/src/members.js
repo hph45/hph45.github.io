@@ -77,6 +77,11 @@ export function createMemberDirectory({ client, document, window, onDenied, isDe
       const item = element("span", "member-book", `${i + 1}. ${book.title}`);
       item.append(element("span", "member-book-author", book.author)); books.append(item);
     }
+    if (profile.current_book) {
+      const item = element("span", "member-book");
+      item.append(element("span", "member-book-label", "Currently reading"), document.createTextNode(profile.current_book), element("span", "member-book-author", profile.current_author));
+      books.append(item);
+    }
     const chevron = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     chevron.setAttribute("viewBox", "0 0 24 24"); chevron.setAttribute("class", "member-chevron");
     chevron.setAttribute("aria-hidden", "true"); chevron.setAttribute("focusable", "false");

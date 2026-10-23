@@ -1,5 +1,5 @@
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, PROFILE_TABLE, getAuthRedirect } from "./config.js";
-import { INTENTS, profileIntents, ageOn, birthdayBounds, makeProfile, validateProfile, locationLabel, preferenceDetails, bookEditTime, favoriteBooks, normalizeLinkedInURL } from "./profile.js";
+import { INTENTS, profileIntents, ageOn, birthdayBounds, makeProfile, validateProfile, locationLabel, preferenceDetails, bookEditTime, currentReadEditTime, favoriteBooks, normalizeLinkedInURL } from "./profile.js";
 import { attachAutocomplete } from "./autocomplete.js";
 import { attachAgeRange } from "./age-range.js";
 import { renderCommunityMap } from "./map.js";
@@ -103,7 +103,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       if (Number(item.dataset.progress) === index) item.setAttribute("aria-current", "step");
       else item.removeAttribute("aria-current");
     });
-    const titles = ["A little about you.", "Your favorite books.", "Your kind of people."];
+    const titles = ["A little about you.", "Your books.", "Your kind of people."];
     const descriptions = ["The basics, before the book.", "A little shelf that says a lot about you.", "Tell us what a good connection looks like."];
     text("#onboarding-title", titles[index]);
     text("#form-description", descriptions[index]);
@@ -127,17 +127,25 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
 
   function updateBookLock() {
     window.clearTimeout(bookTimer);
-    const unlocks = bookEditTime(profile);
-    const remaining = unlocks - Date.now();
-    const locked = remaining > 0;
-    steps[1].disabled = currentStep !== 1 || locked;
-    const message = locked
-      ? `You can change your books again ${new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(unlocks))}.`
-      : "You can update your books now. Changes are available once every 24 hours.";
-    text("#books-lock-note", message);
-    $("#books-lock-note").hidden = currentStep !== 1 || !locked;
-    text("#book-edit-status", message);
-    if (locked) bookTimer = window.setTimeout(updateBookLock, Math.min(remaining + 50, 24 * 60 * 60 * 1000));
+    const locks = [
+      [bookEditTime(profile), "favorites", "#favorite-book-fields", "#books-lock-note", "#book-edit-status"],
+      [currentReadEditTime(profile), "current read", "#current-reading-fields", "#current-reading-lock-note", "#profile-current-reading-status"],
+    ];
+    let nextUnlock = Infinity;
+    for (const [unlocks, label, fields, note, status] of locks) {
+      const remaining = unlocks - Date.now();
+      const locked = remaining > 0;
+      $(fields).disabled = locked;
+      const message = locked
+        ? `You can change your ${label} again ${new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(unlocks))}.`
+        : `You can update your ${label} now. Changes are available once every 24 hours.`;
+      text(note, message);
+      $(note).hidden = currentStep !== 1 || !locked;
+      text(status, message);
+      if (status === "#profile-current-reading-status") $(status).hidden = !locked && !profile?.current_book;
+      if (locked) nextUnlock = Math.min(nextUnlock, remaining);
+    }
+    if (Number.isFinite(nextUnlock)) bookTimer = window.setTimeout(updateBookLock, Math.min(nextUnlock + 50, 24 * 60 * 60 * 1000));
   }
 
   function openForm() {
@@ -228,6 +236,14 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     const extraBooks = $("#profile-extra-books");
     extraBooks.replaceChildren();
     favoriteBooks(profile).slice(1).forEach(book => detail(extraBooks, book.title, `by ${book.author}`));
+    const currentReading = $("#profile-current-reading");
+    currentReading.replaceChildren();
+    currentReading.hidden = !profile.current_book;
+    if (profile.current_book) {
+      const label = document.createElement("p"); label.className = "eyebrow"; label.textContent = "Currently reading";
+      currentReading.append(label);
+      detail(currentReading, profile.current_book, `by ${profile.current_author}`);
+    }
     updateBookLock();
     text("#participation-description", profile.is_active ? "You’re on the list for future introductions." : "Your profile is saved. You won’t receive new matches while paused.");
     text("#pause-matching", profile.is_active ? "Pause matching" : "Resume matching");
@@ -268,6 +284,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
         place.textContent = locationLabel(match);
         article.append(tag, heading, place);
         favoriteBooks(match).forEach(book => detail(article, book.title, `by ${book.author}`));
+        if (match.current_book) detail(article, "Currently reading", `${match.current_book} — ${match.current_author}`);
         detail(article, "Why you crossed paths", match.reason);
         if (match.intent === "friends") detail(article, "Time well spent", match.friendship_interests);
         if (match.intent === "business_partners") {
@@ -419,7 +436,9 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     } catch (error) {
       if (version !== generation) return;
       text("#form-error", error?.message === "BOOKS_LOCKED"
-        ? "Your books can be changed once every 24 hours. Please wait until your next update is available."
+        ? "Your favorites can be changed once every 24 hours. Please wait until your next update is available."
+        : error?.message === "CURRENT_READING_LOCKED"
+          ? "Your current read can be changed once every 24 hours. Please wait until your next update is available."
         : "We couldn’t save your profile. Your answers are still here—please try again.");
       $("#form-error").hidden = false;
     } finally {
@@ -516,8 +535,10 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     onSelect(city) { field("city_id").value = city.id; field("city").value = city.name; field("region").value = city.region; field("country").value = city.country; },
     onClear() { field("city_id").value = ""; field("region").value = ""; field("country").value = ""; },
   }));
-  for (const suffix of ["", "_2", "_3"]) {
-    autocompletes.push(attachAutocomplete(field(`favorite_book${suffix}`), {
+  const bookFields = ["", "_2", "_3"].map(suffix => [`favorite_book${suffix}`, `favorite_author${suffix}`]);
+  bookFields.push(["current_book", "current_author"]);
+  for (const [titleField, authorField] of bookFields) {
+    autocompletes.push(attachAutocomplete(field(titleField), {
       document, window,
       async search(query) {
         let result = await client.functions.invoke("search-books", { body: { query: query.slice(0, 120) } });
@@ -529,8 +550,8 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
         return result.data?.books || [];
       },
       describe: book => [book.title, book.author],
-      onSelect(book) { field(`favorite_book${suffix}_id`).value = book.work_id; field(`favorite_book${suffix}`).value = book.title; field(`favorite_author${suffix}`).value = book.author; },
-      onClear() { field(`favorite_book${suffix}_id`).value = ""; field(`favorite_author${suffix}`).value = ""; },
+      onSelect(book) { field(`${titleField}_id`).value = book.work_id; field(titleField).value = book.title; field(authorField).value = book.author; },
+      onClear() { field(`${titleField}_id`).value = ""; field(authorField).value = ""; },
     }));
   }
 

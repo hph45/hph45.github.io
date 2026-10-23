@@ -28,8 +28,14 @@ function mockClient({ signedIn = true, initialProfile = null, matches = [], risi
         maybeSingle: async () => ({ data: state.profile, error: null }),
         async single() {
           state.calls.push(call);
-          if (state.failNext) { state.failNext = false; return { data: null, error: new Error("Network failure") }; }
-          state.profile = { ...state.profile, ...call.values, books_updated_at: new Date().toISOString() };
+          if (state.failNext) { const error = state.failNext === true ? new Error("Network failure") : state.failNext; state.failNext = false; return { data: null, error }; }
+          const now = new Date().toISOString();
+          const favoritesChanged = call.action === "insert" || ["favorite_book_id", "favorite_book_2_id", "favorite_book_3_id"].some(key => Object.hasOwn(call.values, key) && call.values[key] !== state.profile?.[key]);
+          const currentChanged = Object.hasOwn(call.values, "current_book_id") && call.values.current_book_id !== (state.profile?.current_book_id ?? null);
+          state.profile = { ...state.profile, ...call.values,
+            books_updated_at: favoritesChanged ? now : state.profile?.books_updated_at,
+            current_book_updated_at: currentChanged ? now : state.profile?.current_book_updated_at ?? null,
+          };
           return { data: structuredClone(state.profile), error: null };
         },
       };
@@ -75,6 +81,7 @@ test("a new member can finish all three steps with one book and no explanation",
   assert.equal($('[name="book_reason"]'), null);
   assert.equal($('[name="favorite_book_2"]').required, false);
   assert.equal($('[name="favorite_book_3"]').required, false);
+  assert.equal($('[name="current_book"]').required, false);
   set("favorite_book_id", "OL1W"); set("favorite_book", "Parable of the Sower"); set("favorite_author", "Octavia Butler");
   await event("#profile-form", "submit");
   assert.equal($('[data-step="2"]').hidden, false);
@@ -93,11 +100,136 @@ test("a new member can finish all three steps with one book and no explanation",
   assert.equal(state.profile.favorite_book, "Parable of the Sower");
   assert.equal(state.profile.favorite_book_2_id, null);
   assert.equal(state.profile.favorite_book_3_id, null);
+  assert.equal(state.profile.current_book_id, null);
+  assert.equal($("#profile-current-reading").hidden, true);
   assert.ok(!("book_reason" in state.profile));
   assert.deepEqual(state.profile.intents, ["friends"]);
   assert.equal(state.profile.email_matches, false);
   assert.equal(state.profile.user_id, member.id);
   assert.equal(state.calls.at(-1).action, "insert");
+});
+
+test("signup uses the shared book search for an optional current read and preserves it after a failed save", async t => {
+  const { $, set, event, state, client, window } = await setup(t, { intent: "friends" });
+  const queries = [];
+  client.functions.invoke = async (name, { body }) => {
+    queries.push({ name, body });
+    return { data: { books: [{ work_id: "OL4W", title: "A current read", author: "Current author" }] }, error: null };
+  };
+  for (const [key, value] of Object.entries({ birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States", favorite_book_id: "OL1W", favorite_book: "A favorite", favorite_author: "Favorite author" })) set(key, value);
+  await event("#profile-form", "submit");
+  set("current_book", "A current"); await event('[name="current_book"]', "input");
+  await new Promise(resolve => window.setTimeout(resolve, 500));
+  assert.deepEqual(queries[0], { name: "search-books", body: { query: "A current" } });
+  assert.equal($("#current_book-suggestions").hidden, false);
+  await event("#profile-form", "submit");
+  assert.match($("#form-error").textContent, /Choose your current read/);
+  assert.equal($('[data-step="1"]').hidden, false);
+  // Validation closes suggestions; typing again allows a new selection.
+  await event('[name="current_book"]', "input");
+  await new Promise(resolve => window.setTimeout(resolve, 500));
+  await event("#current_book-suggestions-0");
+  assert.equal($('[name="current_book_id"]').value, "OL4W");
+  assert.equal($('[name="current_author"]').value, "Current author");
+  await event("#profile-form", "submit");
+  set("friendship_interests", "Afternoons in bookshops"); set("profile_consent", true);
+  state.failNext = true; await event("#profile-form", "submit");
+  assert.equal($('[name="current_book"]').value, "A current read");
+  await event("#profile-form", "submit");
+  assert.equal(state.profile.current_book_id, "OL4W");
+  assert.equal($("#profile-current-reading").hidden, false);
+  assert.match($("#profile-current-reading").textContent, /Currently reading.*A current read.*Current author/);
+  assert.equal(state.profile.favorite_book_2_id, null);
+  await event("#edit-profile"); await event("#profile-form", "submit");
+  assert.equal($("#current-reading-fields").disabled, true);
+  assert.match($("#current-reading-lock-note").textContent, /change your current read again/);
+});
+
+test("current reads can change when their own clock allows it, and cleared reads stay locked", async t => {
+  const saved = { ...profile, current_book_id: "OL4W", current_book: "A current read", current_author: "Current author", books_updated_at: new Date().toISOString() };
+  const { $, set, event, state, window } = await setup(t, { initialProfile: saved });
+  await event("#edit-profile"); await event("#profile-form", "submit");
+  assert.equal($('#favorite-book-fields').disabled, true);
+  assert.equal($('[name="current_book"]').closest('fieldset[disabled]'), null);
+  assert.equal($('[name="current_book"]').value, "A current read");
+  set("current_book_id", "OL5W"); set("current_book", "The next read"); set("current_author", "Another author");
+  await event("#profile-form", "submit"); await event("#profile-form", "submit");
+  assert.equal(state.profile.current_book, "The next read");
+  assert.equal(state.profile.favorite_book_id, "OL1W");
+  assert.equal(state.profile.books_updated_at, saved.books_updated_at);
+  assert.match($("#profile-current-reading-status").textContent, /change your current read again/);
+  await event("#edit-profile"); await event("#profile-form", "submit");
+  assert.equal($("#current-reading-fields").disabled, true);
+  await event("#cancel-edit");
+  // Simulate the server's clock after the full interval, then reload the profile.
+  state.profile.current_book_updated_at = new Date(Date.now() - 24 * 60 * 60 * 1000 - 1000).toISOString();
+  await event("#retry-profile");
+  await event("#edit-profile"); await event("#profile-form", "submit");
+  assert.equal($("#current-reading-fields").disabled, false);
+  set("current_book", ""); await event('[name="current_book"]', "input");
+  assert.equal($('[name="current_book_id"]').value, "");
+  assert.equal($('[name="current_author"]').value, "");
+  await event("#profile-form", "submit"); await event("#profile-form", "submit");
+  assert.equal(state.profile.current_book_id, null);
+  assert.equal($("#profile-current-reading").hidden, true);
+  assert.equal($("#profile-current-reading-status").hidden, false);
+  await event("#edit-profile"); await event("#profile-form", "submit");
+  assert.equal($("#current-reading-fields").disabled, true);
+  await event("#cancel-edit");
+  await event("#edit-profile"); set("current_book", "An unsaved read"); set("current_book_id", "OL6W");
+  await event("#cancel-edit"); await event("#edit-profile");
+  assert.equal($('[name="current_book"]').value, "");
+  set("current_book", "An unsaved read"); set("current_book_id", "OL6W");
+  await event("#sign-out");
+  assert.equal($('[name="current_book"]').value, "");
+  assert.equal($('[name="current_book_id"]').value, "");
+  assert.equal($("#profile-current-reading").textContent, "");
+});
+
+test("a current-read lock leaves favorites and other profile answers editable", async t => {
+  const readingTime = new Date().toISOString();
+  const { $, set, event, state } = await setup(t, { initialProfile: { ...profile, current_book_id: "OL4W", current_book: "A current read", current_author: "Current author", current_book_updated_at: readingTime, books_updated_at: "2000-01-01T00:00:00Z" } });
+  await event("#edit-profile"); set("display_name", "A new name"); await event("#profile-form", "submit");
+  assert.equal($("#favorite-book-fields").disabled, false);
+  assert.equal($("#current-reading-fields").disabled, true);
+  assert.equal($("#current-reading-lock-note").hidden, false);
+  set("favorite_book_id", "OL5W"); set("favorite_book", "A new favorite");
+  await event("#profile-form", "submit"); await event("#profile-form", "submit");
+  assert.equal(state.profile.display_name, "A new name");
+  assert.equal(state.profile.favorite_book_id, "OL5W");
+  assert.equal(state.profile.current_book_id, "OL4W");
+  assert.equal(state.profile.current_book_updated_at, readingTime);
+});
+
+test("the current-read field unlocks automatically when its interval ends", async t => {
+  const { $, event, window } = await setup(t, { initialProfile: { ...profile, current_book_updated_at: new Date(Date.now() - 24 * 60 * 60 * 1000 + 600).toISOString() } });
+  await event("#edit-profile"); await event("#profile-form", "submit");
+  assert.equal($("#current-reading-fields").disabled, true);
+  await new Promise(resolve => window.setTimeout(resolve, 700));
+  assert.equal($("#current-reading-fields").disabled, false);
+  assert.equal($("#current-reading-lock-note").hidden, true);
+  assert.equal($("#profile-current-reading-status").hidden, true);
+});
+
+test("a stale tab shows the server's current-read lock without losing the draft", async t => {
+  const { $, set, event, state } = await setup(t, { initialProfile: profile });
+  await event("#edit-profile"); await event("#profile-form", "submit");
+  set("current_book_id", "OL4W"); set("current_book", "A current read"); set("current_author", "Current author");
+  await event("#profile-form", "submit");
+  state.failNext = { message: "CURRENT_READING_LOCKED" };
+  await event("#profile-form", "submit");
+  assert.match($("#form-error").textContent, /current read.*once every 24 hours/);
+  assert.equal($('[name="current_book"]').value, "A current read");
+  assert.equal($("#dashboard-view").hidden, true);
+});
+
+test("current-read titles render as plain text in profiles and released introductions", async t => {
+  const title = '<img src=x onerror="alert(1)">';
+  const { $ } = await setup(t, { initialProfile: { ...profile, current_book_id: "OL4W", current_book: title, current_author: "An author" }, matches: [{ ...profile, age: 32, intent: "friends", week_start: "2026-10-19", reason: "Shared interests", current_book: title, current_author: "An author" }] });
+  assert.equal($("#profile-current-reading img"), null);
+  assert.ok($("#profile-current-reading").textContent.includes(title));
+  assert.equal($("#matches-list img"), null);
+  assert.ok($("#matches-list").textContent.includes(`Currently reading${title} — An author`));
 });
 
 test("signup stays three steps and requires the questions for every selected type", async t => {
@@ -162,7 +294,8 @@ test("editing a legacy profile can add a type without losing its existing answer
   assert.equal($('[name="intents"][value="business_partners"]').checked, false);
   set("intents", ["romance", "friends"]);
   await event("#profile-form", "submit");
-  assert.equal($('[data-step="1"]').disabled, true);
+  assert.equal($('[data-step="1"]').disabled, false);
+  assert.equal($('#favorite-book-fields').disabled, true);
   await event("#profile-form", "submit");
   assert.equal($('[name="friendship_interests"]').value, profile.friendship_interests);
   set("gender", "man"); set("interested_in", ["woman"]);
@@ -341,7 +474,7 @@ test("the dashboard renders the real count, city dots, and community book rankin
   assert.equal($("#map-markers").children.length, 1);
   assert.match($("#map-markers circle").getAttribute("aria-label"), /Oakland/);
   assert.match($("#top-books-list").textContent, /A book/);
-  assert.match($("#top-books-list").textContent, /1 reader/);
+  assert.match($("#top-books-list").textContent, /1 favorite/);
 });
 
 test("rising favorites recover after a community error, then clear on sign-out with map zoom", async t => {
@@ -368,7 +501,8 @@ test("books stay locked for 24 hours while other profile details remain editable
   set("display_name", "A new name");
   await event("#profile-form", "submit");
   assert.equal($('[data-step="1"]').hidden, false);
-  assert.equal($('[data-step="1"]').disabled, true);
+  assert.equal($('[data-step="1"]').disabled, false);
+  assert.equal($('#favorite-book-fields').disabled, true);
   assert.equal($("#books-lock-note").hidden, false);
   await event("#profile-form", "submit");
   await event("#profile-form", "submit");

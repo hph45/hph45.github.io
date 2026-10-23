@@ -49,6 +49,7 @@ test("multiple connection types migrate safely and enforce completeness and matc
         const legacy = { user_id: ids[i], ...makeProfile({ ...answers, intent }), intent,
           created_at: "2020-01-01T00:00:00Z", updated_at: "2026-10-20T00:00:00Z", books_updated_at: "2026-10-20T00:00:00Z" };
         delete legacy.intents;
+        for (const key of ["current_book_id", "current_book", "current_author"]) delete legacy[key];
         await db.query(`insert into public.matchmaking_profiles (${Object.keys(legacy).join(",")}) values (${Object.keys(legacy).map((_, index) => `$${index + 1}`).join(",")})`, Object.values(legacy));
       }
       before = (await db.query("select * from public.matchmaking_profiles order by user_id")).rows;
@@ -60,8 +61,9 @@ test("multiple connection types migrate safely and enforce completeness and matc
   await t.test("backfill preserves every existing answer, timestamp, and favorite selection", async () => {
     const after = (await db.query("select * from public.matchmaking_profiles order by user_id")).rows;
     for (const [i, row] of after.entries()) {
-      const { intents, ...unchanged } = row;
+      const { intents, current_book_id, current_book, current_author, current_book_updated_at, ...unchanged } = row;
       assert.deepEqual(intents, [before[i].intent]);
+      assert.deepEqual([current_book_id, current_book, current_author, current_book_updated_at], [null, "", "", null]);
       assert.deepEqual(unchanged, before[i]);
     }
     assert.deepEqual((await db.query("select * from public.matchmaking_favorite_selections order by user_id")).rows, selectionsBefore);

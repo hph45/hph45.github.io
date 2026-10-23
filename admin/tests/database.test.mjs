@@ -253,6 +253,20 @@ test("admin statistics enforce server-owned access and accurate, aggregate-only 
     });
   });
 
+  await t.test("the current read is searchable and returned only through the protected directory", async () => {
+    await db.exec("insert into public.matchmaking_books(work_id,title,author) values ('OL4W','A current read','Current author')");
+    await asUser(owner, () => db.query("update public.matchmaking_profiles set current_book_id='OL4W' where user_id=$1", [owner]));
+    for (const search of ["A CURRENT READ", "CURRENT AUTHOR"]) {
+      const result = await asUser(owner, () => profiles(search));
+      assert.equal(result.total_count, 1);
+      assert.equal(result.profiles[0].current_book, "A current read");
+      assert.equal(result.profiles[0].current_author, "Current author");
+      assert.equal(result.profiles[0].favorite_books.length, 3);
+      assert.ok(!("current_book_id" in result.profiles[0]));
+      await assert.rejects(asUser(other, () => profiles(search)), /ADMIN_ONLY/);
+    }
+  });
+
   await t.test("revocation takes effect on the very next request", async () => {
     await db.exec("delete from public.matchmaking_admin_access");
     await assert.rejects(asUser(owner, rpc), /ADMIN_ONLY/);
