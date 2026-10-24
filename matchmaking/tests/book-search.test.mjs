@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createBookSearchHandler, normalizeBooks } from "../../supabase/functions/search-books/handler.ts";
+import { searchBooks } from "../src/book-search.js";
 
 test("book search accepts only work IDs and deduplicates editions of a work", () => {
   const books = normalizeBooks({ docs: [
@@ -11,6 +12,41 @@ test("book search accepts only work IDs and deduplicates editions of a work", ()
     { key: "/works/OL2W", title: "Another book" },
   ] });
   assert.deepEqual(books, [{ work_id: "OL1W", title: "A book", author: "One, Two", cover_id: 1234 }, { work_id: "OL2W", title: "Another book", author: "Unknown author", cover_id: null }]);
+});
+
+test("stored suggestions survive rate limits, cache outages, and provider failures without losing cover metadata", async () => {
+  const stored = { work_id: "OL1W", title: "A book", author: "An author", cover_id: null };
+  for (const failure of ["busy", "provider", "cache", "none"]) {
+    const handle = createBookSearchHandler({
+      authenticate: async () => true,
+      cached: async () => { if (failure === "cache") throw new Error("Cache down"); return null; },
+      catalog: async () => [stored],
+      reserve: async () => failure !== "busy",
+      search: async () => { if (failure === "provider") throw new Error("Provider down"); return { docs: [{ key: "/works/OL1W", title: "A book", author_name: ["An author"], cover_i: 123 }] }; },
+      save: async () => {},
+    });
+    const response = await handle(new Request("https://example.test", { method: "POST", headers: { authorization: "Bearer valid", origin: "https://zebrabookclub.com" }, body: JSON.stringify({ query: "a book" }) }));
+    assert.equal(response.status, 200, failure);
+    const result = await response.json();
+    assert.equal(result.books.length, 1);
+    assert.equal(result.books[0].cover_id, ["busy", "provider"].includes(failure) ? null : 123);
+  }
+});
+
+test("the browser uses the database catalog if the search function is unreachable, and cancels stale requests", async () => {
+  const book = { work_id: "OL1W", title: "A book", author: "An author" };
+  const calls = [];
+  const client = {
+    functions: { invoke: async (name, options) => { calls.push(options); throw new Error("Function unreachable"); } },
+    rpc(name, args) { calls.push({ name, args }); const result = Promise.resolve({ data: [book], error: null }); result.abortSignal = () => result; return result; },
+  };
+  const controller = new AbortController();
+  assert.deepEqual(await searchBooks(client, "a book", { signal: controller.signal }), [book]);
+  assert.equal(calls[0].timeout, 8000);
+  assert.deepEqual(calls[1], { name: "search_matchmaking_books", args: { query: "a book" } });
+  controller.abort();
+  await assert.rejects(searchBooks(client, "old query", { signal: controller.signal }), /cancelled/);
+  assert.equal(calls.filter(call => call.name === "search_matchmaking_books").length, 1);
 });
 
 test("only positive integer cover IDs are accepted from the book provider", () => {

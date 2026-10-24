@@ -5,6 +5,16 @@
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 
 input[type=hidden] { display: none !important; }
+.match-launch-banner { display: flex; align-items: center; justify-content: space-between; gap: 28px; width: min(1120px, calc(100% - 64px)); margin: 22px auto 0; padding: 20px 28px; background: var(--ink); color: var(--paper); }
+.match-launch-copy h2 { margin: 0; font-size: 26px; line-height: 1.15; }
+.match-launch-banner .match-countdown-clock { --countdown-size: 44px; }
+.match-launch-banner .countdown-unit { gap: 7px; }
+.match-launch-banner .countdown-unit-label { font-size: 8px; opacity: .72; }
+@media (max-width: 680px) {
+  .match-launch-banner { width: calc(100% - 36px); flex-direction: column; gap: 17px; padding: 21px 16px; margin-top: 18px; text-align: center; }
+  .match-launch-copy h2 { font-size: 23px; }
+  .match-launch-banner .match-countdown-clock { --countdown-size: 40px; }
+}
 .legal-notice { max-width: 44ch; }
 .site-footer { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: start; }
 .legal-links { display: flex; justify-content: center; gap: 20px; }

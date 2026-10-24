@@ -1,6 +1,6 @@
-// Small keyboard-accessible combobox. Each selection carries a canonical ID;
-// typing again clears that ID so arbitrary text cannot be saved as a selection.
-export function attachAutocomplete(input, { search, describe, onSelect, onClear, document, window, delay = 450, emptyMessage = "No results. Try another title or author." }) {
+// Small keyboard-accessible combobox. Typing clears a selected catalog ID;
+// each caller decides whether free text is allowed (books) or not (cities).
+export function attachAutocomplete(input, { search, describe, onSelect, onClear, document, window, delay = 450, emptyMessage = "No results. Try another title or author.", failureMessage = "Search is unavailable. Please try typing again in a moment.", suggestionMessage = "Choose a suggestion below." }) {
   const wrapper = document.createElement("div");
   const label = input.closest("label");
   const labelText = label && [...label.childNodes].filter(node => node.nodeType === 3).map(node => node.textContent).join("").trim();
@@ -15,9 +15,10 @@ export function attachAutocomplete(input, { search, describe, onSelect, onClear,
   wrapper.append(list, status);
   input.setAttribute("role", "combobox"); input.setAttribute("aria-autocomplete", "list");
   input.setAttribute("aria-controls", list.id); input.setAttribute("aria-expanded", "false"); input.autocomplete = "off";
-  let timer, version = 0, options = [], active = -1;
+  let timer, controller, version = 0, options = [], active = -1;
   function close() {
     version++; window.clearTimeout(timer); list.hidden = true; status.textContent = "";
+    controller?.abort();
     input.setAttribute("aria-expanded", "false"); input.removeAttribute("aria-activedescendant"); active = -1;
   }
   function choose(index) {
@@ -26,12 +27,13 @@ export function attachAutocomplete(input, { search, describe, onSelect, onClear,
   }
   async function run() {
     const requestVersion = ++version;
+    controller = new window.AbortController();
     status.textContent = "Searching…";
     try {
-      const found = await search(input.value.trim());
+      const found = await search(input.value.trim(), { signal: controller.signal });
       if (requestVersion !== version) return;
       options = found; active = -1; list.replaceChildren();
-      status.textContent = found.length ? "Choose a suggestion below." : emptyMessage;
+      status.textContent = found.length ? suggestionMessage : emptyMessage;
       found.forEach((item, index) => {
         const option = document.createElement("div"); option.id = `${list.id}-${index}`;
         option.setAttribute("role", "option"); option.setAttribute("aria-selected", "false");
@@ -44,7 +46,7 @@ export function attachAutocomplete(input, { search, describe, onSelect, onClear,
       });
       list.hidden = !found.length; input.setAttribute("aria-expanded", String(Boolean(found.length)));
     } catch {
-      if (requestVersion === version) { close(); status.textContent = "Search is unavailable. Please try typing again in a moment."; }
+      if (requestVersion === version) { close(); status.textContent = failureMessage; }
     }
   }
   input.addEventListener("input", () => {
@@ -63,5 +65,5 @@ export function attachAutocomplete(input, { search, describe, onSelect, onClear,
     if (event.key === "Enter" && active >= 0) { event.preventDefault(); choose(active); }
   });
   input.addEventListener("blur", () => { version++; window.clearTimeout(timer); close(); });
-  return { close, destroy() { version++; window.clearTimeout(timer); } };
+  return { close, destroy() { close(); } };
 }

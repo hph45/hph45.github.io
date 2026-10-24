@@ -63,6 +63,7 @@ export function birthdayBounds(today = new Date()) {
 // cleared when someone deselects a type; timestamps and account IDs stay out.
 export function makeProfile(values, { isActive = true } = {}) {
   const text = (key) => String(values[key] ?? "").trim();
+  const bookID = title => text(`${title}_id`) || (text(title) ? "manual" : null);
   const intents = profileIntents(values);
   const romance = intents.includes("romance");
   const business = intents.includes("business_partners");
@@ -71,13 +72,13 @@ export function makeProfile(values, { isActive = true } = {}) {
     birth_date: text("birth_date"),
     city_id: Number(values.city_id) || null,
     city: text("city"), region: text("region"), country: text("country"), intents,
-    favorite_book_id: text("favorite_book_id") || null,
+    favorite_book_id: bookID("favorite_book"),
     favorite_book: text("favorite_book"), favorite_author: text("favorite_author"),
-    favorite_book_2_id: text("favorite_book_2_id") || null,
+    favorite_book_2_id: bookID("favorite_book_2"),
     favorite_book_2: text("favorite_book_2"), favorite_author_2: text("favorite_author_2"),
-    favorite_book_3_id: text("favorite_book_3_id") || null,
+    favorite_book_3_id: bookID("favorite_book_3"),
     favorite_book_3: text("favorite_book_3"), favorite_author_3: text("favorite_author_3"),
-    current_book_id: text("current_book_id") || null,
+    current_book_id: bookID("current_book"),
     current_book: text("current_book"), current_author: text("current_author"),
     location_preference: text("location_preference"),
     gender: romance ? text("gender") || null : null,
@@ -112,21 +113,27 @@ export function validateProfile(profile, { consent, today = new Date() } = {}) {
   length("region", 0, 200, 0, "Your state or region");
   length("country", 2, 200, 0, "Your country");
   const bookIDs = new Set();
+  const bookNames = new Set();
+  const validBookID = id => /^(?:OL\d+W|ZB[a-f0-9]{32}|manual)$/.test(id || "");
+  const bookKey = value => String(value ?? "").normalize("NFKC").toLowerCase().replace(/[\p{P}\s]/gu, "");
   for (const suffix of ["", "_2", "_3"]) {
     const title = profile[`favorite_book${suffix}`];
+    const author = profile[`favorite_author${suffix}`];
     const id = profile[`favorite_book${suffix}_id`];
-    if (suffix && !title && !id) continue;
-    if (!/^OL\d+W$/.test(id || "")) error(`favorite_book${suffix}`, 1, "Choose a book from the suggestions so we can recognize it.");
-    else if (bookIDs.has(id)) error(`favorite_book${suffix}`, 1, "Choose a different book for each of your favorites.");
-    bookIDs.add(id);
+    if (suffix && !title && !id && !author) continue;
+    const name = JSON.stringify([bookKey(title), bookKey(author || "Unknown author")]);
+    if (!validBookID(id)) error(`favorite_book${suffix}`, 1, "Enter a book title or choose a suggestion.");
+    else if ((id !== "manual" && bookIDs.has(id)) || bookNames.has(name)) error(`favorite_book${suffix}`, 1, "Choose a different book for each of your favorites.");
+    if (id !== "manual") bookIDs.add(id);
+    bookNames.add(name);
     length(`favorite_book${suffix}`, 1, 300, 1, "The book’s title");
-    length(`favorite_author${suffix}`, 1, 300, 1, "The author’s name");
+    length(`favorite_author${suffix}`, id === "manual" ? 0 : 1, 300, 1, "The author’s name");
   }
   if (profile.favorite_book_3_id && !profile.favorite_book_2_id) error("favorite_book_2", 1, "Add your second favorite before your third.");
   if (profile.current_book || profile.current_book_id || profile.current_author) {
-    if (!/^OL\d+W$/.test(profile.current_book_id || "")) error("current_book", 1, "Choose your current read from the suggestions, or leave it blank.");
+    if (!validBookID(profile.current_book_id)) error("current_book", 1, "Enter your current read, choose a suggestion, or leave it blank.");
     length("current_book", 1, 300, 1, "The book’s title");
-    length("current_author", 1, 300, 1, "The author’s name");
+    length("current_author", profile.current_book_id === "manual" ? 0 : 1, 300, 1, "The author’s name");
   }
   if (!["same_city", "anywhere"].includes(profile.location_preference)) error("location_preference", 2, "Choose where you’d like to connect.");
   if (intents.includes("romance")) {

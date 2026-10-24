@@ -17,6 +17,13 @@ Deno.serve(createBookSearchHandler({
     if (error) throw error;
     return data?.results ?? null;
   },
+  async catalog(query, workID) {
+    const { data, error } = workID
+      ? await admin.from("matchmaking_books").select("work_id,title,author").eq("work_id", workID).limit(1)
+      : await admin.rpc("search_matchmaking_books", { query });
+    if (error) throw error;
+    return (data || []).map(book => ({ ...book, cover_id: null }));
+  },
   async reserve() {
     const { data, error } = await admin.rpc("reserve_matchmaking_book_search");
     if (error) throw error;
@@ -25,7 +32,7 @@ Deno.serve(createBookSearchHandler({
   async search(query) {
     const url = new URL("https://openlibrary.org/search.json");
     url.search = new URLSearchParams({ q: query, fields: "key,title,author_name,cover_i", limit: "8", lang: "en" }).toString();
-    const response = await fetch(url, { headers: { "User-Agent": "ZebraBookClub/1.0 (henry@zebrabookclub.com)", "email": "henry@zebrabookclub.com" }, signal: AbortSignal.timeout(10000) });
+    const response = await fetch(url, { headers: { "User-Agent": "ZebraBookClub/1.0 (henry@zebrabookclub.com)", "email": "henry@zebrabookclub.com" }, signal: AbortSignal.timeout(5000) });
     if (!response.ok) throw new Error("Book service unavailable");
     return response.json();
   },
@@ -36,6 +43,6 @@ Deno.serve(createBookSearchHandler({
       if (error) throw error;
     }
     const { error } = await admin.from("matchmaking_book_search_cache").upsert({ query, results: books, expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() });
-    if (error) throw error;
+    if (error) console.warn("Book search cache write failed");
   },
 }));

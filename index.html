@@ -7,9 +7,10 @@
   <title>Zebra Book Club</title>
   <meta
     name="description"
-    content="Book-based matchmaking is now open! Visit the matchmaking platform from Zebra Book Club."
+    content="Book-based matchmaking is now live! First matches arrive November 2. Join Zebra Book Club to meet through the books you love."
   >
-  <link rel="stylesheet" href="styles.css?v=20261021.8">
+  <link rel="stylesheet" href="styles.css?v=20261024.1">
+  <link rel="stylesheet" href="/assets/match-countdown.css?v=20261024.1">
 </head>
 <!-- RAHHH ZEBRA BOOK CLUB, FOLLOW THE INSTA -->
 <!-- Internal reminder: redirect links through our own URLs
@@ -35,34 +36,10 @@
   </header>
 
   <main id="top">
-    <section class="hero section reveal is-visible">
-      <h1 class="hero-title hero-title--outline" aria-label="Book-based matchmaking is now open!">
-        <span class="hero-word" aria-hidden="true">
-          <span style="--letter-index: 0">B</span>
-          <span style="--letter-index: 1">o</span>
-          <span style="--letter-index: 2">o</span>
-          <span style="--letter-index: 3">k</span>
-          <span style="--letter-index: 4">-</span>
-          <span style="--letter-index: 5">b</span>
-          <span style="--letter-index: 6">a</span>
-          <span style="--letter-index: 7">s</span>
-          <span style="--letter-index: 8">e</span>
-          <span style="--letter-index: 9">d</span>
-        </span>
-        <span class="hero-word" aria-hidden="true">
-          <span style="--letter-index: 11">m</span>
-          <span style="--letter-index: 12">a</span>
-          <span style="--letter-index: 13">t</span>
-          <span style="--letter-index: 14">c</span>
-          <span style="--letter-index: 15">h</span>
-          <span style="--letter-index: 16">m</span>
-          <span style="--letter-index: 17">a</span>
-          <span style="--letter-index: 18">k</span>
-          <span style="--letter-index: 19">i</span>
-          <span style="--letter-index: 20">n</span>
-          <span style="--letter-index: 21">g</span>
-        </span>
-        <span class="hero-announcement" aria-hidden="true">is now open!</span>
+    <section class="hero section reveal is-visible" data-match-countdown>
+      <h1 class="hero-title hero-title--outline hero-countdown-title">
+        <span class="hero-countdown-label">First match in:</span>
+        <span class="match-countdown-clock hero-countdown-clock" data-countdown-clock role="timer" aria-live="off" aria-label="First matches on November 2, 2026 at 00:00 UTC">--:--:--:--</span>
       </h1>
       <p class="hero-cta">
         <a class="info-link" href="/matchmaking/">Matchmaking platform <svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="/assets/icons.svg#arrow-up-right"/></svg></a>
@@ -252,5 +229,6 @@
     <nav class="legal-links" aria-label="Legal"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a></nav>
   </footer>
   <script src="script.js"></script>
+  <script type="module" src="/assets/match-countdown.js?v=20261024.1"></script>
 </body>
 </html>

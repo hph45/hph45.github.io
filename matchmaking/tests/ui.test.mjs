@@ -122,12 +122,6 @@ test("signup uses the shared book search for an optional current read and preser
   await new Promise(resolve => window.setTimeout(resolve, 500));
   assert.deepEqual(queries[0], { name: "search-books", body: { query: "A current" } });
   assert.equal($("#current_book-suggestions").hidden, false);
-  await event("#profile-form", "submit");
-  assert.match($("#form-error").textContent, /Choose your current read/);
-  assert.equal($('[data-step="1"]').hidden, false);
-  // Validation closes suggestions; typing again allows a new selection.
-  await event('[name="current_book"]', "input");
-  await new Promise(resolve => window.setTimeout(resolve, 500));
   await event("#current_book-suggestions-0");
   assert.equal($('[name="current_book_id"]').value, "OL4W");
   assert.equal($('[name="current_author"]').value, "Current author");
@@ -143,6 +137,54 @@ test("signup uses the shared book search for an optional current read and preser
   await event("#edit-profile"); await event("#profile-form", "submit");
   assert.equal($("#current-reading-fields").disabled, true);
   assert.match($("#current-reading-lock-note").textContent, /change your current read again/);
+});
+
+test("signup can save typed favorites and a current read when suggestions fail or find nothing", async t => {
+  for (const unavailable of [true, false]) await t.test(unavailable ? "search outage" : "book not listed", async t => {
+    const { $, set, event, state, client, window } = await setup(t, { intent: "friends" });
+    client.functions.invoke = async () => ({ data: { books: [] }, error: unavailable ? new Error("Offline") : null });
+    const originalRPC = client.rpc;
+    client.rpc = (name, args) => {
+      if (name !== "search_matchmaking_books") return originalRPC(name, args);
+      const response = Promise.resolve({ data: [], error: unavailable ? new Error("Offline") : null });
+      response.abortSignal = () => response;
+      return response;
+    };
+    for (const [key, value] of Object.entries({ birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States" })) set(key, value);
+    await event("#profile-form", "submit");
+    set("favorite_book", "A book outside the catalog"); await event('[name="favorite_book"]', "input");
+    set("favorite_author", "An author"); await event('[name="favorite_author"]', "input");
+    set("favorite_book_2", "Another unlisted favorite");
+    set("current_book", "My current read"); await event('[name="current_book"]', "input");
+    await new Promise(resolve => window.setTimeout(resolve, 500));
+    assert.match($('[name="favorite_book"]').closest(".autocomplete").textContent, unavailable ? /can still enter your book/ : /use the title you typed/);
+    assert.equal($('[name="favorite_author"]').readOnly, false);
+    assert.equal($('[name="current_author"]').required, false);
+    await event("#profile-form", "submit");
+    assert.equal($('[data-step="2"]').hidden, false, "suggestions are optional");
+    set("friendship_interests", "Bookshop afternoons"); set("profile_consent", true);
+    state.failNext = true; await event("#profile-form", "submit");
+    assert.equal($('[name="favorite_book"]').value, "A book outside the catalog");
+    await event("#profile-form", "submit");
+    assert.equal($("#dashboard-view").hidden, false);
+    const submitted = state.calls.at(-1).values;
+    assert.equal(submitted.favorite_book_id, "manual");
+    assert.equal(submitted.favorite_book_2_id, "manual");
+    assert.equal(submitted.current_book_id, "manual");
+    assert.equal(submitted.favorite_author, "An author");
+    assert.equal(submitted.current_author, "");
+  });
+});
+
+test("editing an autofilled author switches to free text and title edits preserve a typed author", async t => {
+  const { $, set, event } = await setup(t, { initialProfile: profile });
+  await event("#edit-profile"); await event("#profile-form", "submit");
+  set("favorite_author", "Corrected author"); await event('[name="favorite_author"]', "input");
+  assert.equal($('[name="favorite_book_id"]').value, "");
+  set("favorite_book", "Corrected title"); await event('[name="favorite_book"]', "input");
+  assert.equal($('[name="favorite_author"]').value, "Corrected author");
+  set("favorite_book", ""); await event('[name="favorite_book"]', "input");
+  assert.equal($('[name="favorite_author"]').value, "");
 });
 
 test("current reads can change when their own clock allows it, and cleared reads stay locked", async t => {

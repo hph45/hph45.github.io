@@ -149,7 +149,7 @@ test("one to three books are valid, a first book is required, and the retired an
   assert.ok(validateProfile(empty, { consent: true, today }).some(error => error.field === "favorite_book"));
 });
 
-test("a current read is optional, requires a catalog selection, and may also be a favorite", () => {
+test("a current read is optional, validates selected catalog IDs, and may also be a favorite", () => {
   const empty = makeProfile(basics);
   assert.equal(empty.current_book_id, null);
   assert.equal(empty.current_book, "");
@@ -161,6 +161,22 @@ test("a current read is optional, requires a catalog selection, and may also be 
   assert.deepEqual(validateProfile(reading, { consent: true, today }), []);
   for (const changes of [{ current_book_id: "" }, { current_book_id: "OL1M" }, { current_book: "" }, { current_author: "" }, { current_book: "a".repeat(301) }]) {
     assert.ok(validateProfile({ ...reading, ...changes }, { consent: true, today }).some(error => error.step === 1));
+  }
+});
+
+test("typed books need only a title, preserve author text, and reject duplicate favorites", () => {
+  const values = { ...basics, favorite_book_id: "", favorite_book: "An unlisted book", favorite_author: "",
+    favorite_book_2: "Another book", favorite_author_2: "An author",
+    favorite_book_3: "A third title", current_book: "An unlisted book", current_author: "" };
+  const manual = makeProfile(values);
+  for (const key of ["favorite_book_id", "favorite_book_2_id", "favorite_book_3_id", "current_book_id"]) assert.equal(manual[key], "manual");
+  assert.deepEqual(validateProfile(manual, { consent: true, today }), []);
+  const duplicate = makeProfile({ ...values, favorite_book_2: " AN  UNLISTED BOOK! ", favorite_author_2: "" });
+  assert.ok(validateProfile(duplicate, { consent: true, today }).some(error => error.field === "favorite_book_2"));
+  const local = makeProfile({ ...basics, favorite_book_id: "ZB" + "a".repeat(32) });
+  assert.deepEqual(validateProfile(local, { consent: true, today }), []);
+  for (const id of ["ZBbad", "OL123M", "https://example.test"]) {
+    assert.ok(validateProfile({ ...local, favorite_book_id: id }, { consent: true, today }).some(error => error.step === 1));
   }
 });
 

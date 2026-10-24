@@ -1,6 +1,7 @@
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, PROFILE_TABLE, getAuthRedirect } from "./config.js";
 import { INTENTS, profileIntents, ageOn, birthdayBounds, makeProfile, validateProfile, locationLabel, preferenceDetails, bookEditTime, currentReadEditTime, favoriteBooks, normalizeLinkedInURL } from "./profile.js";
 import { attachAutocomplete } from "./autocomplete.js";
+import { searchBooks } from "./book-search.js";
 import { attachAgeRange } from "./age-range.js";
 import { renderCommunityMap } from "./map.js";
 import { attachMapZoom } from "./map-zoom.js";
@@ -435,7 +436,10 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       await Promise.all([loadMatches(version), loadCommunity(version)]);
     } catch (error) {
       if (version !== generation) return;
-      text("#form-error", error?.message === "BOOKS_LOCKED"
+      const duplicateBook = error?.code === "23514" && error.message?.includes("distinct_favorite_books");
+      if (duplicateBook) showStep(1, false);
+      text("#form-error", duplicateBook ? "Choose a different book for each of your favorites."
+        : error?.message === "BOOKS_LOCKED"
         ? "Your favorites can be changed once every 24 hours. Please wait until your next update is available."
         : error?.message === "CURRENT_READING_LOCKED"
           ? "Your current read can be changed once every 24 hours. Please wait until your next update is available."
@@ -538,20 +542,21 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   const bookFields = ["", "_2", "_3"].map(suffix => [`favorite_book${suffix}`, `favorite_author${suffix}`]);
   bookFields.push(["current_book", "current_author"]);
   for (const [titleField, authorField] of bookFields) {
+    field(authorField).addEventListener("input", () => { field(`${titleField}_id`).value = ""; });
     autocompletes.push(attachAutocomplete(field(titleField), {
       document, window,
-      async search(query) {
-        let result = await client.functions.invoke("search-books", { body: { query: query.slice(0, 120) } });
-        if (result.error?.context?.status === 429) {
-          await new Promise(resolve => window.setTimeout(resolve, 1000));
-          result = await client.functions.invoke("search-books", { body: { query: query.slice(0, 120) } });
-        }
-        if (result.error) throw result.error;
-        return result.data?.books || [];
-      },
+      emptyMessage: "No suggestions found. You can use the title you typed and add the author below.",
+      failureMessage: "Suggestions are unavailable. You can still enter your book and continue.",
+      suggestionMessage: "Choose a suggestion, or keep the title you typed.",
+      search: (query, options) => searchBooks(client, query, options),
       describe: book => [book.title, book.author],
       onSelect(book) { field(`${titleField}_id`).value = book.work_id; field(titleField).value = book.title; field(authorField).value = book.author; },
-      onClear() { field(`${titleField}_id`).value = ""; field(authorField).value = ""; },
+      onClear() {
+        // Clear an autofilled author when replacing its book, but preserve an
+        // author the member has typed while they finish editing the title.
+        if (field(`${titleField}_id`).value || !field(titleField).value.trim()) field(authorField).value = "";
+        field(`${titleField}_id`).value = "";
+      },
     }));
   }
 

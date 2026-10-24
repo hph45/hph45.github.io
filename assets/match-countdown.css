@@ -1,0 +1,19 @@
+.match-countdown-clock {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: .06em;
+  font-size: var(--countdown-size, 48px);
+  line-height: .95;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.countdown-unit { display: grid; justify-items: center; gap: 12px; }
+.countdown-value { display: flex; }
+.countdown-digit { display: inline-block; width: .5em; text-align: center; }
+.countdown-colon { display: inline-block; width: .25em; text-align: center; }
+.countdown-unit-label { font: 10px/1.2 Arial, Helvetica, sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+@media (max-width: 640px) {
+  .countdown-unit { gap: 9px; }
+  .countdown-unit-label { font-size: 8px; letter-spacing: .1em; }
+}
