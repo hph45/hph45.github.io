@@ -7,7 +7,7 @@ import { makeProfile } from "../src/profile.js";
 
 const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
 const member = { id: "00000000-0000-4000-8000-000000000001", email: "reader@example.invalid", user_metadata: { given_name: "Reader" } };
-const profile = { ...makeProfile({ display_name: "Reader", birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States", intent: "friends", favorite_book_id: "OL1W", favorite_book: "A book", favorite_author: "An author", location_preference: "same_city", friendship_interests: "Afternoons in bookshops" }), user_id: member.id };
+const profile = { ...makeProfile({ display_name: "Reader", instagram_handle: "reader.books", birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States", intent: "friends", favorite_book_id: "OL1W", favorite_book: "A book", favorite_author: "An author", location_preference: "same_city", friendship_interests: "Afternoons in bookshops" }), user_id: member.id };
 
 function mockClient({ signedIn = true, initialProfile = null, matches = [], risingBooks = [], communityError = false } = {}) {
   const state = { profile: initialProfile ? structuredClone(initialProfile) : null, calls: [], failNext: false, matches, communityError, session: signedIn ? { user: member } : null };
@@ -74,7 +74,7 @@ test("a new member can finish all three steps with one book and no explanation",
   assert.equal($("#onboarding-view").hidden, false);
   assert.equal($('[name="intents"][value="friends"]').checked, true);
   assert.equal($('[name="display_name"]').value, "Reader");
-  for (const [key, value] of Object.entries({ birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States" })) set(key, value);
+  for (const [key, value] of Object.entries({ instagram_handle: "reader.books", birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States" })) set(key, value);
   await event("#profile-form", "submit");
   assert.equal($('[data-step="1"]').hidden, false);
   assert.equal($('[data-step="0"]').disabled, true);
@@ -106,7 +106,128 @@ test("a new member can finish all three steps with one book and no explanation",
   assert.deepEqual(state.profile.intents, ["friends"]);
   assert.equal(state.profile.email_matches, false);
   assert.equal(state.profile.user_id, member.id);
+  assert.equal(state.profile.instagram_handle, "reader.books");
+  assert.equal($("#instagram-dialog").open, false);
   assert.equal(state.calls.at(-1).action, "insert");
+});
+
+test("signup asks for a valid Instagram on the first step", async t => {
+  const { $, set, event, state } = await setup(t, { intent: "friends" });
+  for (const [key, value] of Object.entries({ birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States" })) set(key, value);
+  assert.equal($('[name="instagram_handle"]').required, true);
+  assert.equal($("#instagram-dialog").open, false);
+  for (const value of ["", "two words", "https://evil.test/reader"]) {
+    set("instagram_handle", value); await event("#profile-form", "submit");
+    assert.equal($('[data-step="0"]').hidden, false);
+    assert.match($("#form-error").textContent, /Instagram/);
+    assert.equal(state.calls.length, 0);
+  }
+  set("instagram_handle", "https://www.instagram.com/Reader.Books/?igsh=tracking");
+  await event("#profile-form", "submit");
+  assert.equal($('[data-step="1"]').hidden, false);
+});
+
+test("existing members can choose Not now, edit other answers, and return to the prompt from their profile", async t => {
+  const { $, set, event, state } = await setup(t, { initialProfile: { ...profile, instagram_handle: null } });
+  assert.equal($("#instagram-dialog").open, true);
+  assert.match($("#instagram-description").textContent, /before you can be matched/);
+  assert.equal($("#dashboard-view").hidden, false);
+  await event("#instagram-later");
+  assert.equal($("#instagram-dialog").open, false);
+  assert.equal(state.calls.length, 0);
+  await event("#edit-profile");
+  assert.equal($('[name="instagram_handle"]').required, false);
+  set("display_name", "Updated reader");
+  for (let i = 0; i < 3; i++) await event("#profile-form", "submit");
+  assert.equal(state.profile.display_name, "Updated reader");
+  assert.equal(state.profile.instagram_handle, null);
+  assert.equal($("#instagram-dialog").open, false, "ordinary dashboard rerenders do not nag after Not now");
+  await event("#add-instagram"); assert.equal($("#instagram-dialog").open, true);
+  await event("#instagram-dialog", "cancel"); assert.equal($("#instagram-dialog").open, false);
+  await event("#pause-matching"); assert.equal($("#instagram-dialog").open, false);
+  const nextVisit = await setup(t, { initialProfile: state.profile });
+  assert.equal(nextVisit.$("#instagram-dialog").open, true, "the next visit asks again, even with a restored sign-in");
+});
+
+test("the Instagram popup validates, retains failed drafts, and saves only the owner's contact without changing book clocks", async t => {
+  const time = new Date().toISOString();
+  const { $, event, state } = await setup(t, { initialProfile: { ...profile, instagram_handle: null, books_updated_at: time, current_book_updated_at: time } });
+  $("#instagram-prompt-input").value = "https://evil.test/reader";
+  await event("#instagram-form", "submit");
+  assert.equal(state.calls.length, 0);
+  assert.equal($("#instagram-prompt-input").getAttribute("aria-invalid"), "true");
+  const input = "https://www.instagram.com/Reader.Books/?igsh=tracking";
+  $("#instagram-prompt-input").value = input;
+  state.failNext = true; await event("#instagram-form", "submit");
+  assert.equal($("#instagram-dialog").open, true);
+  assert.equal($("#instagram-prompt-input").value, input);
+  assert.equal($("#instagram-error").hidden, false);
+  assert.equal($("#save-instagram").disabled, false);
+  await event("#instagram-form", "submit");
+  assert.deepEqual(state.calls.at(-1).values, { instagram_handle: "reader.books" });
+  assert.deepEqual(state.calls.at(-1).filter, ["user_id", member.id]);
+  assert.equal(state.profile.books_updated_at, time);
+  assert.equal(state.profile.current_book_updated_at, time);
+  assert.equal($("#instagram-dialog").open, false);
+  assert.equal($("#profile-instagram a").href, "https://www.instagram.com/reader.books/");
+  assert.equal($("#profile-instagram a").rel, "noopener noreferrer");
+  const nextVisit = await setup(t, { initialProfile: state.profile });
+  assert.equal(nextVisit.$("#instagram-dialog").open, false);
+});
+
+test("members can update their Instagram from the profile editor but cannot clear it after supplying it", async t => {
+  const { $, set, event, state } = await setup(t, { initialProfile: profile });
+  await event("#edit-profile");
+  assert.equal($('[name="instagram_handle"]').required, true);
+  set("instagram_handle", ""); await event("#profile-form", "submit");
+  assert.match($("#form-error").textContent, /Instagram/);
+  set("instagram_handle", "@New.Handle");
+  for (let i = 0; i < 3; i++) await event("#profile-form", "submit");
+  assert.equal(state.profile.instagram_handle, "new.handle");
+  assert.equal($("#profile-instagram a").href, "https://www.instagram.com/new.handle/");
+});
+
+test("a delayed Instagram save cannot restore private content or block the next signed-in account", async t => {
+  const { $, app, state, client, window } = await setup(t, { initialProfile: { ...profile, instagram_handle: null } });
+  let finish;
+  const originalFrom = client.from;
+  client.from = table => { const query = originalFrom(table); query.single = () => new Promise(resolve => { finish = resolve; }); return query; };
+  $("#instagram-prompt-input").value = "@old.account";
+  $("#instagram-form").dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
+  await new Promise(resolve => window.setTimeout(resolve, 0));
+  assert.equal($("#save-instagram").disabled, true);
+  state.onAuth("SIGNED_OUT", null);
+  await new Promise(resolve => window.setTimeout(resolve, 10));
+  assert.equal($("#instagram-dialog").open, false);
+  assert.equal($("#instagram-prompt-input").value, "");
+  const next = { ...member, id: "00000000-0000-4000-8000-000000000002" };
+  state.profile = { ...profile, user_id: next.id, display_name: "Next reader", instagram_handle: null };
+  state.onAuth("SIGNED_IN", { user: next });
+  await new Promise(resolve => window.setTimeout(resolve, 10));
+  assert.equal($("#instagram-dialog").open, true);
+  assert.equal($("#save-instagram").disabled, false);
+  $("#instagram-prompt-input").value = "next.account";
+  finish({ data: { ...profile, instagram_handle: "old.account" }, error: null });
+  await app.settled();
+  assert.equal($("#instagram-prompt-input").value, "next.account");
+  assert.equal($("#instagram-dialog").open, true);
+  assert.match($("#profile-name").textContent, /Next reader/);
+  assert.equal($("#profile-instagram a"), null);
+});
+
+test("released matches offer safe Instagram contact links for every connection type", async t => {
+  const match = { week_start: "2026-10-19", display_name: "Reader", age: 30, city: "Oakland", country: "United States" };
+  const { $ } = await setup(t, { initialProfile: profile, matches: [
+    ...["romance", "friends", "business_partners"].map(intent => ({ ...match, intent, instagram_handle: "other.reader" })),
+    { ...match, intent: "friends", instagram_handle: "javascript:alert(1)" },
+  ] });
+  const links = $("#matches-list").querySelectorAll("a.instagram-link");
+  assert.equal(links.length, 3);
+  for (const link of links) {
+    assert.equal(link.href, "https://www.instagram.com/other.reader/");
+    assert.equal(link.target, "_blank"); assert.equal(link.rel, "noopener noreferrer");
+  }
+  assert.ok(!$("#matches-list").textContent.includes("javascript:"));
 });
 
 test("signup uses the shared book search for an optional current read and preserves it after a failed save", async t => {
@@ -116,7 +237,7 @@ test("signup uses the shared book search for an optional current read and preser
     queries.push({ name, body });
     return { data: { books: [{ work_id: "OL4W", title: "A current read", author: "Current author" }] }, error: null };
   };
-  for (const [key, value] of Object.entries({ birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States", favorite_book_id: "OL1W", favorite_book: "A favorite", favorite_author: "Favorite author" })) set(key, value);
+  for (const [key, value] of Object.entries({ instagram_handle: "reader.books", birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States", favorite_book_id: "OL1W", favorite_book: "A favorite", favorite_author: "Favorite author" })) set(key, value);
   await event("#profile-form", "submit");
   set("current_book", "A current"); await event('[name="current_book"]', "input");
   await new Promise(resolve => window.setTimeout(resolve, 500));
@@ -150,7 +271,7 @@ test("signup can save typed favorites and a current read when suggestions fail o
       response.abortSignal = () => response;
       return response;
     };
-    for (const [key, value] of Object.entries({ birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States" })) set(key, value);
+    for (const [key, value] of Object.entries({ instagram_handle: "reader.books", birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States" })) set(key, value);
     await event("#profile-form", "submit");
     set("favorite_book", "A book outside the catalog"); await event('[name="favorite_book"]', "input");
     set("favorite_author", "An author"); await event('[name="favorite_author"]', "input");
@@ -285,7 +406,7 @@ test("signup stays three steps and requires the questions for every selected typ
   assert.equal(window.document.activeElement, $('[name="intents"]'));
   assert.equal($('[name="intents"]').getAttribute("aria-invalid"), "true");
   set("intents", types);
-  for (const [key, value] of Object.entries({ birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States" })) set(key, value);
+  for (const [key, value] of Object.entries({ instagram_handle: "reader.books", birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States" })) set(key, value);
   await event("#profile-form", "submit");
   set("favorite_book_id", "OL1W"); set("favorite_book", "A book"); set("favorite_author", "An author");
   await event("#profile-form", "submit");

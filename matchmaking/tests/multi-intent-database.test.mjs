@@ -8,7 +8,7 @@ const ids = [1, 2, 3].map(n => `00000000-0000-4000-8000-00000000000${n}`);
 const [A, B, C] = ids;
 const types = Object.keys(INTENTS);
 const answers = {
-  display_name: "Reader", birth_date: "1994-06-15", city_id: 5378538,
+  display_name: "Reader", instagram_handle: "reader.books", birth_date: "1994-06-15", city_id: 5378538,
   city: "Oakland", country: "United States", favorite_book_id: "OL1W",
   favorite_book: "A book", favorite_author: "An author", location_preference: "same_city",
   gender: "other", interested_in: ["woman", "other"], age_min: 25, age_max: 80,
@@ -49,7 +49,7 @@ test("multiple connection types migrate safely and enforce completeness and matc
         const legacy = { user_id: ids[i], ...makeProfile({ ...answers, intent }), intent,
           created_at: "2020-01-01T00:00:00Z", updated_at: "2026-10-20T00:00:00Z", books_updated_at: "2026-10-20T00:00:00Z" };
         delete legacy.intents;
-        for (const key of ["current_book_id", "current_book", "current_author"]) delete legacy[key];
+        for (const key of ["current_book_id", "current_book", "current_author", "instagram_handle"]) delete legacy[key];
         await db.query(`insert into public.matchmaking_profiles (${Object.keys(legacy).join(",")}) values (${Object.keys(legacy).map((_, index) => `$${index + 1}`).join(",")})`, Object.values(legacy));
       }
       before = (await db.query("select * from public.matchmaking_profiles order by user_id")).rows;
@@ -61,8 +61,9 @@ test("multiple connection types migrate safely and enforce completeness and matc
   await t.test("backfill preserves every existing answer, timestamp, and favorite selection", async () => {
     const after = (await db.query("select * from public.matchmaking_profiles order by user_id")).rows;
     for (const [i, row] of after.entries()) {
-      const { intents, current_book_id, current_book, current_author, current_book_updated_at, ...unchanged } = row;
+      const { intents, instagram_handle, current_book_id, current_book, current_author, current_book_updated_at, ...unchanged } = row;
       assert.deepEqual(intents, [before[i].intent]);
+      assert.equal(instagram_handle, null);
       assert.deepEqual([current_book_id, current_book, current_author, current_book_updated_at], [null, "", "", null]);
       assert.deepEqual(unchanged, before[i]);
     }

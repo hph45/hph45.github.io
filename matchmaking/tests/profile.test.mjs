@@ -1,16 +1,42 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { INTENTS, profileIntents, preferenceDetails, ageOn, birthdayBounds, makeProfile, validateProfile, normalizeLinkedInURL, ageRangeLabel, currentReadEditTime } from "../src/profile.js";
+import { INTENTS, profileIntents, preferenceDetails, ageOn, birthdayBounds, makeProfile, validateProfile, normalizeLinkedInURL, normalizeInstagramHandle, instagramProfileURL, ageRangeLabel, currentReadEditTime } from "../src/profile.js";
 import { getAuthRedirect } from "../src/config.js";
 
 const today = new Date("2026-10-21T12:00:00Z");
 const basics = {
-  intent: "friends", display_name: " Reader ", birth_date: "1994-06-15",
+  intent: "friends", display_name: " Reader ", instagram_handle: "reader.books", birth_date: "1994-06-15",
   city_id: 5378538, city: " Oakland ", region: "California", country: "United States",
   favorite_book_id: "OL1W",
   favorite_book: "Parable of the Sower", favorite_author: "Octavia Butler",
   location_preference: "same_city", friendship_interests: "Coffee and bookshops",
 };
+
+test("Instagram accepts usernames and profile links while keeping links on the Instagram domain", () => {
+  for (const value of ["reader.books", " @Reader.Books ", "instagram.com/Reader.Books", "https://www.instagram.com/Reader.Books/?igsh=tracking#profile", "http://instagram.com/reader%2Ebooks/"]) {
+    assert.equal(normalizeInstagramHandle(value), "reader.books", value);
+    assert.equal(instagramProfileURL(value), "https://www.instagram.com/reader.books/");
+    assert.equal(makeProfile({ ...basics, instagram_handle: value }).instagram_handle, "reader.books");
+  }
+  assert.equal(normalizeInstagramHandle("_a.1"), "_a.1");
+  assert.equal(normalizeInstagramHandle("a".repeat(30)), "a".repeat(30));
+  for (const value of ["a".repeat(31), "two words", ".reader", "reader.", "reader..books", "@@reader", "reader/books", "reader?next=bad", "reels",
+    "javascript:alert(1)", "https://instagram.com.evil.test/reader", "https://evil.test/reader", "https://instagram.com@evil.test/reader",
+    "https://reader@instagram.com/reader", "https://instagram.com:444/reader", "https://instagram.com/p/post", "https://instagram.com/", "https://instagram.com/%ZZ"])
+    assert.equal(normalizeInstagramHandle(value), null, value);
+  assert.equal(normalizeInstagramHandle(null), "");
+  assert.equal(instagramProfileURL("javascript:alert(1)"), "");
+});
+
+test("new signup requires Instagram while a legacy member can defer it without accepting invalid text", () => {
+  const missing = makeProfile({ ...basics, instagram_handle: "" });
+  assert.equal(missing.instagram_handle, null);
+  assert.ok(validateProfile(missing, { consent: true, today }).some(error => error.field === "instagram_handle" && error.step === 0));
+  assert.deepEqual(validateProfile(missing, { consent: true, today, requireInstagram: false }), []);
+  const invalid = makeProfile({ ...basics, instagram_handle: "not a handle" });
+  assert.equal(invalid.instagram_handle, "not a handle", "keep invalid text so validation can explain the problem");
+  assert.ok(validateProfile(invalid, { consent: true, today, requireInstagram: false }).some(error => error.field === "instagram_handle"));
+});
 
 test("every combination keeps and requires the answers for all selected connection types", () => {
   const types = Object.keys(INTENTS);

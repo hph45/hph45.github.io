@@ -21,6 +21,32 @@ export function ageRangeLabel(minimum, maximum) {
   return minimum >= 80 ? "80+" : `${minimum}–${maximum >= 80 ? "80+" : maximum}`;
 }
 
+// Store just the handle; every rendered link uses our fixed Instagram host.
+export function normalizeInstagramHandle(value) {
+  let input = String(value ?? "").trim();
+  if (!input) return "";
+  if (input.length > 300) return null;
+  if (/^(?:https?:\/\/)?(?:www\.)?instagram\.com(?:\/|$)/i.test(input) || input.includes("://")) {
+    try {
+      const url = new URL(/^https?:\/\//i.test(input) ? input : `https://${input}`);
+      if (!["https:", "http:"].includes(url.protocol) || url.username || url.password || url.port
+        || !/^(?:www\.)?instagram\.com$/i.test(url.hostname)) return null;
+      const path = decodeURIComponent(url.pathname).match(/^\/([a-z\d_.]{1,30})\/?$/i);
+      if (!path) return null;
+      input = path[1];
+    } catch { return null; }
+  } else input = input.replace(/^@/, "");
+  input = input.toLowerCase();
+  if (!/^[a-z\d_][a-z\d_.]{0,29}$/.test(input) || input.endsWith(".") || input.includes("..")
+    || ["accounts", "explore", "direct", "stories", "reel", "reels", "p", "about", "developer", "legal", "privacy", "terms"].includes(input)) return null;
+  return input;
+}
+
+export function instagramProfileURL(value) {
+  const handle = normalizeInstagramHandle(value);
+  return handle ? `https://www.instagram.com/${handle}/` : "";
+}
+
 // Accept pasted personal or company links, then store one safe HTTPS format.
 // Invalid input stays in the form so the member can correct it.
 export function normalizeLinkedInURL(value) {
@@ -69,6 +95,7 @@ export function makeProfile(values, { isActive = true } = {}) {
   const business = intents.includes("business_partners");
   return {
     display_name: text("display_name"),
+    instagram_handle: normalizeInstagramHandle(text("instagram_handle")) || text("instagram_handle") || null,
     birth_date: text("birth_date"),
     city_id: Number(values.city_id) || null,
     city: text("city"), region: text("region"), country: text("country"), intents,
@@ -96,7 +123,7 @@ export function makeProfile(values, { isActive = true } = {}) {
   };
 }
 
-export function validateProfile(profile, { consent, today = new Date() } = {}) {
+export function validateProfile(profile, { consent, today = new Date(), requireInstagram = true } = {}) {
   const errors = [];
   const intents = profileIntents(profile);
   const error = (field, step, message) => errors.push({ field, step, message });
@@ -106,6 +133,9 @@ export function validateProfile(profile, { consent, today = new Date() } = {}) {
   };
   if (!intents.length || intents.some(intent => !Object.hasOwn(INTENTS, intent))) error("intents", 0, "Choose at least one kind of connection. You can select more than one.");
   length("display_name", 1, 60, 0, "Your name");
+  const instagram = normalizeInstagramHandle(profile.instagram_handle);
+  if (instagram === null || (requireInstagram && !instagram)) error("instagram_handle", 0,
+    profile.instagram_handle ? "Enter a valid Instagram username or profile link." : "Add your Instagram so your matches can reach you.");
   const age = ageOn(profile.birth_date, today);
   if (!Number.isInteger(age) || age < 18 || age > 120) error("birth_date", 0, "Enter a valid birthday. Matchmaking is for people 18 and over.");
   if (!Number.isInteger(profile.city_id) || profile.city_id <= 0) error("city", 0, "Choose your city or a nearby city from the suggestions.");

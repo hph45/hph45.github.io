@@ -1,5 +1,5 @@
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, PROFILE_TABLE, getAuthRedirect } from "./config.js";
-import { INTENTS, profileIntents, ageOn, birthdayBounds, makeProfile, validateProfile, locationLabel, preferenceDetails, bookEditTime, currentReadEditTime, favoriteBooks, normalizeLinkedInURL } from "./profile.js";
+import { INTENTS, profileIntents, ageOn, birthdayBounds, makeProfile, validateProfile, locationLabel, preferenceDetails, bookEditTime, currentReadEditTime, favoriteBooks, normalizeLinkedInURL, normalizeInstagramHandle, instagramProfileURL } from "./profile.js";
 import { attachAutocomplete } from "./autocomplete.js";
 import { searchBooks } from "./book-search.js";
 import { attachAgeRange } from "./age-range.js";
@@ -25,6 +25,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   let authReady = false;
   let subscription;
   let mutationPending = false;
+  let instagramPromptDismissed = false;
   let selectedIntents = [];
   let bookTimer;
   let communityRequest = 0;
@@ -165,6 +166,9 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       } else if (values[input.name] !== undefined) input.value = values[input.name] ?? (input.type === "range" ? input.defaultValue : "");
     }
     ageRange.sync();
+    // Existing members may defer Instagram and still edit their other answers.
+    // New signups, and members who have supplied it, cannot leave it blank.
+    field("instagram_handle").required = !profile || Boolean(profile.instagram_handle);
     text("#form-eyebrow", profile ? "Edit your chapter" : "Your first chapter");
     showStep(0, false);
     showView("onboarding-view", "#onboarding-title");
@@ -179,6 +183,39 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     // Hidden inputs reflect .value into their default value, unlike text inputs.
     // Clear catalog IDs explicitly so a later account never inherits old picks.
     form.querySelectorAll('input[type="hidden"]').forEach(input => { input.value = ""; });
+  }
+
+  function clearInstagramPrompt() {
+    if ($("#instagram-dialog").open) $("#instagram-dialog").close();
+    $("#instagram-form").reset();
+    $("#instagram-prompt-input").value = "";
+    $("#instagram-prompt-input").disabled = false;
+    $("#save-instagram").disabled = $("#instagram-later").disabled = false;
+    text("#save-instagram", "Save Instagram");
+    $("#instagram-prompt-input").removeAttribute("aria-invalid");
+    $("#instagram-error").textContent = "";
+    $("#instagram-error").hidden = true;
+  }
+
+  function openInstagramPrompt() {
+    if (!user || !profile || normalizeInstagramHandle(profile.instagram_handle)) return;
+    if (!$("#instagram-dialog").open) {
+      $("#instagram-dialog").showModal();
+      $("#instagram-prompt-input").focus();
+    }
+  }
+
+  function instagramLink(value) {
+    const handle = normalizeInstagramHandle(value);
+    if (!handle) return null;
+    const link = document.createElement("a");
+    link.className = "text-link instagram-link";
+    link.textContent = `Instagram · @${handle}`;
+    link.href = instagramProfileURL(handle);
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.setAttribute("aria-label", `Instagram: @${handle} (opens in a new tab)`);
+    return link;
   }
 
   function readProfile() {
@@ -232,6 +269,16 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     text("#dashboard-title", `Hello, ${profile.display_name}.`);
     text("#profile-name", `${profile.display_name}, ${ageOn(profile.birth_date)}`);
     text("#profile-location", locationLabel(profile));
+    const contact = $("#profile-instagram");
+    contact.replaceChildren();
+    const instagram = instagramLink(profile.instagram_handle);
+    if (instagram) contact.append(instagram);
+    else {
+      const add = document.createElement("button");
+      add.type = "button"; add.id = "add-instagram"; add.className = "text-button";
+      add.textContent = "Add Instagram to be matched";
+      action(add, "click", openInstagramPrompt); contact.append(add);
+    }
     text("#profile-book", profile.favorite_book);
     text("#profile-author", `by ${profile.favorite_author}`);
     const extraBooks = $("#profile-extra-books");
@@ -246,7 +293,8 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       detail(currentReading, profile.current_book, `by ${profile.current_author}`);
     }
     updateBookLock();
-    text("#participation-description", profile.is_active ? "You’re on the list for future introductions." : "Your profile is saved. You won’t receive new matches while paused.");
+    text("#participation-description", !profile.is_active ? "Your profile is saved. You won’t receive new matches while paused."
+      : instagram ? "You’re on the list for future introductions." : "Add your Instagram before you can be matched.");
     text("#pause-matching", profile.is_active ? "Pause matching" : "Resume matching");
     text("#account-email", user.email || "your Google account");
     $("#email-preference").checked = profile.email_matches;
@@ -255,6 +303,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     preferenceDetails(profile).forEach(([title, value]) => detail(preferences, title, value));
     linkedInDetail(preferences, profile);
     showView("dashboard-view", focus ? "#dashboard-title" : undefined);
+    if (!instagramPromptDismissed) openInstagramPrompt();
   }
 
   async function loadMatches(version) {
@@ -294,6 +343,8 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
           detail(article, "Who they’d like to meet", match.business_seeking);
           linkedInDetail(article, match);
         }
+        const instagram = instagramLink(match.instagram_handle);
+        if (instagram) { const contact = document.createElement("p"); contact.className = "match-contact"; contact.append(instagram); article.append(contact); }
         container.append(article);
       }
     } catch {
@@ -359,6 +410,9 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     const version = ++generation;
     user = session?.user || null;
     profile = null;
+    instagramPromptDismissed = false;
+    clearInstagramPrompt();
+    setMutationBusy(false);
     mapZoom.reset();
     resetForm();
     window.clearTimeout(bookTimer);
@@ -402,7 +456,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   action(form, "submit", async () => {
     if (mutationPending || !user) return;
     const values = readProfile();
-    const errors = validateProfile(values, { consent: field("profile_consent").checked });
+    const errors = validateProfile(values, { consent: field("profile_consent").checked, requireInstagram: !profile || Boolean(profile.instagram_handle) });
     const invalid = errors.find((error) => currentStep === 2 || error.step === currentStep);
     if (invalid) {
       showStep(invalid.step, false);
@@ -439,6 +493,8 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       const duplicateBook = error?.code === "23514" && error.message?.includes("distinct_favorite_books");
       if (duplicateBook) showStep(1, false);
       text("#form-error", duplicateBook ? "Choose a different book for each of your favorites."
+        : error?.message === "INSTAGRAM_REQUIRED" ? "Add your Instagram so your matches can reach you."
+        : error?.message === "INVALID_INSTAGRAM" ? "Enter a valid Instagram username or profile link."
         : error?.message === "BOOKS_LOCKED"
         ? "Your favorites can be changed once every 24 hours. Please wait until your next update is available."
         : error?.message === "CURRENT_READING_LOCKED"
@@ -464,6 +520,53 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   action($("#retry-profile"), "click", () => user ? loadProfile() : acceptSession(null));
   action($("#pause-matching"), "click", () => saveSettings({ is_active: !profile.is_active }));
   action($("#email-preference"), "change", () => saveSettings({ email_matches: $("#email-preference").checked }));
+
+  action($("#instagram-later"), "click", () => {
+    if (mutationPending) return;
+    instagramPromptDismissed = true;
+    clearInstagramPrompt();
+  });
+  $("#instagram-dialog").addEventListener("cancel", event => {
+    if (mutationPending) event.preventDefault();
+    else { instagramPromptDismissed = true; clearInstagramPrompt(); }
+  });
+  action($("#instagram-form"), "submit", async () => {
+    if (mutationPending || !user || !profile) return;
+    const input = $("#instagram-prompt-input");
+    const handle = normalizeInstagramHandle(input.value);
+    if (!handle) {
+      text("#instagram-error", "Enter your Instagram username or profile link.");
+      $("#instagram-error").hidden = false; input.setAttribute("aria-invalid", "true"); input.focus(); return;
+    }
+    const version = generation;
+    setMutationBusy(true);
+    input.disabled = true;
+    $("#save-instagram").disabled = $("#instagram-later").disabled = true;
+    text("#save-instagram", "Saving…");
+    $("#instagram-error").hidden = true;
+    input.removeAttribute("aria-invalid");
+    try {
+      const { data, error } = await client.from(PROFILE_TABLE).update({ instagram_handle: handle }).eq("user_id", user.id).select("*").single();
+      if (version !== generation) return;
+      if (error || data?.instagram_handle !== handle) throw error || new Error("Instagram was not saved");
+      profile = data;
+      instagramPromptDismissed = true;
+      clearInstagramPrompt();
+      renderDashboard(true);
+      notice("Your Instagram is saved.");
+    } catch {
+      if (version !== generation) return;
+      text("#instagram-error", "We couldn’t save your Instagram. Please try again.");
+      $("#instagram-error").hidden = false;
+    } finally {
+      if (version === generation) {
+        input.disabled = false;
+        $("#save-instagram").disabled = $("#instagram-later").disabled = false;
+        text("#save-instagram", "Save Instagram");
+        setMutationBusy(false);
+      }
+    }
+  });
 
   action($("#google-sign-in"), "click", async () => {
     notice();
@@ -593,6 +696,6 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       }
     },
     async settled() { while (pending.size) await Promise.allSettled([...pending]); },
-    destroy() { subscription?.unsubscribe(); generation++; window.clearTimeout(bookTimer); ageRange.destroy(); mapZoom.destroy(); autocompletes.forEach(control => control.destroy()); },
+    destroy() { subscription?.unsubscribe(); generation++; clearInstagramPrompt(); window.clearTimeout(bookTimer); ageRange.destroy(); mapZoom.destroy(); autocompletes.forEach(control => control.destroy()); },
   };
 }

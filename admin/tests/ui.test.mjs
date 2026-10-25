@@ -269,6 +269,7 @@ test("profile text cannot inject HTML and unsafe LinkedIn links stay plain text"
   response.data.profiles[0].display_name = '<img src=x onerror="alert(1)">';
   response.data.profiles[0].romance_ideal_match = "<script>alert(1)</script>";
   response.data.profiles[0].business_linkedin_url = "javascript:alert(1)";
+  response.data.profiles[0].instagram_handle = "javascript:alert(1)";
   response.data.profiles[0].current_book = '<img src=x onerror="alert(1)">';
   response.data.profiles[0].current_author = "Current author";
   const { $ } = await setup(t, { profileResponse: response });
@@ -276,6 +277,17 @@ test("profile text cannot inject HTML and unsafe LinkedIn links stay plain text"
   assert.equal($("#member-list a"), null);
   assert.match($("#member-list").textContent, /<script>/);
   assert.match($("#member-list").textContent, /Currently reading.*Current author/);
+});
+
+test("the owner directory shows Instagram links and identifies members who still need to add one", async t => {
+  const response = membersSuccess();
+  response.data.profiles[0].instagram_handle = "reader.books";
+  const { $ } = await setup(t, { profileResponse: response });
+  const link = $('#member-list a[href="https://www.instagram.com/reader.books/"]');
+  assert.equal(link.textContent, "@reader.books");
+  assert.equal(link.rel, "noopener noreferrer");
+  const pending = await setup(t);
+  assert.match(pending.$("#member-list").textContent, /InstagramNeeded before matching/);
 });
 
 test("directory errors clear profiles, retry recovers, and revoked access clears the entire dashboard", async t => {

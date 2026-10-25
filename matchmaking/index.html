@@ -7,7 +7,7 @@
   <title>Matchmaking | Zebra Book Club</title>
   <meta name="description" content="Meet through the books you love. Find romance, friends, or business partners with Zebra Book Club.">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <link rel="stylesheet" href="./styles.css?v=20261024.1">
+  <link rel="stylesheet" href="./styles.css?v=20261024.3">
   <link rel="stylesheet" href="/assets/match-countdown.css?v=20261024.1">
 </head>
 <body>
@@ -100,6 +100,7 @@
             </div>
           </fieldset>
           <label>What should we call you?<input name="display_name" autocomplete="given-name" maxlength="60" required placeholder="Your first name"></label>
+          <label>Instagram<input name="instagram_handle" maxlength="300" required autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="@yourhandle or your profile link" aria-describedby="instagram-help"><span id="instagram-help" class="field-help">Shared with your matches so they can reach you. You’ll need to add it before you can be matched.</span></label>
           <label>Birthday<input name="birth_date" type="date" required aria-describedby="birthday-help"><span id="birthday-help" class="field-help">You must be 18 or older. Only your age is shown to a match.</span></label>
           <input name="city_id" type="hidden">
           <label>City or nearby city<input name="city" maxlength="200" required placeholder="Start typing your city"><span class="field-help">Choose a suggestion. Your map dot represents the city, never your address.</span></label>
@@ -161,7 +162,7 @@
           </fieldset>
           <div class="consent-fields">
             <p class="field-help">Read our <a href="/privacy/" target="_blank" rel="noopener">Privacy Policy</a> and <a href="/terms/" target="_blank" rel="noopener">Terms of Service</a> before creating your profile.</p>
-            <label class="checkbox-label"><input name="profile_consent" type="checkbox" required><span>I’m happy to share my profile with my matches, and include my city and book picks in anonymous community totals.</span></label>
+            <label class="checkbox-label"><input name="profile_consent" type="checkbox" required><span>I’m happy to share my profile and Instagram with my matches, and include my city and book picks in anonymous community totals.</span></label>
             <label class="checkbox-label"><input name="email_matches" type="checkbox"><span>Email me when a match is ready.<small>You can turn these emails off at any time.</small></span></label>
           </div>
         </fieldset>
@@ -201,6 +202,7 @@
         <article class="profile-card">
           <div class="card-heading"><p class="eyebrow">Your profile</p><button id="edit-profile" class="text-button" type="button">Edit profile <svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="/assets/icons.svg#arrow-up-right"/></svg></button></div>
           <p id="profile-category" class="category-label"></p><h2 id="profile-name"></h2><p id="profile-location" class="muted"></p>
+          <div id="profile-instagram" class="profile-instagram"></div>
           <div class="favorite-book"><p class="eyebrow">Your bookshelf</p><h3 id="profile-book"></h3><p id="profile-author"></p><div id="profile-extra-books"></div><p id="book-edit-status" class="small-copy"></p></div>
           <div id="profile-current-reading" class="current-reading" hidden></div>
           <p id="profile-current-reading-status" class="small-copy" hidden></p>
@@ -218,10 +220,22 @@
     </section>
   </main>
 
+  <dialog id="instagram-dialog" aria-labelledby="instagram-title" aria-describedby="instagram-description">
+    <form id="instagram-form" novalidate>
+      <p class="eyebrow">A way to say hello</p>
+      <h2 id="instagram-title">Add your Instagram.</h2>
+      <p id="instagram-description">Your matches will use it to reach you. You’ll need to add it before you can be matched.</p>
+      <label>Instagram<input id="instagram-prompt-input" maxlength="300" required autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="@yourhandle or your profile link" aria-describedby="instagram-sharing"></label>
+      <p id="instagram-sharing" class="small-copy">Shared only with your released matches, never on the community map. You can update it in your profile.</p>
+      <p id="instagram-error" class="form-error" role="alert" hidden></p>
+      <div class="form-actions"><button id="instagram-later" class="text-button" type="button">Not now</button><button id="save-instagram" class="button" type="submit">Save Instagram</button></div>
+    </form>
+  </dialog>
+
   <dialog id="delete-dialog" aria-labelledby="delete-title"><form id="delete-form"><p class="eyebrow">Close this chapter</p><h2 id="delete-title">Delete your account?</h2><p>This permanently removes your matchmaking profile, preferences, and match memberships. Your Google account is unchanged.</p><label>Type DELETE to confirm<input id="delete-confirmation" autocomplete="off" required pattern="DELETE"></label><p id="delete-error" class="form-error" role="alert" hidden></p><div class="form-actions"><button id="cancel-delete" class="text-button" type="button">Keep my account</button><button id="confirm-delete" class="button" type="submit">Delete account</button></div></form></dialog>
   <footer class="site-footer"><span>© 2026 Zebra Book Club</span><nav class="legal-links" aria-label="Legal"><a href="/privacy/" target="_blank" rel="noopener">Privacy</a><a href="/terms/" target="_blank" rel="noopener">Terms</a></nav><span class="data-credits">Books: <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">Open Library</a> · Cities: <a href="https://www.geonames.org" target="_blank" rel="noopener noreferrer">GeoNames</a> · Map: <a href="https://naturalearthdata.com" target="_blank" rel="noopener noreferrer">Natural Earth</a></span></footer>
   <noscript><p class="notice">Please enable JavaScript to sign in and create your matchmaking profile.</p></noscript>
-  <script type="module" src="./app.js?v=20261024.2"></script>
+  <script type="module" src="./app.js?v=20261024.3"></script>
   <script type="module" src="/assets/match-countdown.js?v=20261024.1"></script>
 </body>
 </html>

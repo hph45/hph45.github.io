@@ -12,7 +12,7 @@ const MATCH = "00000000-0000-4000-8000-000000000010";
 const OTHER_MATCH = "00000000-0000-4000-8000-000000000011";
 const BUSINESS_MATCH = "00000000-0000-4000-8000-000000000012";
 const fixture = makeProfile({
-  display_name: "Reader", birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States", favorite_book_id: "OL1W",
+  display_name: "Reader", instagram_handle: "reader.books", birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States", favorite_book_id: "OL1W",
   intent: "friends", favorite_book: "A good book", favorite_author: "An author",
   location_preference: "same_city",
   friendship_interests: "Coffee and conversation",

@@ -5,6 +5,9 @@
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 
 input[type=hidden] { display: none !important; }
+.profile-instagram { margin: 0 0 20px; }
+.match-contact { margin: 24px 0 0; }
+#instagram-dialog .form-actions { margin-top: 24px; }
 .match-launch-banner { display: flex; align-items: center; justify-content: space-between; gap: 28px; width: min(1120px, calc(100% - 64px)); margin: 22px auto 0; padding: 20px 28px; background: var(--ink); color: var(--paper); }
 .match-launch-copy h2 { margin: 0; font-size: 26px; line-height: 1.15; }
 .match-launch-banner .match-countdown-clock { --countdown-size: 44px; }
