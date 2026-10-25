@@ -8,7 +8,7 @@
   <link rel="icon" type="image/jpeg" href="/zebra%20white.jpeg">
   <title>Admin | Zebra Book Club</title>
   <link rel="stylesheet" href="/matchmaking/styles.css?v=20261023.1">
-  <link rel="stylesheet" href="./styles.css?v=20261023.1">
+  <link rel="stylesheet" href="./styles.css?v=20261025.1">
 </head>
 <body>
   <header class="site-header">
@@ -27,7 +27,12 @@
       <p class="muted">Please try again in a moment.</p>
       <button id="retry" type="button" class="button">Try again</button>
     </section>
-    <section id="admin-view" class="admin-dashboard" aria-labelledby="dashboard-title" hidden>
+    <section id="admin-view" class="admin-dashboard" aria-label="Admin dashboard" hidden>
+      <div class="admin-tabs" role="tablist" aria-label="Admin sections">
+        <button id="tab-matchmaking" type="button" role="tab" aria-selected="true" aria-controls="panel-matchmaking" data-admin-tab="matchmaking">Matchmaking</button>
+        <button id="tab-kaizen" type="button" role="tab" aria-selected="false" aria-controls="panel-kaizen" data-admin-tab="kaizen" tabindex="-1">Kaizen</button>
+      </div>
+      <div id="panel-matchmaking" role="tabpanel" aria-labelledby="tab-matchmaking">
       <div class="admin-heading">
         <div><p class="eyebrow">Behind the books</p><h1 id="dashboard-title">The people<br>in our pages.</h1><p id="population-note" class="muted"></p></div>
         <div class="admin-actions"><button id="refresh" class="button button-secondary" type="button">Refresh</button><p id="updated-at" class="small-copy" role="status"></p></div>
@@ -108,10 +113,27 @@
         <div class="member-pagination"><p id="member-status" class="small-copy" role="status"></p><div><button id="previous-members" class="text-button" type="button" disabled>Previous</button><button id="next-members" class="text-button" type="button" disabled>Next</button></div></div>
       </section>
       <p class="admin-footnote">Counts include all completed matchmaking profiles, including paused profiles. Each member is counted once, even if they select multiple connection types.</p>
+      </div>
+      <div id="panel-kaizen" role="tabpanel" aria-labelledby="tab-kaizen" hidden>
+        <div class="kaizen-heading"><p class="eyebrow">Kaizen</p><h1>Poetry.</h1></div>
+        <p id="poetry-loading" class="directory-message" role="status" hidden>Opening your collection…</p>
+        <div id="poetry-error" class="directory-message" role="alert" hidden><p>We couldn’t load your poems.</p><button id="retry-poetry" class="button button-secondary" type="button">Try again</button></div>
+        <p id="poetry-empty" class="directory-message" hidden>Your poetry collection is empty.</p>
+        <ol id="poetry-list" class="poetry-list" aria-label="Poetry collection"></ol>
+      </div>
     </section>
   </main>
+  <dialog id="poem-dialog" class="poem-dialog" aria-labelledby="poem-title">
+    <div class="poem-toolbar"><p class="eyebrow">Poetry</p><button id="close-poem" type="button" aria-label="Close poem" autofocus><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+    <article class="poem-page">
+      <h2 id="poem-title"></h2><p id="poem-author" class="poem-author"></p><p id="poem-context" class="poem-context" hidden></p>
+      <div id="poem-body" class="poem-body"></div>
+      <section id="poem-translation-section" class="poem-translation" aria-labelledby="poem-translation-title" hidden><h3 id="poem-translation-title">English translation</h3><p id="poem-translation-note" class="poem-context"></p><div id="poem-translation" class="poem-body" lang="en"></div></section>
+      <p id="poem-source" class="poem-source"></p>
+    </article>
+  </dialog>
   <footer class="admin-footer"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a></footer>
   <noscript><p class="notice">Please enable JavaScript, then return to <a href="/matchmaking/">matchmaking</a> to sign in.</p><meta http-equiv="refresh" content="0;url=/matchmaking/"></noscript>
-  <script type="module" src="./app.js?v=20261024.1"></script>
+  <script type="module" src="./app.js?v=20261025.1"></script>
 </body>
 </html>

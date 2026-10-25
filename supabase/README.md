@@ -56,9 +56,25 @@ Open `http://127.0.0.1:8080/matchmaking/`. Source is under `matchmaking/src/`; `
 
 The publishable key in `matchmaking/src/config.js` is intentionally public. Private profile access is enforced by database grants and row-level security. No server credential belongs in browser code.
 
+## Diagnostics and log usage
+
+Supabase meters **Log Ingestion** (new log data) separately from **Log Query** (log data scanned while inspecting logs). Opening Studio log views can consume query allowance, and repeating the same query scans the data again. Ordinary application database queries and RPCs are not log searches, although their activity can generate ingested logs. See [Log Query usage](https://supabase.com/docs/guides/platform/manage-your-usage/logs-query) for current allowances and enforcement status.
+
+For routine development, prefer local tests, configuration inspection, and targeted Postgres metadata queries. Use the organization's **Usage** page to check totals and the actual billing-cycle reset date. Do not open Unified Logs or log-based reports just to check quota consumption.
+
+When logs are needed for a specific failure, start with a **1–5 minute window**, one relevant source/service, and filters applied before querying. Expand the window only when the event cannot be found. Avoid broad 24-hour, all-source searches, repeated refreshes, and scripted log-query polling. Leave log views when the investigation is finished. Do not disable security/error logging to reduce diagnostic scan volume.
+
+Budget new scans against the remaining allowance and days until reset, leaving a reserve for incidents. The Usage page can lag by an hour; compare readings after that delay and across subsequent days. These are operating practices, not an automatic quota cap. A rising counter without intentional log searches needs investigation of integrations or Supabase metering before further broad scans.
+
 ## Private admin dashboard
 
 `/admin/` is an unlinked dashboard on the main domain. Sign in with the owner’s existing Google account at `/matchmaking/`, then open `/admin/` on that same origin. Signed-out visitors and other members are redirected to matchmaking. The page is marked `noindex` and is not included in public navigation.
+
+The dashboard has **Matchmaking** and **Kaizen** tabs. Matchmaking retains the demographic breakdowns and searchable member directory. Kaizen contains a Poetry list; each selection opens a reader with preserved line breaks and stanza spacing, source attribution, and an English translation when supplied. Tabs support arrow keys, Home, and End; the reader closes with its close button or Escape.
+
+Migration `20261025000100` creates the private `admin_poems` collection and `get_admin_poetry()` RPC. The RPC checks the same single-owner allowlist on every request. Anonymous users cannot execute it; other authenticated accounts receive `ADMIN_ONLY`. Browser roles, including the owner's browser, have no direct read or write access to the table. Populate or edit the collection through a privileged SQL connection or the Supabase dashboard. Keep the actual poem texts and seed files outside this public repository, including tests, fixtures, and static assets. Store `slug`, `title`, `author`, `body`, and `sort_order`; optional fields are `context`, `language` (`en` or `es`), `translation`, `translation_note`, `source_url`, and `source_label`.
+
+Opening Kaizen makes one authorized request for the collection. Subsequent poem opens and tab switches use memory until the admin page is refreshed or left; nothing is saved in browser storage. Sign-out, account switches, authorization failures, and page navigation clear the collection and close any reader. The schema migration does not seed content or change who has admin access.
 
 Both `get_matchmaking_admin_stats()` and `get_matchmaking_admin_profiles()` independently verify `auth.uid()` against the server-managed, single-row `matchmaking_admin_access` table on every call. Browser roles cannot read or modify that table. The page contains no owner email, user ID, service key, or client-side allowlist. Existing profile RLS remains owner-only, even for the admin. The statistics endpoint returns aggregate counts, city coordinates, and a median age. The separate profiles endpoint returns names, ages, locations, one to three favorites, an optional current read, settings, and answers for every currently selected connection type, including optional romance and business answers. It excludes exact birthdays, emails, Auth IDs, and retired answers. See [Supabase database function security](https://supabase.com/docs/guides/database/functions#security-definer-vs-invoker).
 

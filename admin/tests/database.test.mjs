@@ -25,6 +25,7 @@ test("admin statistics enforce server-owned access and accurate, aggregate-only 
     await db.exec(await readFile(new URL(file, migrations), "utf8"));
   }
   const rpc = async () => (await db.query("select public.get_matchmaking_admin_stats() as data")).rows[0].data;
+  const poetry = async () => (await db.query("select public.get_admin_poetry() as data")).rows[0].data;
   const profiles = async (search = "", intent = null, page = 1, size = 20, { minAge = null, maxAge = null, gender = null } = {}) => (await db.query("select public.get_matchmaking_admin_profiles($1,$2,$3,$4,$5,$6,$7) as data", [search, intent, page, size, minAge, maxAge, gender])).rows[0].data;
   async function asUser(id, action, role = "authenticated") {
     await db.exec(`set role ${role}`);
@@ -57,8 +58,40 @@ test("admin statistics enforce server-owned access and accurate, aggregate-only 
     await assert.rejects(asUser(other, rpc), permissionDenied);
     await assert.rejects(asUser(null, rpc, "anon"), permissionDenied);
     await assert.rejects(asUser(owner, profiles), permissionDenied);
+    await assert.rejects(asUser(owner, poetry), permissionDenied);
   });
   await db.query("insert into public.matchmaking_admin_access(user_id) values ($1)", [owner]);
+
+  await t.test("only the existing owner can read private poems through the RPC", async () => {
+    assert.deepEqual(await asUser(owner, poetry), []);
+    await db.query(`insert into public.admin_poems(slug,title,author,body,sort_order,language,translation,translation_note)
+      values ('second','Second','Author','Private second text',2,'es','Private translation','Translation note'),
+        ('first','First','Author',E'Line one.\nLine two.\n\nNew stanza.',1,'en','','')`);
+    const result = await asUser(owner, poetry);
+    assert.deepEqual(result.map(p => p.slug), ["first", "second"]);
+    assert.equal(result[0].body, "Line one.\nLine two.\n\nNew stanza.");
+    assert.equal(result[1].language, "es");
+    assert.equal(result[1].translation, "Private translation");
+    for (const id of [null, other]) await assert.rejects(asUser(id, poetry), /ADMIN_ONLY/);
+    await assert.rejects(asUser(owner, poetry, "anon"), permissionDenied);
+    for (const role of ["anon", "authenticated"]) {
+      for (const id of [null, other, owner]) {
+        for (const sql of [
+          "select * from public.admin_poems",
+          "insert into public.admin_poems(slug,title,author,body,sort_order) values ('fake','Fake','Fake','Fake',0)",
+          "update public.admin_poems set body='Changed'",
+          "delete from public.admin_poems",
+          "truncate public.admin_poems",
+        ]) await assert.rejects(asUser(id, () => db.exec(sql), role), permissionDenied);
+      }
+    }
+    const security = (await db.query(`select c.relrowsecurity, p.prosecdef, p.proconfig
+      from pg_class c join pg_proc p on p.proname='get_admin_poetry'
+      where c.oid='public.admin_poems'::regclass`)).rows[0];
+    assert.equal(security.relrowsecurity, true);
+    assert.equal(security.prosecdef, true);
+    assert.deepEqual(security.proconfig, ['search_path=""']);
+  });
 
   await t.test("only the allowlisted authenticated ID can call the function", async () => {
     await assert.rejects(asUser(other, rpc), /ADMIN_ONLY/);
@@ -271,6 +304,7 @@ test("admin statistics enforce server-owned access and accurate, aggregate-only 
     await db.exec("delete from public.matchmaking_admin_access");
     await assert.rejects(asUser(owner, rpc), /ADMIN_ONLY/);
     await assert.rejects(asUser(owner, profiles), /ADMIN_ONLY/);
+    await assert.rejects(asUser(owner, poetry), /ADMIN_ONLY/);
     await db.query("insert into public.matchmaking_admin_access(user_id) values ($1)", [owner]);
   });
 

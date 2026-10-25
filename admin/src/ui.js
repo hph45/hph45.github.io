@@ -1,6 +1,7 @@
 import { renderCommunityMap } from "../../matchmaking/src/map.js";
 import { attachMapZoom } from "../../matchmaking/src/map-zoom.js";
 import { createMemberDirectory } from "./members.js";
+import { createPoetryLibrary } from "./poetry.js";
 
 const PAGE_SIZE = 12;
 const count = value => Math.max(0, Math.trunc(Number(value) || 0));
@@ -15,6 +16,8 @@ export function createAdminApp({ client, document, window }) {
   const $ = selector => document.querySelector(selector);
   const zoom = attachMapZoom(document);
   const directory = createMemberDirectory({ client, document, window, onDenied: redirect, isDenied: denied });
+  const poetry = createPoetryLibrary({ client, document, onDenied: redirect, isDenied: denied });
+  const tabs = [...document.querySelectorAll("[data-admin-tab]")];
   const pending = new Set(), removers = [];
   let stats = null, mode = "countries", page = 0, userId = null;
   let generation = 0, started = false, destroyed = false, away = false, authTimer = null, subscription;
@@ -34,6 +37,8 @@ export function createAdminApp({ client, document, window }) {
   function clear() {
     stats = null;
     directory.clear();
+    poetry.clear();
+    selectTab("matchmaking");
     $("#admin-view").hidden = true;
     for (const id of ["age-chart", "gender-chart", "connection-chart", "location-rows", "map-markers"]) $(`#${id}`).replaceChildren();
     for (const id of ["population-note", "updated-at", "member-count", "member-count-label", "map-selection", "location-status"]) $(`#${id}`).textContent = "";
@@ -54,6 +59,26 @@ export function createAdminApp({ client, document, window }) {
     window.location.replace("/matchmaking/");
   }
   const current = request => !destroyed && !away && request === generation;
+
+  function selectTab(name, focus = false) {
+    for (const tab of tabs) {
+      const active = tab.dataset.adminTab === name;
+      tab.setAttribute("aria-selected", String(active)); tab.tabIndex = active ? 0 : -1;
+      $(`#${tab.getAttribute("aria-controls")}`).hidden = !active;
+      if (active && focus) tab.focus();
+    }
+    if (stats && name === "kaizen") void poetry.load();
+    if (stats && name === "matchmaking") zoom.refresh();
+  }
+  for (const [index, tab] of tabs.entries()) {
+    listen(tab, "click", () => { if (stats) selectTab(tab.dataset.adminTab); });
+    listen(tab, "keydown", event => {
+      if (!stats || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+      event.preventDefault();
+      const next = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+      selectTab(tabs[next].dataset.adminTab, true);
+    });
+  }
 
   function renderChart(selector, groups) {
     const fragment = document.createDocumentFragment();
@@ -186,6 +211,7 @@ export function createAdminApp({ client, document, window }) {
         if (authTimer !== null) await new Promise(resolve => window.setTimeout(resolve, 0));
       }
       await directory.settled();
+      await poetry.settled();
     },
     destroy() {
       destroyed = true; invalidate(); view("loading");
@@ -193,6 +219,7 @@ export function createAdminApp({ client, document, window }) {
       removers.forEach(remove => remove());
       zoom.destroy();
       directory.destroy();
+      poetry.destroy();
     },
   };
 }

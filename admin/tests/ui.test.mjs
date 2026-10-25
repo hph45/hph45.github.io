@@ -23,19 +23,24 @@ const sampleProfile = {
   friendship_interests: "Bookshops and coffee.", business_about: "A bookshop.", business_skills: "Events and community.", business_seeking: "An operations partner.", business_linkedin_url: "https://www.linkedin.com/in/reader",
 };
 const membersSuccess = () => ({ data: { total_count: 1, page: 1, page_size: 20, profiles: [structuredClone(sampleProfile)] }, error: null });
+const samplePoems = [
+  { slug: "example-one", title: "First example", author: "Example author", body: "First line.\nSecond line.\n\nAnother stanza.", language: "en", context: "Excerpt", source_url: "https://example.org/poem", source_label: "Source" },
+  { slug: "example-two", title: "Second example", author: "Another author", body: "Una línea.\n\nOtra estrofa.", language: "es", translation: "One line.\n\nAnother stanza.", translation_note: "Translation for this test.", source_label: "Supplied text" },
+];
+const poetrySuccess = () => ({ data: structuredClone(samplePoems), error: null });
 const forbidden = { data: null, error: { code: "42501", message: "ADMIN_ONLY" } };
 const deferred = () => { let resolve; const promise = new Promise(done => { resolve = done; }); return { resolve, promise }; };
 
-async function setup(t, { signedIn = true, response = success(), profileResponse = membersSuccess(), autoStart = true } = {}) {
+async function setup(t, { signedIn = true, response = success(), profileResponse = membersSuccess(), poetryResponse = poetrySuccess(), autoStart = true } = {}) {
   const window = new Window({ url: "https://zebrabookclub.com/admin/", settings: { disableCSSFileLoading: true, disableJavaScriptFileLoading: true, enableJavaScriptEvaluation: false } });
   window.document.write(html);
-  const state = { session: signedIn ? { user: { id: "owner" } } : null, response, profileResponse, calls: [], requests: [], unsubscribed: false };
+  const state = { session: signedIn ? { user: { id: "owner" } } : null, response, profileResponse, poetryResponse, calls: [], requests: [], unsubscribed: false };
   const client = {
     auth: {
       getSession: async () => ({ data: { session: state.session }, error: null }),
       onAuthStateChange(callback) { state.onAuth = callback; return { data: { subscription: { unsubscribe() { state.unsubscribed = true; } } } }; },
     },
-    rpc: async (name, args) => { state.calls.push(name); state.requests.push({ name, args }); return name === "get_matchmaking_admin_profiles" ? state.profileResponse : state.response; },
+    rpc: async (name, args) => { state.calls.push(name); state.requests.push({ name, args }); return name === "get_admin_poetry" ? state.poetryResponse : name === "get_matchmaking_admin_profiles" ? state.profileResponse : state.response; },
   };
   const app = createAdminApp({ client, document: window.document, window });
   const $ = selector => window.document.querySelector(selector);
@@ -51,6 +56,125 @@ test("signed-out visitors redirect without making a statistics request", async t
   assert.equal(window.location.pathname, "/matchmaking/");
   assert.equal($("#admin-view").hidden, true);
   assert.deepEqual(state.calls, []);
+});
+
+test("Kaizen loads once on demand and switching tabs preserves matchmaking", async t => {
+  const { $, state, event } = await setup(t);
+  assert.equal($("#panel-kaizen").hidden, true);
+  assert.equal($("#panel-matchmaking").hidden, false);
+  assert.ok(!state.calls.includes("get_admin_poetry"));
+  await event("#tab-kaizen");
+  assert.equal($("#tab-kaizen").getAttribute("aria-selected"), "true");
+  assert.equal($("#tab-matchmaking").tabIndex, -1);
+  assert.equal($("#panel-kaizen").hidden, false);
+  assert.equal($("#panel-matchmaking").hidden, true);
+  assert.equal($("#poetry-list").children.length, 2);
+  await event('[data-poem="example-one"]');
+  assert.equal($("#poem-dialog").open, true);
+  assert.equal($("#poem-body").textContent, samplePoems[0].body);
+  assert.equal($("#poem-title").textContent, samplePoems[0].title);
+  assert.equal($("#poem-source a").rel, "noopener noreferrer");
+  assert.equal($("#poem-translation-section").hidden, true);
+  await event("#close-poem");
+  assert.equal($("#poem-dialog").open, false);
+  await event("#tab-matchmaking");
+  assert.equal($("#panel-matchmaking").hidden, false);
+  assert.equal($("#summary-total").textContent, "20");
+  assert.equal($("#member-list").children.length, 1);
+  await event("#tab-kaizen");
+  await event('[data-poem="example-two"]');
+  assert.equal($("#poem-body").lang, "es");
+  assert.equal($("#poem-translation-section").hidden, false);
+  assert.equal($("#poem-translation").textContent, samplePoems[1].translation);
+  assert.equal($("#poem-translation-note").textContent, samplePoems[1].translation_note);
+  assert.equal($("#poem-context").hidden, true);
+  assert.equal($("#poem-source a"), null);
+  assert.equal(state.calls.filter(name => name === "get_admin_poetry").length, 1);
+});
+
+test("admin tabs support arrow, Home, and End keys", async t => {
+  const { $, window, app, state } = await setup(t);
+  for (const [from, key, to] of [["matchmaking", "ArrowRight", "kaizen"], ["kaizen", "ArrowRight", "matchmaking"], ["matchmaking", "End", "kaizen"], ["kaizen", "Home", "matchmaking"], ["matchmaking", "ArrowLeft", "kaizen"]]) {
+    $(`#tab-${from}`).dispatchEvent(new window.KeyboardEvent("keydown", { key, bubbles: true }));
+    await app.settled();
+    assert.equal(window.document.activeElement, $(`#tab-${to}`));
+    assert.equal($(`#tab-${to}`).getAttribute("aria-selected"), "true");
+  }
+  assert.equal(state.calls.filter(name => name === "get_admin_poetry").length, 1);
+});
+
+test("poem text is never HTML and unsafe source URLs cannot become links", async t => {
+  const data = structuredClone(samplePoems);
+  data[0] = { ...data[0], title: "<img src=x>", author: "<script>unsafe()</script>", body: "<img onerror=unsafe()>", source_url: "javascript:unsafe()", source_label: "<img src=x>" };
+  const { $, event, window } = await setup(t, { poetryResponse: { data, error: null } });
+  await event("#tab-kaizen"); await event('[data-poem="example-one"]');
+  assert.equal($("#poem-title").textContent, data[0].title);
+  assert.equal($("#poem-body").textContent, data[0].body);
+  assert.equal($("#poetry-list img"), null);
+  assert.equal($("#poem-dialog img"), null);
+  assert.equal($("#poem-source a"), null);
+  assert.equal(window.localStorage.length, 0);
+  assert.equal(window.sessionStorage.length, 0);
+});
+
+test("poetry failures support retry and empty collections are explicit", async t => {
+  const { $, state, event } = await setup(t, { poetryResponse: { data: null, error: new Error("Offline") } });
+  await event("#tab-kaizen");
+  assert.equal($("#poetry-error").hidden, false);
+  assert.equal($("#poetry-loading").hidden, true);
+  assert.equal($("#poetry-list").children.length, 0);
+  state.poetryResponse = poetrySuccess(); await event("#retry-poetry");
+  assert.equal($("#poetry-error").hidden, true);
+  assert.equal($("#poetry-list").children.length, 2);
+  const empty = await setup(t, { poetryResponse: { data: [], error: null } });
+  await empty.event("#tab-kaizen");
+  assert.equal(empty.$("#poetry-empty").hidden, false);
+});
+
+test("non-admins cannot load poems and a revoked poetry request redirects", async t => {
+  const denied = await setup(t, { response: forbidden });
+  await denied.event("#tab-kaizen");
+  assert.ok(!denied.state.calls.includes("get_admin_poetry"));
+  assert.equal(denied.$("#poetry-list").children.length, 0);
+  const { $, event, window } = await setup(t, { poetryResponse: forbidden });
+  await event("#tab-kaizen");
+  assert.equal(window.location.pathname, "/matchmaking/");
+  assert.equal($("#admin-view").hidden, true);
+  assert.equal($("#poem-body").textContent, "");
+});
+
+test("private poems and open readers are erased on sign-out, account change, navigation, and destruction", async t => {
+  for (const action of ["sign-out", "switch", "navigation", "destroy"]) {
+    const { $, app, state, auth, event, window } = await setup(t);
+    await event("#tab-kaizen"); await event('[data-poem="example-one"]');
+    assert.equal($("#poem-dialog").open, true);
+    if (action === "destroy") app.destroy();
+    else if (action === "navigation") window.dispatchEvent(new window.Event("pagehide"));
+    else if (action === "sign-out") auth("SIGNED_OUT");
+    else { state.response = forbidden; auth("SIGNED_IN", "another-member"); }
+    await app.settled();
+    assert.equal($("#poem-dialog").open, false);
+    assert.equal($("#poem-body").textContent, "");
+    assert.equal($("#poetry-list").children.length, 0);
+    assert.equal($("#poem-source").textContent, "");
+  }
+});
+
+test("late private poem responses cannot restore content after access changes", async t => {
+  for (const action of ["sign-out", "switch", "navigation", "destroy"]) {
+    const delayed = deferred();
+    const { $, app, state, auth, window } = await setup(t, { poetryResponse: delayed.promise });
+    $("#tab-kaizen").click(); $("#tab-kaizen").click();
+    assert.equal(state.calls.filter(name => name === "get_admin_poetry").length, 1, "concurrent loads share a request");
+    if (action === "destroy") app.destroy();
+    else if (action === "navigation") window.dispatchEvent(new window.Event("pagehide"));
+    else if (action === "sign-out") auth("SIGNED_OUT");
+    else { state.response = forbidden; auth("SIGNED_IN", "another-member"); }
+    delayed.resolve(poetrySuccess()); await app.settled();
+    assert.equal($("#poetry-list").children.length, 0);
+    assert.equal($("#poem-body").textContent, "");
+    assert.equal($("#admin-view").hidden, true);
+  }
 });
 
 test("signed-in non-admins and expired sessions redirect without rendering data", async t => {
