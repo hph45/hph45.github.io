@@ -21,8 +21,7 @@ test("two rising favorites reuse affiliate covers, exclude Top Ten, and display 
     { work_id: "OL1W", title: "<script>A new book</script>", author: "An author" },
     { work_id: "OL2W", title: "Third candidate", author: "An author" },
   ];
-  const requested = [];
-  await renderRisingBooks(document, books, [books[0]], catalog, async id => { requested.push(id); return ""; });
+  await renderRisingBooks(document, books, [books[0]], catalog);
   const links = [...document.querySelectorAll("li a")];
   assert.equal(links.length, 2);
   assert.equal(links[0].href, "https://link.amazon/B03RDERzW");
@@ -33,7 +32,7 @@ test("two rising favorites reuse affiliate covers, exclude Top Ten, and display 
   assert.match(links[1].href, /^https:\/\/www.amazon.com\/s\?/);
   assert.equal(links[1].querySelector("img").hidden, true);
   assert.equal(document.querySelector("script"), null);
-  assert.deepEqual(requested, ["OL1W"]);
+  assert.equal(links[1].querySelector("img").getAttribute("src"), null);
   for (const link of links) {
     assert.match(link.querySelector("svg use").getAttribute("href"), /#flame$/);
     assert.equal(link.querySelector("svg").getAttribute("aria-hidden"), "true");
@@ -41,13 +40,11 @@ test("two rising favorites reuse affiliate covers, exclude Top Ten, and display 
   }
   assert.equal(document.querySelector("#rising-books-status").hidden, true);
 });
-test("empty results are honest and delayed cover lookups cannot resurrect stale rising rows", async t => {
+test("empty results are honest and refresh removes stale rising rows", async t => {
   const document = setup(t);
-  let resolve;
-  const pending = renderRisingBooks(document, [{ work_id: "OL1W", title: "A book", author: "An author" }], [], catalog, () => new Promise(done => { resolve = done; }));
+  renderRisingBooks(document, [{ work_id: "OL1W", title: "A book", author: "An author" }], [], catalog);
   const image = document.querySelector("img");
-  await renderRisingBooks(document, [], [], catalog, () => "");
-  resolve("https://covers.openlibrary.org/b/id/123-M.jpg"); await pending;
+  renderRisingBooks(document, [], [], catalog);
   assert.equal(document.querySelectorAll("li").length, 0);
   assert.equal(image.getAttribute("src"), null);
   assert.equal(document.querySelector("#rising-books-status").hidden, false);

@@ -10,7 +10,7 @@ const member = { id: "00000000-0000-4000-8000-000000000001", email: "reader@exam
 const profile = { ...makeProfile({ display_name: "Reader", instagram_handle: "reader.books", birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States", intent: "friends", favorite_book_id: "OL1W", favorite_book: "A book", favorite_author: "An author", location_preference: "same_city", friendship_interests: "Afternoons in bookshops" }), user_id: member.id };
 
 function mockClient({ signedIn = true, initialProfile = null, matches = [], risingBooks = [], communityError = false } = {}) {
-  const state = { profile: initialProfile ? structuredClone(initialProfile) : null, calls: [], failNext: false, matches, communityError, session: signedIn ? { user: member } : null };
+  const state = { profile: initialProfile ? structuredClone(initialProfile) : null, calls: [], requests: [], functionCalls: [], failNext: false, matches, communityError, session: signedIn ? { user: member } : null };
   const client = {
     auth: {
       getSession: async () => ({ data: { session: state.session }, error: null }),
@@ -42,7 +42,7 @@ function mockClient({ signedIn = true, initialProfile = null, matches = [], risi
       return query;
     },
     rpc: async name => ({ data: name === "get_matchmaking_community" ? { total_members: 1, cities: [{ id: 5378538, name: "Oakland", region: "California", country: "United States", latitude: 37.8, longitude: -122.27, member_count: 1 }], top_books: [{ work_id: "OL1W", title: "A book", author: "An author", votes: 1 }], rising_books: risingBooks } : state.matches, error: name === "get_matchmaking_community" && state.communityError ? new Error("Unavailable") : null }),
-    functions: { invoke: async () => ({ data: { deleted: true }, error: null }) },
+    functions: { invoke: async name => { state.functionCalls.push(name); return { data: { deleted: true }, error: null }; } },
   };
   return { client, state };
 }
@@ -53,7 +53,15 @@ async function setup(t, options = {}) {
   if (options.intent) window.localStorage.setItem("zebra-matchmaking-intent", options.intent);
   if (options.intents) window.localStorage.setItem("zebra-matchmaking-intents", JSON.stringify(options.intents));
   const mock = mockClient(options);
-  const app = createMatchmakingApp({ ...mock, document: window.document, window, fetch: async () => ({ ok: true, json: async () => ({ external: { google: options.googleEnabled ?? true } }) }) });
+  const app = createMatchmakingApp({ ...mock, document: window.document, window, fetch: async url => {
+    mock.state.requests.push(url);
+    if (url.startsWith("/matchmaking/data/books.")) {
+      if (options.catalogUnavailable) throw new Error("Offline");
+      return { ok: true, json: async () => ({ version: 1, books: [["OL4W", "A current read", "Current author"], ["OL1W", "A favorite", "Favorite author"]] }) };
+    }
+    if (url.startsWith("/matchmaking/data/cities.")) return { ok: true, json: async () => ({ version: 1, cities: [[2964574, "Dublin", "dublin", "Leinster", "Ireland", 1024027]] }) };
+    return { ok: true, text: async () => "", json: async () => ({ external: { google: options.googleEnabled ?? true } }) };
+  } });
   await app.start();
   t.after(async () => { app.destroy(); await window.happyDOM.close(); });
   const $ = selector => window.document.querySelector(selector);
@@ -231,17 +239,13 @@ test("released matches offer safe Instagram contact links for every connection t
 });
 
 test("signup uses the shared book search for an optional current read and preserves it after a failed save", async t => {
-  const { $, set, event, state, client, window } = await setup(t, { intent: "friends" });
-  const queries = [];
-  client.functions.invoke = async (name, { body }) => {
-    queries.push({ name, body });
-    return { data: { books: [{ work_id: "OL4W", title: "A current read", author: "Current author" }] }, error: null };
-  };
+  const { $, set, event, state, window } = await setup(t, { intent: "friends" });
   for (const [key, value] of Object.entries({ instagram_handle: "reader.books", birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States", favorite_book_id: "OL1W", favorite_book: "A favorite", favorite_author: "Favorite author" })) set(key, value);
   await event("#profile-form", "submit");
   set("current_book", "A current"); await event('[name="current_book"]', "input");
   await new Promise(resolve => window.setTimeout(resolve, 500));
-  assert.deepEqual(queries[0], { name: "search-books", body: { query: "A current" } });
+  assert.equal(state.requests.filter(url => url.startsWith("/matchmaking/data/books.")).length, 1);
+  assert.deepEqual(state.functionCalls, [], "suggestions use no Edge Functions");
   assert.equal($("#current_book-suggestions").hidden, false);
   await event("#current_book-suggestions-0");
   assert.equal($('[name="current_book_id"]').value, "OL4W");
@@ -262,15 +266,7 @@ test("signup uses the shared book search for an optional current read and preser
 
 test("signup can save typed favorites and a current read when suggestions fail or find nothing", async t => {
   for (const unavailable of [true, false]) await t.test(unavailable ? "search outage" : "book not listed", async t => {
-    const { $, set, event, state, client, window } = await setup(t, { intent: "friends" });
-    client.functions.invoke = async () => ({ data: { books: [] }, error: unavailable ? new Error("Offline") : null });
-    const originalRPC = client.rpc;
-    client.rpc = (name, args) => {
-      if (name !== "search_matchmaking_books") return originalRPC(name, args);
-      const response = Promise.resolve({ data: [], error: unavailable ? new Error("Offline") : null });
-      response.abortSignal = () => response;
-      return response;
-    };
+    const { $, set, event, state, window } = await setup(t, { intent: "friends", catalogUnavailable: unavailable });
     for (const [key, value] of Object.entries({ instagram_handle: "reader.books", birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States" })) set(key, value);
     await event("#profile-form", "submit");
     set("favorite_book", "A book outside the catalog"); await event('[name="favorite_book"]', "input");
@@ -295,6 +291,37 @@ test("signup can save typed favorites and a current read when suggestions fail o
     assert.equal(submitted.favorite_author, "An author");
     assert.equal(submitted.current_author, "");
   });
+});
+
+test("profile editing searches both static catalogs without database/Edge calls or per-keystroke downloads", async t => {
+  const { $, set, event, state, client, window } = await setup(t, { initialProfile: profile });
+  assert.deepEqual(state.functionCalls, [], "an uncurated dashboard cover does not invoke a lookup");
+  assert.equal(state.requests.filter(url => url.startsWith("/matchmaking/data/")).length, 0, "dashboard visitors need no autocomplete catalogs");
+  const rpcCalls = [];
+  const originalRPC = client.rpc;
+  client.rpc = (name, args) => { rpcCalls.push(name); return originalRPC(name, args); };
+  await event("#edit-profile");
+  await event('[name="city"]', "focus");
+  for (const query of ["Du", "Dublin Ireland"]) {
+    set("city", query); await event('[name="city"]', "input");
+    await new Promise(resolve => window.setTimeout(resolve, 200));
+  }
+  await event("#city-suggestions-0");
+  assert.equal($('[name="city_id"]').value, "2964574");
+  assert.equal($('[name="country"]').value, "Ireland");
+  await event("#profile-form", "submit");
+  for (const [name, query, id] of [["favorite_book", "A fav", "OL1W"], ["current_book", "A current", "OL4W"]]) {
+    await event(`[name="${name}"]`, "focus");
+    set(name, query); await event(`[name="${name}"]`, "input");
+    await new Promise(resolve => window.setTimeout(resolve, 200));
+    await event(`#${name}-suggestions-0`);
+    assert.equal($(`[name="${name}_id"]`).value, id);
+  }
+  for (const name of ["favorite_book_2", "favorite_book_3"]) await event(`[name="${name}"]`, "focus");
+  assert.deepEqual(rpcCalls, []);
+  assert.deepEqual(state.functionCalls, []);
+  assert.equal(state.requests.filter(url => url.startsWith("/matchmaking/data/books.")).length, 1);
+  assert.equal(state.requests.filter(url => url.startsWith("/matchmaking/data/cities.")).length, 1);
 });
 
 test("editing an autofilled author switches to free text and title edits preserve a typed author", async t => {

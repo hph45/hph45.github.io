@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build:catalogs": "node scripts/build-static-catalogs.mjs",
     "build:admin": "esbuild admin/src/app.js --bundle --format=esm --target=es2022 --minify --outfile=admin/app.js",
     "test:admin": "node --test admin/tests/*.test.mjs",
     "build:matchmaking": "esbuild matchmaking/src/app.js --bundle --format=esm --target=es2022 --minify --outfile=matchmaking/app.js",

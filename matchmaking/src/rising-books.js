@@ -1,11 +1,10 @@
 import { bookPresentation } from "./review-catalog.js";
 import { createBookCover } from "./book-cover.js";
 
-export function renderRisingBooks(document, books, topBooks, catalog, loadCover) {
+export function renderRisingBooks(document, books, topBooks, catalog) {
   const list = document.querySelector("#rising-books-list");
   list.replaceChildren();
   const excluded = new Set(topBooks.map(book => book.work_id));
-  const covers = [];
   for (const book of books) {
     if (excluded.has(book.work_id)) continue;
     excluded.add(book.work_id);
@@ -14,7 +13,7 @@ export function renderRisingBooks(document, books, topBooks, catalog, loadCover)
     const link = document.createElement("a"); link.className = "rising-book-link";
     link.href = presentation.url; link.target = "_blank";
     link.rel = `${presentation.affiliate ? "sponsored " : ""}noopener noreferrer`;
-    const cover = createBookCover(document, book, presentation, loadCover, { width: 48, height: 72, className: "rising-book-cover" });
+    const cover = createBookCover(document, presentation, { width: 48, height: 72, className: "rising-book-cover" });
     const info = document.createElement("span"); info.className = "rising-book-details";
     const title = document.createElement("span"); title.className = "rising-book-title"; title.textContent = book.title;
     const author = document.createElement("span"); author.className = "rising-book-author"; author.textContent = book.author;
@@ -30,12 +29,10 @@ export function renderRisingBooks(document, books, topBooks, catalog, loadCover)
     ranking.append(context, rank, flame);
     const destination = document.createElement("span"); destination.className = "visually-hidden";
     destination.textContent = "Find on Amazon (opens in a new tab).";
-    link.append(cover.element, info, ranking, destination); item.append(link); list.append(item);
-    covers.push(cover.load());
+    link.append(cover, info, ranking, destination); item.append(link); list.append(item);
     if (list.children.length === 2) break;
   }
   const status = document.querySelector("#rising-books-status");
   status.hidden = list.children.length > 0;
   status.textContent = status.hidden ? "" : "New favorites will appear here as readers discover more books.";
-  return Promise.all(covers);
 }

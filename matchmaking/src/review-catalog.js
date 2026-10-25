@@ -85,7 +85,9 @@ export async function loadReviewCatalog(fetch) {
   const files = ["/reviews.csv", "/book_club_current.csv", "/assets/review-covers/sources.csv", "/matchmaking/books.csv"];
   const texts = await Promise.all(files.map(async file => {
     try {
-      const response = await fetch(file, { signal: AbortSignal.timeout(8000) });
+      // Revalidate these small, editable manifests so a newly added affiliate
+      // link or cover appears immediately after the site is published.
+      const response = await fetch(file, { cache: "no-cache", signal: AbortSignal.timeout(8000) });
       return response.ok ? await response.text() : "";
     } catch { return ""; }
   }));

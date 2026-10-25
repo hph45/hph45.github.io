@@ -1,7 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createBookSearchHandler, normalizeBooks } from "../../supabase/functions/search-books/handler.ts";
-import { searchBooks } from "../src/book-search.js";
 
 test("book search accepts only work IDs and deduplicates editions of a work", () => {
   const books = normalizeBooks({ docs: [
@@ -31,22 +30,6 @@ test("stored suggestions survive rate limits, cache outages, and provider failur
     assert.equal(result.books.length, 1);
     assert.equal(result.books[0].cover_id, ["busy", "provider"].includes(failure) ? null : 123);
   }
-});
-
-test("the browser uses the database catalog if the search function is unreachable, and cancels stale requests", async () => {
-  const book = { work_id: "OL1W", title: "A book", author: "An author" };
-  const calls = [];
-  const client = {
-    functions: { invoke: async (name, options) => { calls.push(options); throw new Error("Function unreachable"); } },
-    rpc(name, args) { calls.push({ name, args }); const result = Promise.resolve({ data: [book], error: null }); result.abortSignal = () => result; return result; },
-  };
-  const controller = new AbortController();
-  assert.deepEqual(await searchBooks(client, "a book", { signal: controller.signal }), [book]);
-  assert.equal(calls[0].timeout, 8000);
-  assert.deepEqual(calls[1], { name: "search_matchmaking_books", args: { query: "a book" } });
-  controller.abort();
-  await assert.rejects(searchBooks(client, "old query", { signal: controller.signal }), /cancelled/);
-  assert.equal(calls.filter(call => call.name === "search_matchmaking_books").length, 1);
 });
 
 test("only positive integer cover IDs are accepted from the book provider", () => {

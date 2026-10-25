@@ -2,10 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { Window } from "happy-dom";
-import { bookPresentation, createReviewCatalog, loadReviewCatalog } from "../src/review-catalog.js";
-import { coverURL, createCoverLookup, renderTopBooks } from "../src/top-books.js";
+import { bookPresentation, createReviewCatalog, loadReviewCatalog, parseCsv } from "../src/review-catalog.js";
+import { renderTopBooks } from "../src/top-books.js";
 
 const catalog = createReviewCatalog(...await Promise.all(["reviews.csv", "book_club_current.csv", "assets/review-covers/sources.csv", "matchmaking/books.csv"].map(file => readFile(new URL(`../../${file}`, import.meta.url), "utf8"))));
+const curatedWorkIDs = new Set(parseCsv(await readFile(new URL("../books.csv", import.meta.url), "utf8")).slice(1).map(row => row[0]));
 
 test("current favorites reuse their review covers and exact affiliate links, including original-language work IDs", () => {
   const examples = [
@@ -72,22 +73,19 @@ test("an unavailable review file does not prevent the remaining catalog or searc
   assert.equal(bookPresentation({ title: "A new book", author: "An author" }, reviews).affiliate, false);
 });
 
-test("cover lookup retries throttling, serializes requests, and reuses the exact work's result", async () => {
-  const calls = [];
-  let active = 0, maximumActive = 0;
-  const lookup = createCoverLookup({ functions: { invoke: async (name, { body }) => {
-    assert.equal(name, "search-books");
-    calls.push(body.work_id); active++; maximumActive = Math.max(maximumActive, active);
-    await Promise.resolve(); active--;
-    if (calls.length === 1) return { error: { context: { status: 429 } } };
-    return { data: { books: [{ work_id: "OL1W", cover_id: 1234 }] }, error: null };
-  } } }, { setTimeout: callback => callback() });
-  const one = lookup("OL1W"), repeated = lookup("OL1W"), other = lookup("OL2W");
-  assert.equal(one, repeated);
-  assert.deepEqual(await Promise.all([one, repeated, other, lookup("bad")]), [coverURL(1234), coverURL(1234), "", ""]);
-  assert.deepEqual(calls, ["OL1W", "OL1W", "OL2W"]);
-  assert.equal(maximumActive, 1);
-  assert.equal(coverURL(-1), "");
+test("every curated book has a downloaded JPEG and an affiliate destination, including the Top 20 additions", async () => {
+  for (const entry of catalog.filter(entry => entry.workIDs.some(id => curatedWorkIDs.has(id)))) {
+    assert.ok(entry.amazon, entry.title);
+    const cover = await readFile(new URL(`../..${entry.cover.split("?")[0]}`, import.meta.url));
+    assert.equal(cover.subarray(0, 3).toString("hex"), "ffd8ff", entry.title);
+  }
+  for (const [work_id, asin] of [["OL23166W", "0142004235"], ["OL29983W", "0140390693"], ["OL20150260W", "1984822187"], ["OL18203673W", "1501161938"], ["OL16821606W", "1501173219"], ["OL17332479W", "125007696X"], ["OL16509148W", "0062060627"]]) {
+    const presentation = bookPresentation({ work_id }, catalog);
+    assert.equal(presentation.affiliate, true);
+    assert.equal(new URL(presentation.url).searchParams.get("tag"), "zebrabookclub-20");
+    assert.ok(new URL(presentation.url).pathname.startsWith(`/dp/${asin}/`));
+    assert.ok(presentation.cover.startsWith("/assets/matchmaking-covers/"));
+  }
 });
 
 test("ranked rows are accessible Amazon links and gracefully handle missing or failed covers", async t => {
@@ -95,12 +93,11 @@ test("ranked rows are accessible Amazon links and gracefully handle missing or f
   t.after(() => window.happyDOM.close());
   const { document } = window;
   document.body.innerHTML = '<ol id="top-books-list"></ol>';
-  const requested = [];
   await renderTopBooks(document, [
     { work_id: "OL100672W", title: "Candide", author: "Voltaire", votes: 3 },
     { work_id: "OL1W", title: "<script>unsafe()</script>", author: "An author", votes: 1 },
     { work_id: "OL2W", title: "A book without a cover", author: "An author", votes: 1 },
-  ], catalog, async id => { requested.push(id); return id === "OL2W" ? "" : coverURL(1234); });
+  ], catalog);
   const links = [...document.querySelectorAll("li > a")];
   assert.equal(links.length, 3);
   assert.equal(links[0].href, "https://amzn.to/4rPwHAq");
@@ -110,31 +107,23 @@ test("ranked rows are accessible Amazon links and gracefully handle missing or f
   assert.match(links[0].textContent, /3 favorites.*opens in a new tab/);
   assert.equal(links[1].querySelector(".book-votes").textContent, "1 favorite");
   assert.equal(links[0].querySelector("img").getAttribute("src"), "/assets/review-covers/review-01.jpg");
-  assert.equal(links[1].querySelector("img").src, coverURL(1234));
+  assert.equal(links[1].querySelector("img").getAttribute("src"), null);
   assert.equal(links[1].querySelector("script"), null);
   assert.match(links[1].textContent, /<script>unsafe/);
   assert.equal(links[2].querySelector("img").hidden, true);
-  assert.deepEqual(requested, ["OL1W", "OL2W"]);
   const failed = links[0].querySelector("img");
   failed.dispatchEvent(new window.Event("error"));
-  await Promise.resolve();
-  assert.equal(failed.src, coverURL(1234));
-  failed.dispatchEvent(new window.Event("error"));
   assert.equal(failed.hidden, true);
-  assert.deepEqual(requested, ["OL1W", "OL2W", "OL100672W"], "a missing fallback cover does not retry endlessly");
+  assert.equal(failed.getAttribute("src"), "/assets/review-covers/review-01.jpg", "a failed image never switches to an external cover provider");
 });
 
-test("a delayed cover response cannot restore rows removed on refresh or sign-out", async t => {
+test("refresh replaces the shelf, keeps only ten rows, and clears stale covers", async t => {
   const window = new Window({ url: "http://localhost:8080/matchmaking/" });
   t.after(() => window.happyDOM.close());
   const { document } = window;
   document.body.innerHTML = '<ol id="top-books-list"></ol>';
-  let resolveCover;
-  const pending = renderTopBooks(document, [{ work_id: "OL1W", title: "A book", author: "An author", votes: 1 }], [], () => new Promise(resolve => { resolveCover = resolve; }));
-  const image = document.querySelector("img");
-  await renderTopBooks(document, [], [], () => "");
-  resolveCover(coverURL(1234));
-  await pending;
+  renderTopBooks(document, Array.from({ length: 20 }, (_, i) => ({ work_id: `OL${i}W`, title: `Book ${i}`, author: "An author", votes: 1 })), []);
+  assert.equal(document.querySelectorAll("li").length, 10);
+  renderTopBooks(document, [], []);
   assert.equal(document.querySelector("#top-books-list").children.length, 0);
-  assert.equal(image.getAttribute("src"), null);
 });

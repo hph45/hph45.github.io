@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "books": {
+    "url": "/matchmaking/data/books.9b8475069f51.json",
+    "count": 34784
+  },
+  "cities": {
+    "url": "/matchmaking/data/cities.f7dfc066a3cd.json",
+    "count": 34174
+  }
+}

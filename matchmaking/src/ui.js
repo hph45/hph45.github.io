@@ -1,12 +1,12 @@
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, PROFILE_TABLE, getAuthRedirect } from "./config.js";
 import { INTENTS, profileIntents, ageOn, birthdayBounds, makeProfile, validateProfile, locationLabel, preferenceDetails, bookEditTime, currentReadEditTime, favoriteBooks, normalizeLinkedInURL, normalizeInstagramHandle, instagramProfileURL } from "./profile.js";
 import { attachAutocomplete } from "./autocomplete.js";
-import { searchBooks } from "./book-search.js";
+import { createStaticCatalogSearch } from "./static-catalogs.js";
 import { attachAgeRange } from "./age-range.js";
 import { renderCommunityMap } from "./map.js";
 import { attachMapZoom } from "./map-zoom.js";
 import { loadReviewCatalog } from "./review-catalog.js";
-import { createCoverLookup, renderTopBooks } from "./top-books.js";
+import { renderTopBooks } from "./top-books.js";
 import { renderRisingBooks } from "./rising-books.js";
 
 export function createMatchmakingApp({ client, document, window, fetch = window.fetch.bind(window) }) {
@@ -32,7 +32,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   const autocompletes = [];
   const ageRange = attachAgeRange($(".age-range"));
   const mapZoom = attachMapZoom(document);
-  const loadCover = createCoverLookup(client, window);
+  const catalogSearch = createStaticCatalogSearch(fetch);
   let reviewCatalog;
 
   try {
@@ -369,12 +369,8 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       if (error || !data) throw error || new Error("No community data");
       renderCommunityMap(document, data);
       mapZoom.refresh();
-      const coverWork = Promise.all([
-        renderTopBooks(document, data.top_books || [], catalog, loadCover),
-        renderRisingBooks(document, data.rising_books || [], data.top_books || [], catalog, loadCover),
-      ]);
-      pending.add(coverWork);
-      void coverWork.finally(() => pending.delete(coverWork));
+      renderTopBooks(document, data.top_books || [], catalog);
+      renderRisingBooks(document, data.rising_books || [], data.top_books || [], catalog);
       text("#top-books-status", data.top_books?.length ? "" : "The first favorites will appear here as readers join.");
     } catch {
       if (version !== generation || request !== communityRequest) return;
@@ -630,14 +626,11 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   field("birth_date").min = bounds.min;
   field("birth_date").max = bounds.max;
 
+  field("city").addEventListener("focus", () => { void catalogSearch.preloadCities().catch(() => {}); });
   autocompletes.push(attachAutocomplete(field("city"), {
-    document, window, delay: 250,
+    document, window, delay: 150,
     emptyMessage: "No city found. Try a nearby city or its local name.",
-    async search(query) {
-      const { data, error } = await client.rpc("search_matchmaking_cities", { query });
-      if (error) throw error;
-      return data || [];
-    },
+    search: catalogSearch.cities,
     describe: city => [city.name, [city.region, city.country].filter(Boolean).join(", ")],
     onSelect(city) { field("city_id").value = city.id; field("city").value = city.name; field("region").value = city.region; field("country").value = city.country; },
     onClear() { field("city_id").value = ""; field("region").value = ""; field("country").value = ""; },
@@ -645,13 +638,14 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   const bookFields = ["", "_2", "_3"].map(suffix => [`favorite_book${suffix}`, `favorite_author${suffix}`]);
   bookFields.push(["current_book", "current_author"]);
   for (const [titleField, authorField] of bookFields) {
+    field(titleField).addEventListener("focus", () => { void catalogSearch.preloadBooks().catch(() => {}); });
     field(authorField).addEventListener("input", () => { field(`${titleField}_id`).value = ""; });
     autocompletes.push(attachAutocomplete(field(titleField), {
-      document, window,
+      document, window, delay: 150,
       emptyMessage: "No suggestions found. You can use the title you typed and add the author below.",
       failureMessage: "Suggestions are unavailable. You can still enter your book and continue.",
       suggestionMessage: "Choose a suggestion, or keep the title you typed.",
-      search: (query, options) => searchBooks(client, query, options),
+      search: catalogSearch.books,
       describe: book => [book.title, book.author],
       onSelect(book) { field(`${titleField}_id`).value = book.work_id; field(titleField).value = book.title; field(authorField).value = book.author; },
       onClear() {
