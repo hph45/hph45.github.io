@@ -8,7 +8,7 @@ const OPEN_LIBRARY_SEARCH_URL = "https://openlibrary.org/search.json";
 const OPEN_LIBRARY_COVERS_URL = "https://covers.openlibrary.org/b/id";
 const GOOGLE_BOOKS_URL = "https://www.googleapis.com/books/v1/volumes";
 const REQUEST_HEADERS = {
-  "User-Agent": "ZebraBookClub/1.0 (henry@zebrabookclub.com)",
+  "User-Agent": "ZebraBookClub/1.0 (zebrabookclub@proton.me)",
 };
 const MANIFEST_COLUMNS = [
   "key",

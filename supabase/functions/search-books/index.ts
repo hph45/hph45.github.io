@@ -32,7 +32,7 @@ Deno.serve(createBookSearchHandler({
   async search(query) {
     const url = new URL("https://openlibrary.org/search.json");
     url.search = new URLSearchParams({ q: query, fields: "key,title,author_name,cover_i", limit: "8", lang: "en" }).toString();
-    const response = await fetch(url, { headers: { "User-Agent": "ZebraBookClub/1.0 (henry@zebrabookclub.com)", "email": "henry@zebrabookclub.com" }, signal: AbortSignal.timeout(5000) });
+    const response = await fetch(url, { headers: { "User-Agent": "ZebraBookClub/1.0 (zebrabookclub@proton.me)", "email": "zebrabookclub@proton.me" }, signal: AbortSignal.timeout(5000) });
     if (!response.ok) throw new Error("Book service unavailable");
     return response.json();
   },
