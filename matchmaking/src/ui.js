@@ -8,6 +8,7 @@ import { attachMapZoom } from "./map-zoom.js";
 import { loadReviewCatalog } from "./review-catalog.js";
 import { renderTopBooks } from "./top-books.js";
 import { renderRisingBooks } from "./rising-books.js";
+import { attachInvites } from "./invite.js";
 
 export function createMatchmakingApp({ client, document, window, fetch = window.fetch.bind(window) }) {
   const $ = (selector) => document.querySelector(selector);
@@ -32,6 +33,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   const autocompletes = [];
   const ageRange = attachAgeRange($(".age-range"));
   const mapZoom = attachMapZoom(document);
+  const invites = attachInvites(document, window);
   const catalogSearch = createStaticCatalogSearch(fetch);
   let reviewCatalog;
 
@@ -690,6 +692,6 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       }
     },
     async settled() { while (pending.size) await Promise.allSettled([...pending]); },
-    destroy() { subscription?.unsubscribe(); generation++; clearInstagramPrompt(); window.clearTimeout(bookTimer); ageRange.destroy(); mapZoom.destroy(); autocompletes.forEach(control => control.destroy()); },
+    destroy() { subscription?.unsubscribe(); generation++; clearInstagramPrompt(); window.clearTimeout(bookTimer); ageRange.destroy(); mapZoom.destroy(); invites.destroy(); autocompletes.forEach(control => control.destroy()); },
   };
 }

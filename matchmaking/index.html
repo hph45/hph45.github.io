@@ -7,12 +7,13 @@
   <title>Matchmaking | Zebra Book Club</title>
   <meta name="description" content="Meet through the books you love. Find romance, friends, or business partners with Zebra Book Club.">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <link rel="stylesheet" href="./styles.css?v=20261024.3">
+  <link rel="stylesheet" href="./styles.css?v=20261026.2">
   <link rel="stylesheet" href="/assets/match-countdown.css?v=20261024.1">
 </head>
 <body>
   <header class="site-header">
     <a class="brand" href="/">Zebra Book Club<span> / Matchmaking</span></a>
+    <button class="header-invite" type="button" data-invite-friends><span>Know someone who should join? <strong>Invite them!</strong></span><svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="/assets/icons.svg?v=20261026.1#share"/></svg></button>
     <div id="account-tools" class="account-tools" hidden>
       <span id="account-name"></span>
       <button id="sign-out" class="text-button" type="button">Sign out</button>
@@ -220,6 +221,18 @@
     </section>
   </main>
 
+  <div id="invite-status" class="invite-status" role="status" hidden></div>
+  <dialog id="invite-dialog" aria-labelledby="invite-title" aria-describedby="invite-description">
+    <form method="dialog">
+      <p class="eyebrow">Good company grows</p>
+      <h2 id="invite-title">Invite your friends.</h2>
+      <p id="invite-description">Share the link and meet through the books you love.</p>
+      <label>Matchmaking link<input id="invite-url" type="url" readonly></label>
+      <p id="invite-copy-help" class="small-copy" role="status">Copy the link below to send to a friend.</p>
+      <div class="form-actions"><button class="text-button" type="submit">Done</button><button id="copy-invite-link" class="button" type="button">Copy link</button></div>
+    </form>
+  </dialog>
+
   <dialog id="instagram-dialog" aria-labelledby="instagram-title" aria-describedby="instagram-description">
     <form id="instagram-form" novalidate>
       <p class="eyebrow">A way to say hello</p>
@@ -235,7 +248,7 @@
   <dialog id="delete-dialog" aria-labelledby="delete-title"><form id="delete-form"><p class="eyebrow">Close this chapter</p><h2 id="delete-title">Delete your account?</h2><p>This permanently removes your matchmaking profile, preferences, and match memberships. Your Google account is unchanged.</p><label>Type DELETE to confirm<input id="delete-confirmation" autocomplete="off" required pattern="DELETE"></label><p id="delete-error" class="form-error" role="alert" hidden></p><div class="form-actions"><button id="cancel-delete" class="text-button" type="button">Keep my account</button><button id="confirm-delete" class="button" type="submit">Delete account</button></div></form></dialog>
   <footer class="site-footer"><span>© 2026 Zebra Book Club</span><nav class="legal-links" aria-label="Legal"><a href="/privacy/" target="_blank" rel="noopener">Privacy</a><a href="/terms/" target="_blank" rel="noopener">Terms</a></nav><span class="data-credits">Books: <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">Open Library</a> · Cities: <a href="https://www.geonames.org" target="_blank" rel="noopener noreferrer">GeoNames</a> · Map: <a href="https://naturalearthdata.com" target="_blank" rel="noopener noreferrer">Natural Earth</a></span></footer>
   <noscript><p class="notice">Please enable JavaScript to sign in and create your matchmaking profile.</p></noscript>
-  <script type="module" src="./app.js?v=20261025.1"></script>
+  <script type="module" src="./app.js?v=20261026.1"></script>
   <script type="module" src="/assets/match-countdown.js?v=20261024.1"></script>
 </body>
 </html>
