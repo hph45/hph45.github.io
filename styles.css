@@ -187,7 +187,7 @@ h1 {
 .hero-title--outline .hero-word > span,
 .hero-title--outline .countdown-digit,
 .hero-title--outline .countdown-colon {
-  color: var(--bg);
+  color: transparent;
   -webkit-text-stroke: 1px #000000;
   animation: outline-letter 6600ms ease-in-out infinite;
   animation-delay: calc(var(--letter-index) * 150ms);
@@ -923,13 +923,13 @@ h2 {
 @keyframes outline-letter {
   0%,
   100% {
-    color: var(--bg);
+    color: transparent;
     transform: scale(0.98);
   }
 
   24%,
   82% {
-    color: var(--bg);
+    color: transparent;
   }
 
   38%,

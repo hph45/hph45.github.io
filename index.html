@@ -9,8 +9,9 @@
     name="description"
     content="Book-based matchmaking is now live! First matches arrive November 2. Join Zebra Book Club to meet through the books you love."
   >
-  <link rel="stylesheet" href="styles.css?v=20261024.1">
+  <link rel="stylesheet" href="styles.css?v=20261027.1">
   <link rel="stylesheet" href="/assets/match-countdown.css?v=20261024.1">
+  <link rel="stylesheet" href="/assets/community-map.css?v=20261027.6">
 </head>
 <!-- RAHHH ZEBRA BOOK CLUB, FOLLOW THE INSTA -->
 <!-- Internal reminder: redirect links through our own URLs
@@ -36,7 +37,10 @@
   </header>
 
   <main id="top">
-    <section class="hero section reveal is-visible" data-match-countdown>
+    <section class="hero section reveal is-visible home-community" id="community" data-match-countdown>
+      <div class="hero-map-backdrop">
+        <svg id="world-map" viewBox="0 0 1000 500" role="group" aria-label="Reader locations by city"><g id="map-content"><image href="/matchmaking/world-outline.svg" width="1000" height="500"/><g id="map-markers"></g></g></svg>
+      </div>
       <h1 class="hero-title hero-title--outline hero-countdown-title">
         <span class="hero-countdown-label">First match in:</span>
         <span class="match-countdown-clock hero-countdown-clock" data-countdown-clock role="timer" aria-live="off" aria-label="First matches on November 2, 2026 at 00:00 UTC">--:--:--:--</span>
@@ -230,5 +234,6 @@
   </footer>
   <script src="script.js"></script>
   <script type="module" src="/assets/match-countdown.js?v=20261024.1"></script>
+  <script type="module" src="/assets/community-map.js?v=20261027.6"></script>
 </body>
 </html>

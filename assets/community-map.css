@@ -1,0 +1,9 @@
+.hero.home-community { position: relative; isolation: isolate; }
+.home-community .hero-map-backdrop { position: absolute; z-index: -1; inset: 0; overflow: hidden; pointer-events: none; }
+.home-community #world-map { position: absolute; top: 43%; left: 0; transform: translateY(-50%); display: block; width: 100%; height: auto; opacity: .78; overflow: hidden; }
+.home-community .hero-title { pointer-events: none; }
+.home-community .map-marker { fill: #16a34a; stroke: #166534; stroke-opacity: .35; stroke-width: 1.4; vector-effect: non-scaling-stroke; pointer-events: auto; cursor: default; }
+.home-community .map-marker:hover { stroke: #14532d; stroke-opacity: 1; stroke-width: 2.5; outline: none; }
+@media (max-width: 640px) {
+  .home-community #world-map { top: 30%; }
+}
