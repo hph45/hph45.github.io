@@ -28,14 +28,13 @@ test("Instagram accepts usernames and profile links while keeping links on the I
   assert.equal(instagramProfileURL("javascript:alert(1)"), "");
 });
 
-test("new signup requires Instagram while a legacy member can defer it without accepting invalid text", () => {
+test("Instagram is optional without accepting invalid text when it is supplied", () => {
   const missing = makeProfile({ ...basics, instagram_handle: "" });
   assert.equal(missing.instagram_handle, null);
-  assert.ok(validateProfile(missing, { consent: true, today }).some(error => error.field === "instagram_handle" && error.step === 0));
-  assert.deepEqual(validateProfile(missing, { consent: true, today, requireInstagram: false }), []);
+  assert.deepEqual(validateProfile(missing, { consent: true, today }), []);
   const invalid = makeProfile({ ...basics, instagram_handle: "not a handle" });
   assert.equal(invalid.instagram_handle, "not a handle", "keep invalid text so validation can explain the problem");
-  assert.ok(validateProfile(invalid, { consent: true, today, requireInstagram: false }).some(error => error.field === "instagram_handle"));
+  assert.ok(validateProfile(invalid, { consent: true, today }).some(error => error.field === "instagram_handle"));
 });
 
 test("every combination keeps and requires the answers for all selected connection types", () => {

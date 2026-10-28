@@ -168,9 +168,6 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       } else if (values[input.name] !== undefined) input.value = values[input.name] ?? (input.type === "range" ? input.defaultValue : "");
     }
     ageRange.sync();
-    // Existing members may defer Instagram and still edit their other answers.
-    // New signups, and members who have supplied it, cannot leave it blank.
-    field("instagram_handle").required = !profile || Boolean(profile.instagram_handle);
     text("#form-eyebrow", profile ? "Edit your chapter" : "Your first chapter");
     showStep(0, false);
     showView("onboarding-view", "#onboarding-title");
@@ -278,7 +275,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     else {
       const add = document.createElement("button");
       add.type = "button"; add.id = "add-instagram"; add.className = "text-button";
-      add.textContent = "Add Instagram to be matched";
+      add.textContent = "Add Instagram (optional)";
       action(add, "click", openInstagramPrompt); contact.append(add);
     }
     text("#profile-book", profile.favorite_book);
@@ -296,7 +293,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     }
     updateBookLock();
     text("#participation-description", !profile.is_active ? "Your profile is saved. You won’t receive new matches while paused."
-      : instagram ? "You’re on the list for future introductions." : "Add your Instagram before you can be matched.");
+      : instagram ? "You’re on the list for future introductions." : "You’re on the list for future introductions. Without Instagram, you’ll only be able to contact your matches by email.");
     text("#pause-matching", profile.is_active ? "Pause matching" : "Resume matching");
     text("#account-email", user.email || "your Google account");
     $("#email-preference").checked = profile.email_matches;
@@ -454,7 +451,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   action(form, "submit", async () => {
     if (mutationPending || !user) return;
     const values = readProfile();
-    const errors = validateProfile(values, { consent: field("profile_consent").checked, requireInstagram: !profile || Boolean(profile.instagram_handle) });
+    const errors = validateProfile(values, { consent: field("profile_consent").checked });
     const invalid = errors.find((error) => currentStep === 2 || error.step === currentStep);
     if (invalid) {
       showStep(invalid.step, false);
@@ -482,6 +479,8 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       if (version !== generation) return;
       if (error) throw error;
       profile = data;
+      // Leaving Instagram blank in the form is already a deliberate choice.
+      instagramPromptDismissed = true;
       rememberIntents(profileIntents(profile));
       renderDashboard(true);
       notice("Your profile is saved.");
@@ -491,7 +490,6 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       const duplicateBook = error?.code === "23514" && error.message?.includes("distinct_favorite_books");
       if (duplicateBook) showStep(1, false);
       text("#form-error", duplicateBook ? "Choose a different book for each of your favorites."
-        : error?.message === "INSTAGRAM_REQUIRED" ? "Add your Instagram so your matches can reach you."
         : error?.message === "INVALID_INSTAGRAM" ? "Enter a valid Instagram username or profile link."
         : error?.message === "BOOKS_LOCKED"
         ? "Your favorites can be changed once every 24 hours. Please wait until your next update is available."

@@ -403,7 +403,7 @@ test("profile text cannot inject HTML and unsafe LinkedIn links stay plain text"
   assert.match($("#member-list").textContent, /Currently reading.*Current author/);
 });
 
-test("the owner directory shows Instagram links and identifies members who still need to add one", async t => {
+test("the owner directory shows Instagram links or the email-only contact choice", async t => {
   const response = membersSuccess();
   response.data.profiles[0].instagram_handle = "reader.books";
   const { $ } = await setup(t, { profileResponse: response });
@@ -411,7 +411,7 @@ test("the owner directory shows Instagram links and identifies members who still
   assert.equal(link.textContent, "@reader.books");
   assert.equal(link.rel, "noopener noreferrer");
   const pending = await setup(t);
-  assert.match(pending.$("#member-list").textContent, /InstagramNeeded before matching/);
+  assert.match(pending.$("#member-list").textContent, /InstagramNot provided · Email only/);
 });
 
 test("directory errors clear profiles, retry recovers, and revoked access clears the entire dashboard", async t => {

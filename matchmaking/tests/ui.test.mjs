@@ -77,12 +77,14 @@ async function setup(t, options = {}) {
   return { ...mock, app, window, $, set, event };
 }
 
-test("a new member can finish all three steps with one book and no explanation", async t => {
+test("a new member can finish all three steps with one book and no Instagram", async t => {
   const { $, set, event, state } = await setup(t, { intent: "friends" });
   assert.equal($("#onboarding-view").hidden, false);
   assert.equal($('[name="intents"][value="friends"]').checked, true);
   assert.equal($('[name="display_name"]').value, "Reader");
-  for (const [key, value] of Object.entries({ instagram_handle: "reader.books", birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States" })) set(key, value);
+  assert.equal($('[name="instagram_handle"]').required, false);
+  assert.match($("#instagram-help").textContent, /only be able to contact your matches by email/);
+  for (const [key, value] of Object.entries({ birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States" })) set(key, value);
   await event("#profile-form", "submit");
   assert.equal($('[data-step="1"]').hidden, false);
   assert.equal($('[data-step="0"]').disabled, true);
@@ -114,17 +116,18 @@ test("a new member can finish all three steps with one book and no explanation",
   assert.deepEqual(state.profile.intents, ["friends"]);
   assert.equal(state.profile.email_matches, false);
   assert.equal(state.profile.user_id, member.id);
-  assert.equal(state.profile.instagram_handle, "reader.books");
-  assert.equal($("#instagram-dialog").open, false);
+  assert.equal(state.profile.instagram_handle, null);
+  assert.equal($("#instagram-dialog").open, false, "skipping Instagram at signup does not immediately prompt again");
+  assert.match($("#participation-description").textContent, /on the list.*only be able to contact your matches by email/);
   assert.equal(state.calls.at(-1).action, "insert");
 });
 
-test("signup asks for a valid Instagram on the first step", async t => {
+test("signup still validates Instagram when supplied on the first step", async t => {
   const { $, set, event, state } = await setup(t, { intent: "friends" });
   for (const [key, value] of Object.entries({ birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States" })) set(key, value);
-  assert.equal($('[name="instagram_handle"]').required, true);
+  assert.equal($('[name="instagram_handle"]').required, false);
   assert.equal($("#instagram-dialog").open, false);
-  for (const value of ["", "two words", "https://evil.test/reader"]) {
+  for (const value of ["two words", "https://evil.test/reader"]) {
     set("instagram_handle", value); await event("#profile-form", "submit");
     assert.equal($('[data-step="0"]').hidden, false);
     assert.match($("#form-error").textContent, /Instagram/);
@@ -138,7 +141,7 @@ test("signup asks for a valid Instagram on the first step", async t => {
 test("existing members can choose Not now, edit other answers, and return to the prompt from their profile", async t => {
   const { $, set, event, state } = await setup(t, { initialProfile: { ...profile, instagram_handle: null } });
   assert.equal($("#instagram-dialog").open, true);
-  assert.match($("#instagram-description").textContent, /before you can be matched/);
+  assert.match($("#instagram-description").textContent, /only be able to contact your matches by email/);
   assert.equal($("#dashboard-view").hidden, false);
   await event("#instagram-later");
   assert.equal($("#instagram-dialog").open, false);
@@ -183,12 +186,17 @@ test("the Instagram popup validates, retains failed drafts, and saves only the o
   assert.equal(nextVisit.$("#instagram-dialog").open, false);
 });
 
-test("members can update their Instagram from the profile editor but cannot clear it after supplying it", async t => {
+test("members can remove or update Instagram without losing matching eligibility", async t => {
   const { $, set, event, state } = await setup(t, { initialProfile: profile });
   await event("#edit-profile");
-  assert.equal($('[name="instagram_handle"]').required, true);
-  set("instagram_handle", ""); await event("#profile-form", "submit");
-  assert.match($("#form-error").textContent, /Instagram/);
+  assert.equal($('[name="instagram_handle"]').required, false);
+  set("instagram_handle", "");
+  for (let i = 0; i < 3; i++) await event("#profile-form", "submit");
+  assert.equal(state.profile.instagram_handle, null);
+  assert.equal($("#profile-instagram a"), null);
+  assert.equal($("#instagram-dialog").open, false);
+  assert.match($("#participation-description").textContent, /on the list.*by email/);
+  await event("#edit-profile");
   set("instagram_handle", "@New.Handle");
   for (let i = 0; i < 3; i++) await event("#profile-form", "submit");
   assert.equal(state.profile.instagram_handle, "new.handle");

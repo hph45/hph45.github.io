@@ -4,7 +4,7 @@ import { readFile, readdir } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import { makeProfile } from "../src/profile.js";
 
-test("Instagram preserves existing profiles and enforces contact availability and privacy at match release", async t => {
+test("optional Instagram preserves profiles, eligibility checks, and released-match privacy", async t => {
   const db = new PGlite(); t.after(() => db.close());
   await db.exec(`
     create role anon; create role authenticated; create role service_role bypassrls;
@@ -47,7 +47,7 @@ test("Instagram preserves existing profiles and enforces contact availability an
     assert.deepEqual(await profiles(), before.map(row => ({ ...row, instagram_handle: null })));
     assert.deepEqual(await selections(), beforeSelections);
     assert.deepEqual(await community(), beforeCommunity);
-    // Older cached clients can still save pending profiles; matching is guarded below.
+    // New and older clients can save profiles without Instagram.
     const saved = (await asUser(D, () => insert(D, basics))).rows[0];
     assert.equal(saved.instagram_handle, null);
     const changed = (await asUser(A, () => db.query("update public.matchmaking_profiles set display_name='Updated reader',email_matches=true where user_id=$1 returning *", [A]))).rows[0];
@@ -61,15 +61,24 @@ test("Instagram preserves existing profiles and enforces contact availability an
   const release = () => db.query("update public.matchmaking_matches set released_at=now() where id=$1", [match]);
   const matches = id => asUser(id, () => db.query("select * from public.get_my_matchmaking_matches()"));
 
-  await t.test("both participants must add Instagram before a match can be released", async () => {
-    await assert.rejects(release(), /INSTAGRAM_REQUIRED_FOR_MATCH/);
+  await t.test("members without Instagram can be matched while inactive profiles and drafts stay protected", async () => {
+    assert.equal((await matches(A)).rows.length, 0, "drafts stay private without Instagram");
+    await asUser(B, () => db.query("update public.matchmaking_profiles set is_active=false where user_id=$1", [B]));
+    await assert.rejects(release(), /two active members/);
+    await asUser(B, () => db.query("update public.matchmaking_profiles set is_active=true where user_id=$1", [B]));
+    await release();
+    assert.equal((await matches(A)).rows[0].instagram_handle, null);
+    assert.equal((await matches(B)).rows[0].instagram_handle, null);
+    assert.equal((await matches(C)).rows.length, 0, "outsiders cannot see email-only introductions either");
     const saved = (await updateHandle(A, " @Reader.Books ")).rows[0];
     assert.equal(saved.instagram_handle, "reader.books");
     assert.deepEqual(saved.books_updated_at, before[0].books_updated_at);
     assert.deepEqual(saved.current_book_updated_at, before[0].current_book_updated_at);
     assert.deepEqual(await selections(), [...beforeSelections, ...(await selections()).filter(row => row.user_id === D)]);
-    await assert.rejects(release(), /INSTAGRAM_REQUIRED_FOR_MATCH/);
+    await release();
+    assert.equal((await matches(A)).rows[0].instagram_handle, null, "one participant can choose email only");
     await updateHandle(B, "other.reader");
+    await db.query("update public.matchmaking_matches set released_at=null where id=$1", [match]);
     assert.equal((await matches(A)).rows.length, 0, "draft matches remain private even with both handles");
     await release();
     assert.equal((await matches(A)).rows[0].instagram_handle, "other.reader");
@@ -80,8 +89,15 @@ test("Instagram preserves existing profiles and enforces contact availability an
     await release();
   });
 
-  await t.test("the owner may change but not clear a handle, and invalid handles never reach profiles", async () => {
-    for (const value of [null, "", "   "]) await assert.rejects(updateHandle(A, value), /INSTAGRAM_REQUIRED/);
+  await t.test("the owner may clear or change a handle, while invalid handles never reach profiles", async () => {
+    for (const value of [null, "", "   "]) {
+      await updateHandle(A, "reader.books");
+      const cleared = (await updateHandle(A, value)).rows[0];
+      assert.equal(cleared.instagram_handle, null);
+      assert.deepEqual(cleared.books_updated_at, before[0].books_updated_at);
+      assert.deepEqual(cleared.current_book_updated_at, before[0].current_book_updated_at);
+      assert.equal((await matches(B)).rows[0].instagram_handle, null);
+    }
     for (const value of ["two words", ".reader", "reader.", "reader..books", "a".repeat(31), "https://evil.test/reader", "javascript:alert(1)", "reels"])
       await assert.rejects(updateHandle(A, value), /INVALID_INSTAGRAM/);
     const changed = (await updateHandle(A, "NEW.Reader")).rows[0];

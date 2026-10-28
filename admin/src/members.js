@@ -90,7 +90,7 @@ export function createMemberDirectory({ client, document, window, onDenied, isDe
     const response = element("div", "member-answers");
     response.append(answers("Preferences", [
       ["Profile", profile.is_active ? "Active" : "Paused"],
-      ["Instagram", normalizeInstagramHandle(profile.instagram_handle) ? `@${normalizeInstagramHandle(profile.instagram_handle)}` : "Needed before matching", instagramProfileURL(profile.instagram_handle)],
+      ["Instagram", normalizeInstagramHandle(profile.instagram_handle) ? `@${normalizeInstagramHandle(profile.instagram_handle)}` : "Not provided · Email only", instagramProfileURL(profile.instagram_handle)],
       ["Where would you like to connect?", profile.location_preference === "same_city" ? "In my city or metro area" : "Open to anywhere"],
       ["Email me when a match is ready", profile.email_matches ? "Yes" : "No"],
     ]));
