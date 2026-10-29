@@ -43,8 +43,9 @@ test("optional Instagram preserves profiles, eligibility checks, and released-ma
     await db.exec(await readFile(new URL(file, folder), "utf8"));
   }
 
+  await db.exec("insert into public.matchmaking_books(work_id,title,author) values ('OL900W','A shared next read','A recommendation author')");
   await t.test("migration leaves all answers, timestamps, favorites, current reads, and totals intact", async () => {
-    assert.deepEqual(await profiles(), before.map(row => ({ ...row, instagram_handle: null })));
+    assert.deepEqual(await profiles(), before.map(row => ({ ...row, instagram_handle: null, share_email_with_matches: true })));
     assert.deepEqual(await selections(), beforeSelections);
     assert.deepEqual(await community(), beforeCommunity);
     // New and older clients can save profiles without Instagram.
@@ -58,7 +59,7 @@ test("optional Instagram preserves profiles, eligibility checks, and released-ma
 
   const match = (await db.query("insert into public.matchmaking_matches(intent,week_start,reason) values ('friends','2026-10-19','Books in common') returning id")).rows[0].id;
   await db.query("insert into public.matchmaking_match_members(match_id,week_start,user_id) values ($1,'2026-10-19',$2),($1,'2026-10-19',$3)", [match, A, B]);
-  const release = () => db.query("update public.matchmaking_matches set released_at=now() where id=$1", [match]);
+  const release = () => db.query("update public.matchmaking_matches set released_at=now(),recommended_book_id='OL900W',recommendation_reason='A new book to read together' where id=$1", [match]);
   const matches = id => asUser(id, () => db.query("select * from public.get_my_matchmaking_matches()"));
 
   await t.test("members without Instagram can be matched while inactive profiles and drafts stay protected", async () => {

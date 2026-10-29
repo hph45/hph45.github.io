@@ -58,12 +58,14 @@ test("multiple connection types migrate safely and enforce completeness and matc
     await db.exec(await readFile(new URL(file, migrationFolder), "utf8"));
   }
 
+  await db.exec("insert into public.matchmaking_books(work_id,title,author) values ('OL900W','A shared next read','A recommendation author')");
   await t.test("backfill preserves every existing answer, timestamp, and favorite selection", async () => {
     const after = (await db.query("select * from public.matchmaking_profiles order by user_id")).rows;
     for (const [i, row] of after.entries()) {
-      const { intents, instagram_handle, current_book_id, current_book, current_author, current_book_updated_at, ...unchanged } = row;
+      const { intents, instagram_handle, current_book_id, current_book, current_author, current_book_updated_at, share_email_with_matches, ...unchanged } = row;
       assert.deepEqual(intents, [before[i].intent]);
       assert.equal(instagram_handle, null);
+      assert.equal(share_email_with_matches, true);
       assert.deepEqual([current_book_id, current_book, current_author, current_book_updated_at], [null, "", "", null]);
       assert.deepEqual(unchanged, before[i]);
     }
@@ -134,7 +136,7 @@ test("multiple connection types migrate safely and enforce completeness and matc
     await db.query("insert into public.matchmaking_match_members(match_id,week_start,user_id) values ($1,$2,$3),($1,$2,$4)", [match, week, first, second]);
     return match;
   }
-  const release = id => db.query("update public.matchmaking_matches set released_at=now() where id=$1", [id]);
+  const release = id => db.query("update public.matchmaking_matches set released_at=now(),recommended_book_id='OL900W',recommendation_reason='A new book to read together' where id=$1", [id]);
 
   await t.test("introductions can use any shared type and expose only that type's answers", async () => {
     await update(B, makeProfile({ ...answers, intents: ["friends", "business_partners"] }));
@@ -158,6 +160,6 @@ test("multiple connection types migrate safely and enforce completeness and matc
     const removed = (await asUser(A, () => db.query("select * from public.get_my_matchmaking_matches() where id=$1", [business]))).rows[0];
     for (const field of ["business_about", "business_skills", "business_seeking", "business_linkedin_url"]) assert.equal(removed[field], "");
     const another = (await db.query("insert into public.matchmaking_matches(intent,week_start,reason) values ('romance','2026-10-05','Another category') returning id")).rows[0].id;
-    await assert.rejects(db.query("insert into public.matchmaking_match_members(match_id,week_start,user_id) values ($1,'2026-10-05',$2)", [another, A]), error => error.code === "23505");
+    await db.query("insert into public.matchmaking_match_members(match_id,week_start,user_id) values ($1,'2026-10-05',$2)", [another, A]);
   });
 });

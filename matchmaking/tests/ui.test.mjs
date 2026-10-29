@@ -10,7 +10,7 @@ const member = { id: "00000000-0000-4000-8000-000000000001", email: "reader@exam
 const profile = { ...makeProfile({ display_name: "Reader", instagram_handle: "reader.books", birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States", intent: "friends", favorite_book_id: "OL1W", favorite_book: "A book", favorite_author: "An author", location_preference: "same_city", friendship_interests: "Afternoons in bookshops" }), user_id: member.id };
 
 function mockClient({ signedIn = true, initialProfile = null, matches = [], risingBooks = [], communityError = false } = {}) {
-  const state = { profile: initialProfile ? structuredClone(initialProfile) : null, calls: [], requests: [], functionCalls: [], failNext: false, matches, communityError, session: signedIn ? { user: member } : null };
+  const state = { profile: initialProfile ? structuredClone(initialProfile) : null, calls: [], requests: [], functionCalls: [], rpcCalls: [], failNext: false, matches: matches.map((match, i) => ({ id: `match-${i}`, ...match })), communityError, session: signedIn ? { user: member } : null };
   const client = {
     auth: {
       getSession: async () => ({ data: { session: state.session }, error: null }),
@@ -41,7 +41,22 @@ function mockClient({ signedIn = true, initialProfile = null, matches = [], risi
       };
       return query;
     },
-    rpc: async name => ({ data: name === "get_matchmaking_community" ? { total_members: 1, cities: [{ id: 5378538, name: "Oakland", region: "California", country: "United States", latitude: 37.8, longitude: -122.27, member_count: 1 }], top_books: [{ work_id: "OL1W", title: "A book", author: "An author", votes: 1 }], rising_books: risingBooks } : state.matches, error: name === "get_matchmaking_community" && state.communityError ? new Error("Unavailable") : null }),
+    rpc: async (name, args) => {
+      state.rpcCalls.push({ name, args });
+      if (name === "suggest_matchmaking_friends") return { data: true, error: null };
+      if (name === "get_my_matchmaking_introductions") {
+        const start = args.p_before_id ? state.matches.findIndex(match => match.id === args.p_before_id) + 1 : 0;
+        const items = state.matches.slice(start, start + args.p_limit);
+        return { data: { items: structuredClone(items), total_count: state.matches.length,
+          next_cursor: start + items.length < state.matches.length ? { id: items.at(-1).id, released_at: "2026-10-26T00:00:00Z" } : null }, error: null };
+      }
+      if (name === "reveal_matchmaking_match") {
+        const match = state.matches.find(match => match.id === args.p_match_id);
+        if (match) match.revealed_at ||= new Date().toISOString();
+        return { data: match?.revealed_at, error: null };
+      }
+      return ({ data: name === "get_matchmaking_community" ? { total_members: 1, cities: [{ id: 5378538, name: "Oakland", region: "California", country: "United States", latitude: 37.8, longitude: -122.27, member_count: 1 }], top_books: [{ work_id: "OL1W", title: "A book", author: "An author", votes: 1 }], rising_books: risingBooks } : state.matches, error: name === "get_matchmaking_community" && state.communityError ? new Error("Unavailable") : null });
+    },
     functions: { invoke: async name => { state.functionCalls.push(name); return { data: { deleted: true }, error: null }; } },
   };
   return { client, state };
@@ -118,7 +133,8 @@ test("a new member can finish all three steps with one book and no Instagram", a
   assert.equal(state.profile.user_id, member.id);
   assert.equal(state.profile.instagram_handle, null);
   assert.equal($("#instagram-dialog").open, false, "skipping Instagram at signup does not immediately prompt again");
-  assert.match($("#participation-description").textContent, /on the list.*only be able to contact your matches by email/);
+  assert.equal($("#participation-description").textContent, "Active");
+  assert.equal(state.profile.share_email_with_matches, true);
   assert.equal(state.calls.at(-1).action, "insert");
 });
 
@@ -195,7 +211,7 @@ test("members can remove or update Instagram without losing matching eligibility
   assert.equal(state.profile.instagram_handle, null);
   assert.equal($("#profile-instagram a"), null);
   assert.equal($("#instagram-dialog").open, false);
-  assert.match($("#participation-description").textContent, /on the list.*by email/);
+  assert.equal($("#participation-description").textContent, "Active");
   await event("#edit-profile");
   set("instagram_handle", "@New.Handle");
   for (let i = 0; i < 3; i++) await event("#profile-form", "submit");
@@ -233,17 +249,21 @@ test("a delayed Instagram save cannot restore private content or block the next 
 
 test("released matches offer safe Instagram contact links for every connection type", async t => {
   const match = { week_start: "2026-10-19", display_name: "Reader", age: 30, city: "Oakland", country: "United States" };
-  const { $ } = await setup(t, { initialProfile: profile, matches: [
+  const { $, event } = await setup(t, { initialProfile: profile, matches: [
     ...["romance", "friends", "business_partners"].map(intent => ({ ...match, intent, instagram_handle: "other.reader" })),
     { ...match, intent: "friends", instagram_handle: "javascript:alert(1)" },
   ] });
-  const links = $("#matches-list").querySelectorAll("a.instagram-link");
-  assert.equal(links.length, 3);
-  for (const link of links) {
-    assert.equal(link.href, "https://www.instagram.com/other.reader/");
-    assert.equal(link.target, "_blank"); assert.equal(link.rel, "noopener noreferrer");
+  assert.equal($("#matches-list a"), null, "contact is hidden until opening a card");
+  for (let i = 0; i < 4; i++) {
+    await event(`.match-reveal-card:nth-child(${i + 1})`);
+    const contact = $("#reveal-contact a");
+    if (i < 3) {
+      assert.equal(contact.href, "https://www.instagram.com/other.reader/");
+      assert.equal(contact.target, "_blank"); assert.equal(contact.rel, "noopener noreferrer");
+    } else assert.equal(contact, null);
+    assert.ok(!$("#reveal-contact").textContent.includes("javascript:"));
+    await event(".reveal-close");
   }
-  assert.ok(!$("#matches-list").textContent.includes("javascript:"));
 });
 
 test("signup uses the shared book search for an optional current read and preserves it after a failed save", async t => {
@@ -423,11 +443,13 @@ test("a stale tab shows the server's current-read lock without losing the draft"
 
 test("current-read titles render as plain text in profiles and released introductions", async t => {
   const title = '<img src=x onerror="alert(1)">';
-  const { $ } = await setup(t, { initialProfile: { ...profile, current_book_id: "OL4W", current_book: title, current_author: "An author" }, matches: [{ ...profile, age: 32, intent: "friends", week_start: "2026-10-19", reason: "Shared interests", current_book: title, current_author: "An author" }] });
+  const { $, event } = await setup(t, { initialProfile: { ...profile, current_book_id: "OL4W", current_book: title, current_author: "An author" }, matches: [{ ...profile, age: 32, intent: "friends", week_start: "2026-10-19", reason: "Shared interests", current_book: title, current_author: "An author" }] });
   assert.equal($("#profile-current-reading img"), null);
   assert.ok($("#profile-current-reading").textContent.includes(title));
   assert.equal($("#matches-list img"), null);
-  assert.ok($("#matches-list").textContent.includes(`Currently reading${title} — An author`));
+  await event(".match-reveal-card");
+  assert.equal($("#reveal-content img"), null);
+  assert.ok($("#reveal-content").textContent.includes(`Currently reading${title} · An author`));
 });
 
 test("signup stays three steps and requires the questions for every selected type", async t => {
@@ -613,17 +635,21 @@ test("romance sliders restore saved ages, cannot cross, and save the private ope
 
 test("business matches get safe LinkedIn links without exposing private ideal-match answers", async t => {
   const match = { week_start: "2026-10-19", intent: "business_partners", display_name: "Reader", age: 30, city: "Oakland", country: "United States", business_about: "A bookshop", business_skills: "Events", business_seeking: "An operator", romance_ideal_match: "A private preference" };
-  const { $ } = await setup(t, { initialProfile: profile, matches: [
+  const { $, event } = await setup(t, { initialProfile: profile, matches: [
     { ...match, business_linkedin_url: "https://www.linkedin.com/in/reader" },
     { ...match, business_linkedin_url: "javascript:alert(1)" },
     { ...match, intent: "friends", business_linkedin_url: "https://www.linkedin.com/in/reader" },
   ] });
-  const links = $("#matches-list").querySelectorAll("a");
-  assert.equal(links.length, 1);
-  assert.equal(links[0].href, "https://www.linkedin.com/in/reader");
-  assert.equal(links[0].rel, "noopener noreferrer");
-  assert.equal(links[0].target, "_blank");
-  assert.ok(!$("#matches-list").textContent.includes("A private preference"));
+  for (let i = 0; i < 3; i++) {
+    await event(`.match-reveal-card:nth-child(${i + 1})`);
+    const linkedin = $("#reveal-content .reveal-linkedin");
+    if (i === 0) {
+      assert.equal(linkedin.href, "https://www.linkedin.com/in/reader");
+      assert.equal(linkedin.rel, "noopener noreferrer"); assert.equal(linkedin.target, "_blank");
+    } else assert.equal(linkedin, null);
+    assert.ok(!$("#reveal-content").textContent.includes("A private preference"));
+    await event(".reveal-close");
+  }
 });
 
 test("settings roll back on failure and sign-out removes profile answers", async t => {
@@ -635,7 +661,12 @@ test("settings roll back on failure and sign-out removes profile answers", async
   assert.equal(state.profile.email_matches, false);
   await event("#pause-matching");
   assert.equal(state.profile.is_active, false);
+  $("#profile-more").open = true;
   await event("#sign-out");
+  assert.equal($("#profile-more").open, false);
+  assert.equal($("#profile-more-label").textContent, "View more");
+  assert.ok($("#profile-more #profile-book"), "sign-out preserves the reusable details structure");
+  assert.equal($("#profile-book").textContent, "");
   assert.equal($("#welcome-view").hidden, false);
   assert.equal($("#account-tools").hidden, true);
   assert.equal($("#profile-name").textContent, "");
@@ -645,10 +676,14 @@ test("settings roll back on failure and sign-out removes profile answers", async
 });
 
 test("match content is rendered as text and no directory or private birthday is displayed", async t => {
-  const { $ } = await setup(t, { initialProfile: profile, matches: [{ id: "match", week_start: "2026-10-19", intent: "friends", display_name: '<img src=x onerror="alert(1)">', age: 30, city: "Oakland", country: "United States", favorite_book: "<script>unsafe()</script>", favorite_author: "An author", book_reason: "A good story", reason: "Shared interests", friendship_interests: "Long walks" }] });
+  const { $, event } = await setup(t, { initialProfile: profile, matches: [{ id: "match", week_start: "2026-10-19", intent: "friends", display_name: '<img src=x onerror="alert(1)">', age: 30, city: "Oakland", country: "United States", favorite_book: "<script>unsafe()</script>", favorite_author: "An author", book_reason: "A good story", reason: "Shared interests", friendship_interests: "Long walks" }] });
   assert.equal($("#matches-list img"), null);
   assert.equal($("#matches-list script"), null);
-  assert.match($("#matches-list").textContent, /<img src=x/);
+  assert.ok(!$("#matches-list").textContent.includes("<img src=x"));
+  await event(".match-reveal-card");
+  assert.match($("#reveal-content").textContent, /<img src=x/);
+  assert.equal($("#reveal-content img"), null);
+  assert.equal($("#reveal-content script"), null);
   assert.ok(!$("#matches-list").textContent.includes(profile.birth_date));
   assert.ok(!$("#matches-list").textContent.includes(member.email));
 });
@@ -719,4 +754,185 @@ test("opening the editor and navigating steps returns to the start of the form",
   window.scrollTo(0, 600);
   await event("#previous-step");
   assert.equal(window.scrollY, 0);
+});
+
+const introduction = {
+  id: "first-match", week_start: "2026-10-26", intent: "friends", display_name: "A new reader", age: 29,
+  city: "Oakland", region: "California", country: "United States", reason: "A shared love of books", friendship_interests: "Bookshop afternoons",
+  favorite_book_id: "OL1W", favorite_book: "A book", favorite_author: "An author", instagram_handle: "new.reader",
+  recommended_book: { work_id: "OL3W", title: "Our next read", author: "Another author", reason: "Something to discover together" },
+};
+
+test("an unrevealed card opens the shared read, saves once, and becomes a persistent personal card", async t => {
+  const { $, event, state } = await setup(t, { initialProfile: profile, matches: [introduction] });
+  assert.equal($(".match-reveal-card").textContent, "FriendClick to reveal");
+  assert.ok(!$("#matches-list").textContent.includes(introduction.display_name));
+  await event(".match-reveal-card");
+  assert.equal($("#match-reveal-dialog").open, true);
+  assert.equal($(".reveal-shared").textContent, "A shared favorite");
+  assert.match($(".reveal-recommendation").textContent, /Read together nextRecommended by Zebra Book ClubOur next read/);
+  assert.match($(".match-reveal-card").textContent, /A new reader, 29Oakland, California, United StatesOur next read/);
+  assert.ok(!$(".match-reveal-card").textContent.includes("Click to reveal"));
+  assert.ok(!$(".match-reveal-card").textContent.includes("Friend"));
+  await event(".reveal-close"); await event(".match-reveal-card");
+  assert.equal(state.rpcCalls.filter(call => call.name === "reveal_matchmaking_match").length, 1);
+  const reloaded = await setup(t, { initialProfile: profile, matches: state.matches });
+  assert.equal(reloaded.$(".match-reveal-card").classList.contains("has-revealed"), true);
+  assert.ok(!reloaded.$(".match-reveal-card").textContent.includes("Click to reveal"));
+});
+
+test("email fallback uses an authorized address and Instagram always takes priority", async t => {
+  const { $, event } = await setup(t, { initialProfile: profile, matches: [
+    { ...introduction, id: "both", contact_email: "reader@example.invalid" },
+    { ...introduction, id: "email", instagram_handle: null, contact_email: "reader+books@example.invalid" },
+    { ...introduction, id: "unsafe", instagram_handle: null, contact_email: "reader@example.invalid?bcc=private@example.invalid" },
+  ] });
+  await event('.match-reveal-card[data-match-id="both"]');
+  assert.equal($("#reveal-contact a").href, "https://www.instagram.com/new.reader/");
+  assert.ok(!$("#reveal-contact").textContent.includes("reader@example.invalid"));
+  await event(".reveal-close");
+  await event('.match-reveal-card[data-match-id="email"]');
+  assert.equal($("#reveal-contact a").textContent, "Send them an email!");
+  assert.equal($("#reveal-contact a").getAttribute("href"), "mailto:reader%2Bbooks@example.invalid");
+  await event(".reveal-close");
+  await event('.match-reveal-card[data-match-id="unsafe"]');
+  assert.equal($("#reveal-contact a"), null);
+  assert.match($("#reveal-contact").textContent, /haven’t shared contact details/);
+});
+
+test("reveal failures offer retry without pretending the server saved it", async t => {
+  const { $, event, client } = await setup(t, { initialProfile: profile, matches: [introduction] });
+  const original = client.rpc; let fail = true;
+  client.rpc = async (name, args) => name === "reveal_matchmaking_match" && fail
+    ? { data: null, error: new Error("Offline") } : original(name, args);
+  await event(".match-reveal-card");
+  assert.equal($("#match-reveal-dialog").open, true);
+  assert.match($("#reveal-status").textContent, /couldn’t save its reveal/);
+  assert.equal($(".match-reveal-card").textContent, "FriendClick to reveal");
+  fail = false; await event("#reveal-status button");
+  assert.equal($("#reveal-status").textContent, "");
+  assert.equal($(".match-reveal-card").classList.contains("has-revealed"), true);
+});
+
+test("older pages append to the carousel, preserve reveals, and stop after the last page", async t => {
+  const { $, event, window } = await setup(t, { initialProfile: profile, matches: Array.from({ length: 65 }, (_, i) => ({ ...introduction, id: `history-${i}` })) });
+  assert.equal(window.document.querySelectorAll(".match-reveal-card").length, 24);
+  await event(".match-reveal-card"); await event(".reveal-close");
+  await event(".reveal-load-older");
+  assert.equal(window.document.querySelectorAll(".match-reveal-card").length, 48);
+  assert.equal($(".match-reveal-card").classList.contains("has-revealed"), true);
+  await event(".reveal-load-older");
+  assert.equal(window.document.querySelectorAll(".match-reveal-card").length, 65);
+  assert.equal($(".reveal-load-older").hidden, true);
+  assert.match($(".reveal-carousel-range").textContent, /of 65/);
+});
+
+test("sign-out clears the open introduction and a late reveal cannot restore it", async t => {
+  const { $, event, client, window, app } = await setup(t, { initialProfile: profile, matches: [introduction] });
+  const original = client.rpc; let finish;
+  client.rpc = (name, args) => name === "reveal_matchmaking_match" ? new Promise(resolve => { finish = resolve; }) : original(name, args);
+  $(".match-reveal-card").dispatchEvent(new window.Event("click", { bubbles: true }));
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal($("#match-reveal-dialog").open, true);
+  const signingOut = event("#sign-out");
+  await new Promise(resolve => setTimeout(resolve, 15));
+  assert.equal($("#match-reveal-dialog").open, false);
+  assert.equal($("#reveal-content").textContent, "");
+  assert.equal($("#reveal-contact").textContent, "");
+  finish({ data: new Date().toISOString(), error: null }); await signingOut; await app.settled();
+  assert.equal($("#matches-list").textContent, "");
+  assert.equal($("#reveal-content").textContent, "");
+  assert.equal(window.document.body.style.overflow, "");
+  assert.equal(window.localStorage.length, 1, "only connection-type preference is stored");
+});
+
+test("members without matches retain the original empty state without carousel controls", async t => {
+  const { $ } = await setup(t, { initialProfile: profile });
+  assert.equal($(".empty-matches h3").textContent, "Your next chapter is still being written.");
+  assert.equal($(".empty-matches p").textContent, "Weekly introductions are coming soon. When you have a match, you’ll find them here.");
+  assert.equal($(".reveal-carousel-controls"), null);
+  assert.equal($("#match-reveal-dialog").open, false);
+});
+
+test("email contact defaults on while explicit opt-outs survive edits and later logins", async t => {
+  const { $, event, state } = await setup(t, { initialProfile: profile });
+  assert.equal($("#share-contact-email").checked, true);
+  $("#share-contact-email").checked = false; await event("#share-contact-email", "change");
+  assert.equal(state.profile.share_email_with_matches, false);
+  assert.equal(state.profile.email_matches, false);
+  await event("#edit-profile");
+  assert.equal($('[name="share_email_with_matches"]').checked, false);
+  assert.equal($('[name="share_email_with_matches"]').required, false);
+  for (let i = 0; i < 3; i++) await event("#profile-form", "submit");
+  assert.equal(state.profile.share_email_with_matches, false);
+  assert.equal($("#share-contact-email").checked, false);
+  const reloaded = await setup(t, { initialProfile: state.profile });
+  assert.equal(reloaded.$("#share-contact-email").checked, false);
+  state.failNext = true;
+  $("#share-contact-email").checked = true; await event("#share-contact-email", "change");
+  assert.equal($("#share-contact-email").checked, false, "a failed save restores the saved choice");
+});
+
+test("members can submit a romance suggestion using two normalized Instagram handles", async t => {
+  const { $, event, state } = await setup(t, { initialProfile: profile });
+  assert.equal($("#matchmake-friends").hidden, false);
+  await event("#matchmake-friends");
+  assert.equal($("#friend-match-dialog").open, true);
+  assert.match($("#friend-match-form").textContent, /romantic match/);
+  $("#friend-instagram-first").value = "https://www.instagram.com/First.Friend/?igsh=tracking";
+  $("#friend-instagram-second").value = " @Second.Friend ";
+  await event("#friend-match-form", "submit");
+  const sent = state.rpcCalls.filter(call => call.name === "suggest_matchmaking_friends");
+  assert.equal(sent.length, 1);
+  assert.deepEqual(sent[0].args, { p_first_instagram: "first.friend", p_second_instagram: "second.friend" });
+  assert.equal($("#friend-match-form").hidden, true);
+  assert.equal($("#friend-match-success").hidden, false);
+  assert.match($("#friend-match-success").textContent, /If they both have accounts, we’ll see what we can do/);
+  assert.equal($("#friend-instagram-first").value, "");
+  await event("#friend-match-done"); await event("#matchmake-friends");
+  assert.equal($("#friend-match-form").hidden, false);
+  assert.equal($("#friend-match-success").hidden, true);
+  assert.equal($("#friend-instagram-second").value, "");
+});
+
+test("friend suggestions validate both handles, reject duplicates, and retain answers for retry", async t => {
+  const { $, event, state, client } = await setup(t, { initialProfile: profile });
+  await event("#matchmake-friends"); await event("#friend-match-form", "submit");
+  assert.match($("#friend-match-error").textContent, /valid Instagram/);
+  $("#friend-instagram-first").value = "@same.friend"; $("#friend-instagram-second").value = "SAME.FRIEND";
+  await event("#friend-match-form", "submit");
+  assert.match($("#friend-match-error").textContent, /two different/);
+  assert.equal(state.rpcCalls.filter(call => call.name === "suggest_matchmaking_friends").length, 0);
+  $("#friend-instagram-second").value = "other.friend";
+  const original = client.rpc;
+  client.rpc = async (name, args) => name === "suggest_matchmaking_friends" ? { data: null, error: { message: "FRIEND_SUGGESTION_LIMIT" } } : original(name, args);
+  await event("#friend-match-form", "submit");
+  assert.match($("#friend-match-error").textContent, /five matches in 24 hours/);
+  assert.equal($("#friend-instagram-first").value, "@same.friend");
+  assert.equal($("#friend-match-success").hidden, true);
+  client.rpc = original; await event("#friend-match-form", "submit");
+  assert.equal($("#friend-match-success").hidden, false);
+});
+
+test("friend suggestions require a member profile and stale submissions cannot reopen after sign-out", async t => {
+  const visitor = await setup(t, { signedIn: false });
+  assert.equal(visitor.$("#matchmake-friends").hidden, true);
+  const onboarding = await setup(t);
+  assert.equal(onboarding.$("#matchmake-friends").hidden, true);
+  const { $, event, client, window, app } = await setup(t, { initialProfile: profile });
+  const original = client.rpc; let finish;
+  client.rpc = (name, args) => name === "suggest_matchmaking_friends" ? new Promise(resolve => { finish = resolve; }) : original(name, args);
+  await event("#matchmake-friends");
+  $("#friend-instagram-first").value = "first.friend"; $("#friend-instagram-second").value = "second.friend";
+  $("#friend-match-form").dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal($("#submit-friend-match").disabled, true);
+  const signingOut = event("#sign-out");
+  await new Promise(resolve => setTimeout(resolve, 15));
+  assert.equal($("#friend-match-dialog").open, false);
+  assert.equal($("#friend-instagram-first").value, "");
+  assert.equal($("#matchmake-friends").hidden, true);
+  finish({ data: true, error: null }); await signingOut; await app.settled();
+  assert.equal($("#friend-match-success").hidden, true);
+  assert.equal(window.document.body.style.overflow, "");
 });

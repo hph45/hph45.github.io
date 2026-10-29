@@ -65,6 +65,7 @@ test("Postgres enforces ownership, validation, and released-match privacy", asyn
       await db.exec("delete from public.matchmaking_books where work_id='OL99999W'");
     }
   }
+  await db.exec("insert into public.matchmaking_books(work_id,title,author) values ('OL900W','A shared next read','A recommendation author')");
   await db.exec("insert into public.matchmaking_books (work_id,title,author) values ('OL1W','A good book','An author'),('OL2W','Another good book','Another author'),('OL3W','A third book','A third author'),('OL4W','A current read','A current author')");
   await db.query("insert into auth.users(id) values ($1), ($2), ($3), ($4)", [A, B, C, D]);
   const insert = (id, changes = {}) => {
@@ -209,15 +210,15 @@ test("Postgres enforces ownership, validation, and released-match privacy", asyn
     });
     await db.exec("set role service_role");
     await db.query("insert into public.matchmaking_matches (id,week_start,intent,reason) values ($1,'2026-10-19','friends','A shared love of stories')", [MATCH]);
-    await assert.rejects(db.query("update public.matchmaking_matches set released_at=now() where id=$1", [MATCH]), /two active members/);
+    await assert.rejects(db.query("update public.matchmaking_matches set released_at=now(),recommended_book_id='OL900W',recommendation_reason='A new book to read together' where id=$1", [MATCH]), /two active members/);
     await db.query("insert into public.matchmaking_match_members (match_id,week_start,user_id) values ($1,'2026-10-19',$2),($1,'2026-10-19',$3)", [MATCH, A, B]);
     await db.exec("reset role");
     assert.equal((await asUser(A, () => db.query("select * from public.get_my_matchmaking_matches()"))).rows.length, 0);
     await db.exec("set role service_role");
     await db.query("update public.matchmaking_profiles set is_active=false where user_id=$1", [B]);
-    await assert.rejects(db.query("update public.matchmaking_matches set released_at=now() where id=$1", [MATCH]), /two active members/);
+    await assert.rejects(db.query("update public.matchmaking_matches set released_at=now(),recommended_book_id='OL900W',recommendation_reason='A new book to read together' where id=$1", [MATCH]), /two active members/);
     await db.query("update public.matchmaking_profiles set is_active=true where user_id=$1", [B]);
-    await db.query("update public.matchmaking_matches set released_at=now() where id=$1", [MATCH]);
+    await db.query("update public.matchmaking_matches set released_at=now(),recommended_book_id='OL900W',recommendation_reason='A new book to read together' where id=$1", [MATCH]);
     await db.exec("reset role");
   });
 
@@ -250,7 +251,7 @@ test("Postgres enforces ownership, validation, and released-match privacy", asyn
     await db.query("insert into public.matchmaking_matches (id,week_start,intent,reason) values ($1,'2026-10-26','business_partners','A shared interest in books')", [BUSINESS_MATCH]);
     await db.query("insert into public.matchmaking_match_members (match_id,week_start,user_id) values ($1,'2026-10-26',$2),($1,'2026-10-26',$3)", [BUSINESS_MATCH, C, D]);
     assert.equal((await asUser(C, () => db.query("select * from public.get_my_matchmaking_matches()"))).rows.length, 0);
-    await db.query("update public.matchmaking_matches set released_at=now() where id=$1", [BUSINESS_MATCH]);
+    await db.query("update public.matchmaking_matches set released_at=now(),recommended_book_id='OL900W',recommendation_reason='A new book to read together' where id=$1", [BUSINESS_MATCH]);
     const introduced = (await asUser(C, () => db.query("select * from public.get_my_matchmaking_matches()"))).rows[0];
     assert.equal(introduced.business_linkedin_url, "https://www.linkedin.com/company/zebra-books");
     assert.equal((await asUser(D, () => db.query("select * from public.get_my_matchmaking_matches()"))).rows[0].business_linkedin_url, "");
@@ -267,9 +268,9 @@ test("Postgres enforces ownership, validation, and released-match privacy", asyn
     assert.ok(!("romance_ideal_match" in afterChange));
   });
 
-  await t.test("a person gets at most one match per week and deletion removes their profile and memberships", async () => {
+  await t.test("a person can receive several matches per week and deletion removes their profile and memberships", async () => {
     await db.query("insert into public.matchmaking_matches (id,week_start,intent,reason) values ($1,'2026-10-19','friends','Another connection')", [OTHER_MATCH]);
-    await assert.rejects(db.query("insert into public.matchmaking_match_members(match_id,week_start,user_id) values ($1,'2026-10-19',$2)", [OTHER_MATCH, A]), error => error.code === "23505");
+    await db.query("insert into public.matchmaking_match_members(match_id,week_start,user_id) values ($1,'2026-10-19',$2)", [OTHER_MATCH, A]);
     await db.query("delete from auth.users where id=$1", [B]);
     assert.equal((await db.query("select * from public.matchmaking_profiles where user_id=$1", [B])).rows.length, 0);
     assert.equal((await db.query("select * from public.matchmaking_match_members where user_id=$1", [B])).rows.length, 0);

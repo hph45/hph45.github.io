@@ -7,13 +7,16 @@
   <title>Matchmaking | Zebra Book Club</title>
   <meta name="description" content="Meet through the books you love. Find romance, friends, or business partners with Zebra Book Club.">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <link rel="stylesheet" href="./styles.css?v=20261026.2">
+  <link rel="stylesheet" href="./styles.css?v=20261029.2">
   <link rel="stylesheet" href="/assets/match-countdown.css?v=20261024.1">
 </head>
 <body>
   <header class="site-header">
     <a class="brand" href="/">Zebra Book Club<span> / Matchmaking</span></a>
-    <button class="header-invite" type="button" data-invite-friends><span>Know someone who should join? <strong>Invite them!</strong></span><svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="/assets/icons.svg?v=20261026.1#share"/></svg></button>
+    <div class="header-community-actions">
+      <button class="header-invite" type="button" data-invite-friends><span>Know someone who should join? <strong>Invite them!</strong></span><svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="/assets/icons.svg?v=20261026.1#share"/></svg></button>
+      <button id="matchmake-friends" class="header-matchmake" type="button" aria-haspopup="dialog" aria-controls="friend-match-dialog" hidden>Matchmake friends</button>
+    </div>
     <div id="account-tools" class="account-tools" hidden>
       <span id="account-name"></span>
       <button id="sign-out" class="text-button" type="button">Sign out</button>
@@ -86,7 +89,7 @@
           <li data-progress="1"><span>02</span>Your books</li>
           <li data-progress="2"><span>03</span>Your people</li>
         </ol>
-        <p class="privacy-note">Your birthday, email, and romance preferences stay private. Introduction answers are shared only with your matches.</p>
+        <p class="privacy-note">Your birthday and romance preferences stay private. Without Instagram, released matches can contact you by email unless you turn email contact off. Introduction answers are shared only with your matches.</p>
       </div>
       <form id="profile-form" class="profile-form">
         <fieldset data-step="0">
@@ -164,6 +167,7 @@
           <div class="consent-fields">
             <p class="field-help">Read our <a href="/privacy/" target="_blank" rel="noopener">Privacy Policy</a> and <a href="/terms/" target="_blank" rel="noopener">Terms of Service</a> before creating your profile.</p>
             <label class="checkbox-label"><input name="profile_consent" type="checkbox" required><span>I’m happy to share my profile and any Instagram handle I provide with my matches, and include my city and book picks in anonymous community totals.</span></label>
+            <label class="checkbox-label"><input name="share_email_with_matches" type="checkbox" checked><span>If I don’t provide Instagram, share my Google account email with my released matches so they can contact me.<small id="contact-email-account"></small><small>On by default. You can turn this off at any time.</small></span></label>
             <label class="checkbox-label"><input name="email_matches" type="checkbox"><span>Email me when a match is ready.<small>You can turn these emails off at any time.</small></span></label>
           </div>
         </fieldset>
@@ -199,29 +203,47 @@
         </div>
         <section class="community-books" aria-labelledby="top-books-title"><div class="card-heading"><h2 id="top-books-title">Top Ten</h2></div><ol id="top-books-list" class="top-books-list" aria-label="Most selected favorite books"></ol><p id="top-books-status" class="small-copy" role="status">Loading favorite books…</p><p class="affiliate-note">Some book links may earn Zebra Book Club a commission.</p></section>
       </div>
-      <div class="dashboard-grid">
-        <article class="profile-card">
+      <article class="profile-card">
           <div class="card-heading"><p class="eyebrow">Your profile</p><button id="edit-profile" class="text-button" type="button">Edit profile <svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="/assets/icons.svg#arrow-up-right"/></svg></button></div>
           <p id="profile-category" class="category-label"></p><h2 id="profile-name"></h2><p id="profile-location" class="muted"></p>
           <div id="profile-instagram" class="profile-instagram"></div>
-          <div class="favorite-book"><p class="eyebrow">Your bookshelf</p><h3 id="profile-book"></h3><p id="profile-author"></p><div id="profile-extra-books"></div><p id="book-edit-status" class="small-copy"></p></div>
-          <div id="profile-current-reading" class="current-reading" hidden></div>
-          <p id="profile-current-reading-status" class="small-copy" hidden></p>
-          <div id="profile-preferences" class="profile-preferences"></div>
-        </article>
-        <aside class="preferences-card">
-          <p class="eyebrow">At your own pace</p><h2>Leave room for a new chapter.</h2><p>Weekly introductions are coming soon. Your profile is the first step.</p>
-          <div class="account-setting"><div><h3>Matchmaking</h3><p id="participation-description"></p></div><button id="pause-matching" class="button button-secondary" type="button">Pause</button></div>
-          <label class="checkbox-label email-setting"><input id="email-preference" type="checkbox"><span>Email me when a match is ready.</span></label>
-          <p class="small-copy">Signed in as <span id="account-email"></span></p>
-        </aside>
-      </div>
+          <details id="profile-more" class="profile-more">
+            <summary><span id="profile-more-label">View more</span><svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+            <div class="favorite-book"><p class="eyebrow">Your bookshelf</p><h3 id="profile-book"></h3><p id="profile-author"></p><div id="profile-extra-books"></div><p id="book-edit-status" class="small-copy"></p></div>
+            <div id="profile-current-reading" class="current-reading" hidden></div>
+            <p id="profile-current-reading-status" class="small-copy" hidden></p>
+            <div id="profile-preferences" class="profile-preferences"></div>
+          </details>
+      </article>
       <section class="matches-section" aria-labelledby="matches-title"><div class="card-heading"><h2 id="matches-title">Your matches</h2><span class="eyebrow">A little serendipity</span></div><div id="matches-list" aria-live="polite"></div></section>
+      <section class="settings-section" aria-labelledby="settings-title">
+        <h2 id="settings-title">Settings</h2>
+        <div class="account-setting"><div><h3>Matchmaking</h3><p id="participation-description"></p></div><button id="pause-matching" class="button button-secondary" type="button">Pause matching</button></div>
+        <label class="checkbox-label email-setting"><input id="share-contact-email" type="checkbox" checked><span>Let my released matches contact me by email if I don’t provide Instagram.<small>Shares my Google account email with those matches. Optional; turn off at any time.</small></span></label>
+        <label class="checkbox-label email-setting"><input id="email-preference" type="checkbox"><span>Email me when a match is ready.</span></label>
+        <p class="small-copy">Signed in as <span id="account-email"></span></p>
+      </section>
       <div class="account-footer"><p>Need a hand? <a href="mailto:zebrabookclub@proton.me">Get in touch.</a></p><button id="delete-account" class="text-button" type="button">Delete my account</button></div>
     </section>
   </main>
 
   <div id="invite-status" class="invite-status" role="status" hidden></div>
+  <dialog id="friend-match-dialog" aria-labelledby="friend-match-title">
+    <h2 id="friend-match-title">Matchmake friends</h2>
+    <form id="friend-match-form" novalidate>
+      <p>Suggest a romantic match for two friends.</p>
+      <label for="friend-instagram-first">First friend’s Instagram</label>
+      <input id="friend-instagram-first" maxlength="300" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="@theirhandle or profile link" required aria-describedby="friend-match-error">
+      <label for="friend-instagram-second">Second friend’s Instagram</label>
+      <input id="friend-instagram-second" maxlength="300" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="@theirhandle or profile link" required aria-describedby="friend-match-error">
+      <p id="friend-match-error" class="form-error" role="alert" hidden></p>
+      <div class="form-actions"><button id="friend-match-cancel" class="text-button" type="button">Cancel</button><button id="submit-friend-match" class="button" type="submit">Suggest this match</button></div>
+    </form>
+    <div id="friend-match-success" hidden>
+      <p role="status">If they both have accounts, we’ll see what we can do.</p>
+      <div class="form-actions"><button id="friend-match-done" class="button" type="button">Done</button></div>
+    </div>
+  </dialog>
   <dialog id="invite-dialog" aria-labelledby="invite-title" aria-describedby="invite-description">
     <form method="dialog">
       <p class="eyebrow">Good company grows</p>
@@ -239,16 +261,25 @@
       <h2 id="instagram-title">Add Instagram (optional).</h2>
       <p id="instagram-description">Without Instagram, you’ll only be able to contact your matches by email.</p>
       <label>Instagram<input id="instagram-prompt-input" maxlength="300" required autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="@yourhandle or your profile link" aria-describedby="instagram-sharing"></label>
-      <p id="instagram-sharing" class="small-copy">Shared only with your released matches, never on the community map. You can update it in your profile.</p>
+      <p id="instagram-sharing" class="small-copy">Shared only with your released matches, never on the community map. You can update it in your profile. Without Instagram, your matches can contact you by email unless you turn email contact off in Settings.</p>
       <p id="instagram-error" class="form-error" role="alert" hidden></p>
       <div class="form-actions"><button id="instagram-later" class="text-button" type="button">Not now</button><button id="save-instagram" class="button" type="submit">Save Instagram</button></div>
     </form>
   </dialog>
 
+  <dialog id="match-reveal-dialog" class="match-reveal-dialog" aria-labelledby="reveal-name">
+    <div class="reveal-dialog-shell">
+      <div class="reveal-dialog-toolbar"><p id="reveal-introduction-label">Your introduction</p><button class="reveal-close" type="button" aria-label="Close introduction"><svg class="reveal-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div>
+      <div id="reveal-content" class="reveal-dialog-scroll"></div>
+      <div id="reveal-contact" class="reveal-contact-bar"></div>
+      <p id="reveal-status" class="reveal-save-status" role="status"></p>
+    </div>
+  </dialog>
+
   <dialog id="delete-dialog" aria-labelledby="delete-title"><form id="delete-form"><p class="eyebrow">Close this chapter</p><h2 id="delete-title">Delete your account?</h2><p>This permanently removes your matchmaking profile, preferences, and match memberships. Your Google account is unchanged.</p><label>Type DELETE to confirm<input id="delete-confirmation" autocomplete="off" required pattern="DELETE"></label><p id="delete-error" class="form-error" role="alert" hidden></p><div class="form-actions"><button id="cancel-delete" class="text-button" type="button">Keep my account</button><button id="confirm-delete" class="button" type="submit">Delete account</button></div></form></dialog>
   <footer class="site-footer"><span>© 2026 Zebra Book Club</span><nav class="legal-links" aria-label="Legal"><a href="/privacy/" target="_blank" rel="noopener">Privacy</a><a href="/terms/" target="_blank" rel="noopener">Terms</a></nav><span class="data-credits">Books: <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">Open Library</a> · Cities: <a href="https://www.geonames.org" target="_blank" rel="noopener noreferrer">GeoNames</a> · Map: <a href="https://naturalearthdata.com" target="_blank" rel="noopener noreferrer">Natural Earth</a></span></footer>
   <noscript><p class="notice">Please enable JavaScript to sign in and create your matchmaking profile.</p></noscript>
-  <script type="module" src="./app.js?v=20261028.1"></script>
+  <script type="module" src="./app.js?v=20261029.2"></script>
   <script type="module" src="/assets/match-countdown.js?v=20261024.1"></script>
 </body>
 </html>

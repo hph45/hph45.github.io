@@ -9,6 +9,8 @@ import { loadReviewCatalog } from "./review-catalog.js";
 import { renderTopBooks } from "./top-books.js";
 import { renderRisingBooks } from "./rising-books.js";
 import { attachInvites } from "./invite.js";
+import { createMatches } from "./matches.js";
+import { createFriendMatchmaking } from "./friend-matchmaking.js";
 
 export function createMatchmakingApp({ client, document, window, fetch = window.fetch.bind(window) }) {
   const $ = (selector) => document.querySelector(selector);
@@ -34,8 +36,12 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   const ageRange = attachAgeRange($(".age-range"));
   const mapZoom = attachMapZoom(document);
   const invites = attachInvites(document, window);
+  const friendMatchmaking = createFriendMatchmaking({ client, document, window, action });
   const catalogSearch = createStaticCatalogSearch(fetch);
   let reviewCatalog;
+  const matches = createMatches({ client, document, window, action,
+    getCatalog: () => reviewCatalog ||= loadReviewCatalog(fetch), getProfile: () => profile,
+  });
 
   try {
     const stored = window.localStorage.getItem("zebra-matchmaking-intents");
@@ -154,6 +160,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
 
   function openForm() {
     notice();
+    text("#contact-email-account", user?.email || "your Google account email");
     resetForm();
     const values = profile || {
       intents: selectedIntents,
@@ -164,7 +171,8 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       if (input.type === "checkbox") {
         input.checked = input.name === "intents" ? profileIntents(values).includes(input.value)
           : input.name === "interested_in" ? (values.interested_in || []).includes(input.value)
-          : input.name === "profile_consent" ? Boolean(profile) : values[input.name] === true;
+          : input.name === "profile_consent" ? Boolean(profile)
+          : input.name === "share_email_with_matches" ? values[input.name] !== false : values[input.name] === true;
       } else if (values[input.name] !== undefined) input.value = values[input.name] ?? (input.type === "range" ? input.defaultValue : "");
     }
     ageRange.sync();
@@ -292,11 +300,12 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       detail(currentReading, profile.current_book, `by ${profile.current_author}`);
     }
     updateBookLock();
-    text("#participation-description", !profile.is_active ? "Your profile is saved. You won’t receive new matches while paused."
-      : instagram ? "You’re on the list for future introductions." : "You’re on the list for future introductions. Without Instagram, you’ll only be able to contact your matches by email.");
+    text("#participation-description", profile.is_active ? "Active" : "Paused");
     text("#pause-matching", profile.is_active ? "Pause matching" : "Resume matching");
     text("#account-email", user.email || "your Google account");
     $("#email-preference").checked = profile.email_matches;
+    $("#share-contact-email").checked = profile.share_email_with_matches !== false;
+    friendMatchmaking.setAvailable(true);
     const preferences = $("#profile-preferences");
     preferences.replaceChildren();
     preferenceDetails(profile).forEach(([title, value]) => detail(preferences, title, value));
@@ -306,56 +315,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   }
 
   async function loadMatches(version) {
-    const container = $("#matches-list");
-    container.textContent = "Looking for your introductions…";
-    try {
-      const { data, error } = await client.rpc("get_my_matchmaking_matches");
-      if (version !== generation) return;
-      container.replaceChildren();
-      if (error) throw error;
-      if (!data?.length) {
-        const empty = document.createElement("div");
-        empty.className = "empty-matches";
-        detail(empty, "Your next chapter is still being written.", "Weekly introductions are coming soon. When you have a match, you’ll find them here.");
-        container.append(empty);
-        return;
-      }
-      for (const match of data) {
-        const article = document.createElement("article");
-        article.className = "match-card";
-        const tag = document.createElement("p");
-        tag.className = "eyebrow";
-        tag.textContent = `${INTENTS[match.intent] || "Introduction"} · Week of ${new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(`${match.week_start}T00:00:00Z`))}`;
-        const heading = document.createElement("h3");
-        heading.textContent = `${match.display_name}, ${match.age}`;
-        const place = document.createElement("p");
-        place.className = "muted";
-        place.textContent = locationLabel(match);
-        article.append(tag, heading, place);
-        favoriteBooks(match).forEach(book => detail(article, book.title, `by ${book.author}`));
-        if (match.current_book) detail(article, "Currently reading", `${match.current_book} — ${match.current_author}`);
-        detail(article, "Why you crossed paths", match.reason);
-        if (match.intent === "friends") detail(article, "Time well spent", match.friendship_interests);
-        if (match.intent === "business_partners") {
-          detail(article, "What they’re building", match.business_about);
-          detail(article, "What they bring", match.business_skills);
-          detail(article, "Who they’d like to meet", match.business_seeking);
-          linkedInDetail(article, match);
-        }
-        const instagram = instagramLink(match.instagram_handle);
-        if (instagram) { const contact = document.createElement("p"); contact.className = "match-contact"; contact.append(instagram); article.append(contact); }
-        container.append(article);
-      }
-    } catch {
-      if (version !== generation) return;
-      container.textContent = "We couldn’t load your matches. ";
-      const retry = document.createElement("button");
-      retry.type = "button";
-      retry.className = "text-button";
-      retry.textContent = "Try again";
-      action(retry, "click", () => loadMatches(generation));
-      container.append(retry);
-    }
+    if (version === generation) await matches.load();
   }
 
   async function loadCommunity(version) {
@@ -403,6 +363,10 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
 
   async function acceptSession(session) {
     const version = ++generation;
+    matches.reset();
+    friendMatchmaking.reset();
+    $("#profile-more").open = false;
+    text("#profile-more-label", "View more");
     user = session?.user || null;
     profile = null;
     instagramPromptDismissed = false;
@@ -418,7 +382,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     notice();
     if (user) await loadProfile(version);
     else {
-      $$("#dashboard-view [id^='profile-'], #account-email, #matches-list, #top-books-list, #rising-books-list, #rising-books-status, #map-markers").forEach((element) => element.replaceChildren());
+      $$("#dashboard-view [id^='profile-']:not(#profile-more):not(#profile-more-label), #account-email, #contact-email-account, #matches-list, #top-books-list, #rising-books-list, #rising-books-status, #map-markers").forEach((element) => element.replaceChildren());
       if ($("#delete-dialog").open) $("#delete-dialog").close();
       showView("welcome-view");
     }
@@ -426,7 +390,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
 
   function setMutationBusy(busy) {
     mutationPending = busy;
-    for (const selector of ["#pause-matching", "#email-preference", "#edit-profile", "#delete-account"]) $(selector).disabled = busy;
+    for (const selector of ["#pause-matching", "#email-preference", "#share-contact-email", "#edit-profile", "#delete-account"]) $(selector).disabled = busy;
   }
 
   async function saveSettings(patch) {
@@ -447,6 +411,11 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       notice("We couldn’t save that change. Your previous preference is still in place. Please try again.");
     } finally { setMutationBusy(false); }
   }
+
+  action($("#share-contact-email"), "change", () => saveSettings({ share_email_with_matches: $("#share-contact-email").checked }));
+  $("#profile-more").addEventListener("toggle", () => {
+    text("#profile-more-label", $("#profile-more").open ? "View less" : "View more");
+  });
 
   action(form, "submit", async () => {
     if (mutationPending || !user) return;
@@ -690,6 +659,6 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       }
     },
     async settled() { while (pending.size) await Promise.allSettled([...pending]); },
-    destroy() { subscription?.unsubscribe(); generation++; clearInstagramPrompt(); window.clearTimeout(bookTimer); ageRange.destroy(); mapZoom.destroy(); invites.destroy(); autocompletes.forEach(control => control.destroy()); },
+    destroy() { subscription?.unsubscribe(); generation++; matches.destroy(); friendMatchmaking.destroy(); clearInstagramPrompt(); window.clearTimeout(bookTimer); ageRange.destroy(); mapZoom.destroy(); invites.destroy(); autocompletes.forEach(control => control.destroy()); },
   };
 }

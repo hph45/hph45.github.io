@@ -119,6 +119,7 @@ export function makeProfile(values, { isActive = true } = {}) {
     business_skills: business ? text("business_skills") : "",
     business_seeking: business ? text("business_seeking") : "",
     business_linkedin_url: business ? normalizeLinkedInURL(text("business_linkedin_url")) ?? text("business_linkedin_url") : "",
+    ...(Object.hasOwn(values, "share_email_with_matches") ? { share_email_with_matches: values.share_email_with_matches === true } : {}),
     is_active: Boolean(isActive), email_matches: values.email_matches === true,
   };
 }
