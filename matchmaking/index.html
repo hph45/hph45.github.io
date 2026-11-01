@@ -7,7 +7,7 @@
   <title>Matchmaking | Zebra Book Club</title>
   <meta name="description" content="Meet through the books you love. Find romance, friends, or business partners with Zebra Book Club.">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <link rel="stylesheet" href="./styles.css?v=20261029.2">
+  <link rel="stylesheet" href="./styles.css?v=20261101.1">
   <link rel="stylesheet" href="/assets/match-countdown.css?v=20261024.1">
 </head>
 <body>
@@ -25,7 +25,7 @@
   </header>
 
   <aside class="match-launch-banner" data-match-countdown aria-labelledby="match-launch-title">
-    <div class="match-launch-copy"><h2 id="match-launch-title">First matches in:</h2></div>
+    <div class="match-launch-copy"><h2 id="match-launch-title" data-countdown-label>First matches in:</h2></div>
     <div class="match-countdown-clock" data-countdown-clock role="timer" aria-live="off" aria-label="First matches on November 2, 2026 at 00:00 UTC">--:--:--:--</div>
   </aside>
 
@@ -215,7 +215,7 @@
             <div id="profile-preferences" class="profile-preferences"></div>
           </details>
       </article>
-      <section class="matches-section" aria-labelledby="matches-title"><div class="card-heading"><h2 id="matches-title">Your matches</h2><span class="eyebrow">A little serendipity</span></div><div id="matches-list" aria-live="polite"></div></section>
+      <section class="matches-section" aria-labelledby="matches-title"><div class="card-heading"><h2 id="matches-title" tabindex="-1">Your matches</h2><span class="eyebrow">A little serendipity</span></div><div id="matches-list" aria-live="polite"></div></section>
       <section class="settings-section" aria-labelledby="settings-title">
         <h2 id="settings-title">Settings</h2>
         <div class="account-setting"><div><h3>Matchmaking</h3><p id="participation-description"></p></div><button id="pause-matching" class="button button-secondary" type="button">Pause matching</button></div>
@@ -267,6 +267,12 @@
     </form>
   </dialog>
 
+  <dialog id="match-notice-dialog" class="match-notice-dialog" aria-labelledby="match-notice-title">
+    <button id="match-notice-close" class="text-button" type="button" aria-label="Close match notification">Close</button>
+    <h2 id="match-notice-title">You've been matched!</h2>
+    <button id="match-notice-jump" class="text-button" type="button">Click here to scroll down and see your match.</button>
+  </dialog>
+
   <dialog id="match-reveal-dialog" class="match-reveal-dialog" aria-labelledby="reveal-name">
     <div class="reveal-dialog-shell">
       <div class="reveal-dialog-toolbar"><p id="reveal-introduction-label">Your introduction</p><button class="reveal-close" type="button" aria-label="Close introduction"><svg class="reveal-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div>
@@ -279,7 +285,7 @@
   <dialog id="delete-dialog" aria-labelledby="delete-title"><form id="delete-form"><p class="eyebrow">Close this chapter</p><h2 id="delete-title">Delete your account?</h2><p>This permanently removes your matchmaking profile, preferences, and match memberships. Your Google account is unchanged.</p><label>Type DELETE to confirm<input id="delete-confirmation" autocomplete="off" required pattern="DELETE"></label><p id="delete-error" class="form-error" role="alert" hidden></p><div class="form-actions"><button id="cancel-delete" class="text-button" type="button">Keep my account</button><button id="confirm-delete" class="button" type="submit">Delete account</button></div></form></dialog>
   <footer class="site-footer"><span>© 2026 Zebra Book Club</span><nav class="legal-links" aria-label="Legal"><a href="/privacy/" target="_blank" rel="noopener">Privacy</a><a href="/terms/" target="_blank" rel="noopener">Terms</a></nav><span class="data-credits">Books: <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">Open Library</a> · Cities: <a href="https://www.geonames.org" target="_blank" rel="noopener noreferrer">GeoNames</a> · Map: <a href="https://naturalearthdata.com" target="_blank" rel="noopener noreferrer">Natural Earth</a></span></footer>
   <noscript><p class="notice">Please enable JavaScript to sign in and create your matchmaking profile.</p></noscript>
-  <script type="module" src="./app.js?v=20261029.2"></script>
-  <script type="module" src="/assets/match-countdown.js?v=20261024.1"></script>
+  <script type="module" src="./app.js?v=20261101.1"></script>
+  <script type="module" src="/assets/match-countdown.js?v=20261101.1"></script>
 </body>
 </html>

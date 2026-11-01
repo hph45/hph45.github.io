@@ -143,7 +143,7 @@ input[readonly], fieldset:disabled input, fieldset:disabled textarea { backgroun
 .affiliate-note { margin: 14px 0 0; font-size: 12px; color: var(--muted); }
 .data-credits { font-size: 11px; }
 .dashboard-heading h1, .profile-card h2, .favorite-book h3 { overflow-wrap: anywhere; }
-#dashboard-title:focus { outline: none; }
+#dashboard-title:focus, #matches-title:focus { outline: none; }
 .rising-favorites { margin-top: 20px; min-width: 0; }
 .rising-heading { margin-bottom: 12px; }
 .rising-heading h2 { margin: 0; font-size: 28px; }
@@ -293,6 +293,13 @@ input[readonly], fieldset:disabled input, fieldset:disabled textarea { backgroun
 .reveal-history-status{margin-top:16px;font-size:14px}
 .reveal-load-older{display:block;margin:18px auto 0}
 .reveal-load-older[hidden]{display:none}
+.match-notice-dialog{width:min(420px,calc(100% - 32px));padding:20px clamp(20px,5vw,28px) 28px;text-align:center}
+.match-notice-dialog h2{font-size:clamp(28px,7vw,34px);line-height:1.2;margin:16px 0 22px;text-wrap:balance}
+#match-notice-close{display:block;min-width:44px;min-height:44px;margin:0 auto;padding:10px 12px;font-size:14px;text-align:center}
+#match-notice-jump{display:block;width:100%;min-height:56px;padding:14px 18px;border:1px solid var(--ink);border-radius:4px;background:var(--wash);font-size:16px;line-height:1.5;text-align:center;text-decoration:none;text-wrap:balance}
+#match-notice-jump:hover{background:var(--ink);color:var(--paper);opacity:1}
+.matches-section{scroll-margin-top:24px}
+.reveal-book-link{color:inherit;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px}
 @media(hover:none){.match-reveal-card:hover{background:white;color:var(--ink);border-color:var(--line)}.match-reveal-card:hover .reveal-card-hint,.match-reveal-card:hover .reveal-card-person>span,.match-reveal-card:hover .reveal-card-location{color:var(--muted)}}
 
 /* Compact profile and bottom-of-dashboard settings. */

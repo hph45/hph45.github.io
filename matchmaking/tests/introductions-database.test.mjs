@@ -96,6 +96,9 @@ test("introduction history, recommendations, contact preferences, and private re
   });
 
   await t.test("new releases require a recommendation neither participant has already selected", async () => {
+    // Restore the contact route after the preceding opt-out checks: a new
+    // release now requires currently permitted contact as well as a new book.
+    await asUser(B, () => db.query("update public.matchmaking_profiles set share_email_with_matches=true where user_id=$1", [B]));
     await assert.rejects(release(await draft("friends", null)), /MATCH_RECOMMENDATION_REQUIRED/);
     await assert.rejects(release(await draft("friends", "OL1W")), /MATCH_RECOMMENDATION_ALREADY_SELECTED/);
     await assert.rejects(release(await draft("friends", "OL2W")), /MATCH_RECOMMENDATION_ALREADY_SELECTED/);

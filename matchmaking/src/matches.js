@@ -1,5 +1,6 @@
 import { favoriteBooks, locationLabel, instagramProfileURL, normalizeLinkedInURL } from "./profile.js";
 import { bookPresentation } from "./review-catalog.js";
+import { createMatchNotice } from "./match-notice.js";
 
 const kinds = { romance: "Romance", friends: "Friend", business_partners: "Business partner" };
 const paths = {
@@ -14,7 +15,8 @@ const sameBook = (a, b) => a.work_id && b.work_id ? a.work_id === b.work_id
 
 // One page request on load, one write on the first reveal. No polling or private
 // profile data in browser storage. Each lifecycle reset invalidates pending work.
-export function createMatches({ client, document, window, action, getCatalog, getProfile }) {
+export function createMatches({ client, document, window, action, getCatalog, getProfile, getUserId }) {
+  const notice = createMatchNotice({ document, window, getUserId });
   const container = document.querySelector("#matches-list");
   const heading = document.querySelector(".matches-section > .card-heading");
   const eyebrow = heading.querySelector(".eyebrow");
@@ -123,7 +125,13 @@ export function createMatches({ client, document, window, action, getCatalog, ge
       const title = element("div", "reveal-recommendation-heading");
       title.append(element("h3", "", "Read together next"), element("span", "", "Recommended by Zebra Book Club"));
       const row = element("div", "reveal-recommended-book"), info = element("div");
-      info.append(element("h4", "", book.title), element("p", "reveal-book-author", book.author));
+      const presentation = bookPresentation(book, catalog);
+      const bookTitle = element("h4");
+      const bookLink = link(book.title, presentation.url, "reveal-book-link");
+      bookLink.rel = `${presentation.affiliate ? "sponsored " : ""}noopener noreferrer`;
+      bookLink.setAttribute("aria-label", `${book.title}. Find on Amazon (opens in a new tab).`);
+      bookTitle.append(bookLink);
+      info.append(bookTitle, element("p", "reveal-book-author", book.author));
       if (book.reason) info.append(element("p", "reveal-book-reason preserve-lines", book.reason));
       row.append(cover(book, 72, 108), info); recommendation.append(title, row); content.append(recommendation);
     }
@@ -256,6 +264,7 @@ export function createMatches({ client, document, window, action, getCatalog, ge
     if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close();
   });
   function reset() {
+    notice.reset();
     version++; trigger = null;
     if (dialog.open) dialog.close(); finishClose();
     observer?.disconnect(); controls?.remove(); eyebrow.hidden = false;
@@ -274,11 +283,12 @@ export function createMatches({ client, document, window, action, getCatalog, ge
         empty.append(element("h3", "", "Your next chapter is still being written."), element("p", "", "Weekly introductions are coming soon. When you have a match, you’ll find them here.")); container.append(empty); return;
       }
       mount(); appendCards(data.items); older.hidden = !cursor;
+      notice.offer(data.items);
     } catch {
       if (current !== version) return;
       const retry = button("text-button", "Try again"); action(retry, "click", load);
       container.replaceChildren(document.createTextNode("We couldn’t load your matches. "), retry);
     }
   }
-  return { load, reset, destroy() { reset(); cleanups.forEach(cleanup => cleanup()); } };
+  return { load, reset, destroy() { reset(); notice.destroy(); cleanups.forEach(cleanup => cleanup()); } };
 }

@@ -1,15 +1,21 @@
-// One UTC deadline for the homepage and every matchmaking view.
+// Shared, absolute UTC release dates for the homepage and every matchmaking view.
+// This changes the countdown only; releasing introductions is a separate action.
 export const FIRST_MATCH_AT = Date.parse("2026-11-02T00:00:00Z");
+export const NEXT_MATCH_AT = Date.parse("2026-11-17T00:00:00Z");
 const UNITS = ["days", "hours", "minutes", "seconds"];
 
 export function countdownParts(now = Date.now()) {
-  const total = Math.max(0, Math.ceil((FIRST_MATCH_AT - now) / 1000));
+  const deadline = now < FIRST_MATCH_AT ? FIRST_MATCH_AT : NEXT_MATCH_AT;
+  const total = Math.max(0, Math.ceil((deadline - now) / 1000));
   return [Math.floor(total / 86400), Math.floor(total / 3600) % 24, Math.floor(total / 60) % 60, total % 60];
 }
 
 export function startMatchCountdown({ document, window, now = Date.now }) {
   const clocks = [...document.querySelectorAll("[data-match-countdown]")].map(root => {
     const clock = root.querySelector("[data-countdown-clock]");
+    // The class/ID fallback also supports HTML cached before this update.
+    const label = root.querySelector("[data-countdown-label], .hero-countdown-label, #match-launch-title");
+    const firstLabel = label?.textContent || "First match in:";
     clock.setAttribute("role", "timer");
     clock.setAttribute("aria-live", "off");
     const values = [];
@@ -31,7 +37,7 @@ export function startMatchCountdown({ document, window, now = Date.now }) {
       values.push({ value, firstIndex: letterIndex }); letterIndex += 2;
       group.append(value, label); clock.append(group);
     }
-    return { root, clock, values };
+    return { root, clock, label, firstLabel, values };
   });
   let timer, destroyed = false;
   function pause() { window.clearTimeout(timer); }
@@ -39,10 +45,14 @@ export function startMatchCountdown({ document, window, now = Date.now }) {
     pause();
     if (destroyed || !clocks.length || document.hidden) return;
     const time = now(), parts = countdownParts(time);
-    const complete = time >= FIRST_MATCH_AT;
-    for (const { root, clock, values } of clocks) {
+    const phase = time < FIRST_MATCH_AT ? "first" : "next";
+    const complete = time >= NEXT_MATCH_AT;
+    for (const { root, clock, label, firstLabel, values } of clocks) {
+      const heading = phase === "first" ? firstLabel : "Next match in:";
+      if (label && label.textContent !== heading) label.textContent = heading;
+      root.dataset.countdownPhase = phase;
       root.dataset.countdownState = complete ? "complete" : "running";
-      clock.setAttribute("aria-label", complete ? "The countdown to the first matches is complete." : parts.map((value, i) => `${value} ${value === 1 ? UNITS[i].slice(0, -1) : UNITS[i]}`).join(", ") + " until the first matches.");
+      clock.setAttribute("aria-label", complete ? "The countdown to the next matches is complete." : parts.map((value, i) => `${value} ${value === 1 ? UNITS[i].slice(0, -1) : UNITS[i]}`).join(", ") + ` until the ${phase} matches.`);
       for (const [i, { value, firstIndex }] of values.entries()) {
         const digits = String(parts[i]).padStart(2, "0");
         while (value.children.length < digits.length) {

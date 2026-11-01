@@ -9,8 +9,8 @@ const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
 const member = { id: "00000000-0000-4000-8000-000000000001", email: "reader@example.invalid", user_metadata: { given_name: "Reader" } };
 const profile = { ...makeProfile({ display_name: "Reader", instagram_handle: "reader.books", birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States", intent: "friends", favorite_book_id: "OL1W", favorite_book: "A book", favorite_author: "An author", location_preference: "same_city", friendship_interests: "Afternoons in bookshops" }), user_id: member.id };
 
-function mockClient({ signedIn = true, initialProfile = null, matches = [], risingBooks = [], communityError = false } = {}) {
-  const state = { profile: initialProfile ? structuredClone(initialProfile) : null, calls: [], requests: [], functionCalls: [], rpcCalls: [], failNext: false, matches: matches.map((match, i) => ({ id: `match-${i}`, ...match })), communityError, session: signedIn ? { user: member } : null };
+function mockClient({ signedIn = true, initialProfile = null, matches = [], risingBooks = [], communityError = false, matchesError = false } = {}) {
+  const state = { profile: initialProfile ? structuredClone(initialProfile) : null, calls: [], tables: [], requests: [], functionCalls: [], rpcCalls: [], failNext: false, matches: matches.map((match, i) => ({ id: `match-${i}`, ...match })), communityError, matchesError, session: signedIn ? { user: member } : null };
   const client = {
     auth: {
       getSession: async () => ({ data: { session: state.session }, error: null }),
@@ -19,6 +19,7 @@ function mockClient({ signedIn = true, initialProfile = null, matches = [], risi
       signOut: async () => { state.session = null; state.onAuth("SIGNED_OUT", null); return { error: null }; },
     },
     from(table) {
+      state.tables.push(table);
       const call = { table, action: "select" };
       const query = {
         select() { return query; },
@@ -45,6 +46,7 @@ function mockClient({ signedIn = true, initialProfile = null, matches = [], risi
       state.rpcCalls.push({ name, args });
       if (name === "suggest_matchmaking_friends") return { data: true, error: null };
       if (name === "get_my_matchmaking_introductions") {
+        if (state.matchesError) return { data: null, error: new Error("Matches unavailable") };
         const start = args.p_before_id ? state.matches.findIndex(match => match.id === args.p_before_id) + 1 : 0;
         const items = state.matches.slice(start, start + args.p_limit);
         return { data: { items: structuredClone(items), total_count: state.matches.length,
@@ -75,6 +77,7 @@ async function setup(t, options = {}) {
       return { ok: true, json: async () => ({ version: 1, books: [["OL4W", "A current read", "Current author"], ["OL1W", "A favorite", "Favorite author"]] }) };
     }
     if (url.startsWith("/matchmaking/data/cities.")) return { ok: true, json: async () => ({ version: 1, cities: [[2964574, "Dublin", "dublin", "Leinster", "Ireland", 1024027]] }) };
+    if (options.manifests?.[url]) return { ok: true, text: async () => options.manifests[url] };
     return { ok: true, text: async () => "", json: async () => ({ external: { google: options.googleEnabled ?? true } }) };
   } });
   await app.start();
@@ -852,6 +855,76 @@ test("members without matches retain the original empty state without carousel c
   assert.equal($(".empty-matches p").textContent, "Weekly introductions are coming soon. When you have a match, you’ll find them here.");
   assert.equal($(".reveal-carousel-controls"), null);
   assert.equal($("#match-reveal-dialog").open, false);
+  assert.equal($("#match-notice-dialog").open, false);
+});
+
+test("successful released-match loads notify once and token refreshes neither reload nor re-notify", async t => {
+  const { $, state, window } = await setup(t, { initialProfile: profile, matches: [{ ...introduction, released_at: "2026-01-01T00:00:00Z" }] });
+  assert.equal($("#match-notice-dialog").open, true);
+  $("#match-notice-close").click();
+  const requests = state.rpcCalls.length;
+  state.onAuth("TOKEN_REFRESHED", state.session);
+  state.onAuth("SIGNED_IN", state.session);
+  await new Promise(resolve => setTimeout(resolve, 10));
+  assert.equal(state.rpcCalls.length, requests);
+  assert.equal($("#match-notice-dialog").open, false);
+  assert.equal(state.rpcCalls.some(call => call.name === "reveal_matchmaking_match"), false, "the notice does not reveal a card or write to the backend");
+  assert.ok(window.localStorage.getItem(`zebra-match-notice:v1:${member.id}`));
+});
+
+test("failed match fetches stay quiet; successful retry waits for the existing Instagram dialog", async t => {
+  const { $, state, event } = await setup(t, { initialProfile: { ...profile, instagram_handle: null }, matchesError: true,
+    matches: [{ ...introduction, released_at: "2026-01-01T00:00:00Z" }] });
+  assert.equal($("#instagram-dialog").open, true);
+  assert.equal($("#match-notice-dialog").open, false);
+  state.matchesError = false; await event("#matches-list button");
+  assert.equal($("#match-notice-dialog").open, false);
+  await event("#instagram-later");
+  await new Promise(resolve => setTimeout(resolve, 0));
+  assert.equal($("#match-notice-dialog").open, true);
+});
+
+test("sign-out closes the notice and another signed-in account has its own release marker", async t => {
+  const { $, state, event, window } = await setup(t, { initialProfile: profile,
+    matches: [{ ...introduction, released_at: "2026-01-01T00:00:00Z" }] });
+  assert.equal($("#match-notice-dialog").open, true);
+  await event("#sign-out"); await new Promise(resolve => setTimeout(resolve, 10));
+  assert.equal($("#match-notice-dialog").open, false);
+  const other = { ...member, id: "00000000-0000-4000-8000-000000000002" };
+  state.profile = { ...profile, user_id: other.id };
+  state.session = { user: other }; state.onAuth("SIGNED_IN", state.session);
+  await new Promise(resolve => setTimeout(resolve, 10));
+  assert.equal($("#match-notice-dialog").open, true);
+  assert.ok(window.localStorage.getItem(`zebra-match-notice:v1:${other.id}`));
+});
+
+test("shared recommendations reuse the real review affiliate URL and static cover", async t => {
+  const files = ["reviews.csv", "book_club_current.csv", "assets/review-covers/sources.csv", "matchmaking/books.csv"];
+  const manifests = Object.fromEntries(await Promise.all(files.map(async file => [`/${file}`, await readFile(new URL(`../../${file}`, import.meta.url), "utf8")])));
+  const { $, event, state } = await setup(t, { initialProfile: profile, manifests, matches: [{ ...introduction,
+    recommended_book: { work_id: "OL24593432W", title: "Dungeon Crawler Carl", author: "Matt Dinniman", reason: "A new adventure" } }] });
+  await event(".match-reveal-card");
+  const link = $(".reveal-book-link");
+  assert.equal(link.href, "https://amzn.to/4hIrXe9");
+  assert.equal(link.target, "_blank");
+  assert.equal(link.rel, "sponsored noopener noreferrer");
+  assert.equal($(".reveal-recommended-book img").getAttribute("src"), "/assets/review-covers/review-54.jpg");
+  assert.deepEqual([...new Set(state.tables)], ["matchmaking_profiles"], "recommendations never query Supabase books or cover tables");
+  assert.equal(state.functionCalls.length, 0);
+});
+
+test("uncatalogued shared recommendations use a normal safely encoded Amazon search", async t => {
+  const book = { work_id: "OL99999999W", title: 'An unknown <book> & title', author: 'Author / Name' };
+  const { $, event } = await setup(t, { initialProfile: profile, matches: [{ ...introduction, recommended_book: book }] });
+  await event(".match-reveal-card");
+  const link = $(".reveal-book-link"), url = new URL(link.href);
+  assert.equal(url.origin, "https://www.amazon.com");
+  assert.equal(url.pathname, "/s");
+  assert.equal(url.searchParams.get("k"), `${book.title} ${book.author}`);
+  assert.equal(url.searchParams.has("tag"), false);
+  assert.equal(link.rel, "noopener noreferrer");
+  assert.equal(link.textContent, book.title);
+  assert.equal($(".reveal-recommended-book img"), null);
 });
 
 test("email contact defaults on while explicit opt-outs survive edits and later logins", async t => {

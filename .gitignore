@@ -7,3 +7,6 @@ node_modules/
 !.env.example
 supabase/.temp/
 supabase/.branches/
+
+# Private member snapshots, matching notes, and unreleased match plans.
+/.matchmaking-private/

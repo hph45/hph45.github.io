@@ -41,6 +41,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   let reviewCatalog;
   const matches = createMatches({ client, document, window, action,
     getCatalog: () => reviewCatalog ||= loadReviewCatalog(fetch), getProfile: () => profile,
+    getUserId: () => user?.id,
   });
 
   try {
