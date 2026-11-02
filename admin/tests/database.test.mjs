@@ -319,7 +319,7 @@ test("admin statistics enforce server-owned access and accurate, aggregate-only 
     for (const [match, user, compatibility, book] of values) await db.query("insert into public.matchmaking_match_reviews(match_id,user_id,compatibility_rating,book_rating,recommended_book_id) values($1,$2,$3,$4,$5)", [match, user, compatibility, book, book ? "OL5W" : null]);
     const before = (await asUser(owner, rpc)).reviews;
     assert.equal(before.total_reviews, 6); assert.equal(before.reviewers, 3); assert.equal(before.reviewed_matches, 3);
-    assert.equal(before.compatibility.average, 3.33); assert.equal(before.compatibility.total, 6);
+    assert.equal(before.compatibility.average, 3.3); assert.equal(before.compatibility.total, 6);
     assert.deepEqual(before.compatibility.distribution.map(row => row.review_count), [1, 1, 1, 1, 2]);
     assert.equal(before.book.total, 5); assert.equal(before.book.average, 3);
     assert.deepEqual(before.book.distribution.map(row => row.review_count), [1, 1, 1, 1, 1]);

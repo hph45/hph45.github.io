@@ -56,7 +56,7 @@ begin
           'reviewed_matches', count(distinct match_id),
           'compatibility', jsonb_build_object(
             'total', count(compatibility_rating),
-            'average', round(avg(compatibility_rating), 2),
+            'average', round(avg(compatibility_rating), 1),
             'distribution', (select jsonb_agg(jsonb_build_object('rating', ratings.rating,
               'review_count', coalesce(c.review_count, 0)) order by ratings.rating)
               from generate_series(1, 5) as ratings(rating)
@@ -64,7 +64,7 @@ begin
           ),
           'book', jsonb_build_object(
             'total', count(book_rating),
-            'average', round(avg(book_rating), 2),
+            'average', round(avg(book_rating), 1),
             'distribution', (select jsonb_agg(jsonb_build_object('rating', ratings.rating,
               'review_count', coalesce(c.review_count, 0)) order by ratings.rating)
               from generate_series(1, 5) as ratings(rating)

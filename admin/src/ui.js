@@ -102,6 +102,11 @@ export function createAdminApp({ client, document, window }) {
     $("#reviews-unavailable").hidden = Boolean(reviews);
     $("#review-charts").hidden = $("#review-note").hidden = !reviews;
     if (!reviews) return;
+    if (![reviews.total_reviews, reviews.reviewers, reviews.reviewed_matches].every(value => Number.isInteger(value) && value >= 0)
+      || reviews.reviewers > reviews.total_reviews || reviews.reviewed_matches > reviews.total_reviews
+      || reviews.compatibility?.total !== reviews.total_reviews || reviews.book?.total > reviews.total_reviews) {
+      throw new Error("Invalid review totals");
+    }
     const label = (value, singular, plural = `${singular}s`) => `${number(value)} ${value === 1 ? singular : plural}`;
     $("#review-summary").textContent = `${label(reviews.total_reviews, "review")} · ${label(reviews.reviewers, "reader")} · ${label(reviews.reviewed_matches, "match", "matches")}`;
     for (const [key, prefix] of [["compatibility", "compatibility"], ["book", "book-rating"]]) {
