@@ -69,6 +69,21 @@
 .bar-value span { width: 42px; text-align: right; color: var(--muted); }
 .bar-track { height: 8px; background: var(--wash); }
 .bar-fill { height: 100%; background: var(--ink); }
+.review-section { margin-bottom: 36px; }
+.review-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 14px 24px; flex-wrap: wrap; margin-bottom: 18px; }
+.review-heading h2, .review-heading .small-copy { margin: 0; }
+.review-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+.review-panel h3 { margin: 0; font-size: 24px; }
+.review-score { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 17px 0 24px; }
+.review-score p { margin: 0; color: var(--muted); font-size: 18px; }
+.review-score strong { font-size: 44px; font-weight: normal; line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; }
+.review-score .small-copy { margin: 0; font-size: 13px; }
+.review-panel .bar-fill { background: #35684b; }
+.review-section > .chart-note { margin-top: 12px; }
+@media (max-width: 680px) {
+  .review-grid { grid-template-columns: 1fr; }
+  .review-section { margin-bottom: 28px; }
+}
 .chart-note { font-size: 13px; line-height: 1.5; color: var(--muted); margin: 24px 0 0; }
 .locations-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 28px; align-items: start; }
 .locations-grid .community-map { padding: 26px 26px 18px; }

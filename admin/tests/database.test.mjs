@@ -144,7 +144,7 @@ test("admin statistics enforce server-owned access and accurate, aggregate-only 
 
   await t.test("no personal records or wider table access are exposed, including to the admin browser", async () => {
     const stats = await asUser(owner, rpc);
-    assert.deepEqual(Object.keys(stats).sort(), ["generated_at", "total_members", "active_members", "median_age", "city_count", "country_count", "age_groups", "genders", "connection_types", "cities", "countries"].sort());
+    assert.deepEqual(Object.keys(stats).sort(), ["generated_at", "total_members", "active_members", "median_age", "city_count", "country_count", "age_groups", "genders", "connection_types", "cities", "countries", "reviews"].sort());
     for (const city of stats.cities) assert.deepEqual(Object.keys(city).sort(), ["id", "name", "region", "country", "latitude", "longitude", "member_count"].sort());
     const json = JSON.stringify(stats);
     assert.doesNotMatch(json, /Private|birth_date|user_id|email|favorite|ideal_match|interested_in/);
@@ -300,6 +300,57 @@ test("admin statistics enforce server-owned access and accurate, aggregate-only 
     }
   });
 
+  await t.test("review distributions include zero buckets and separate book denominators, with one latest review per member and match", async () => {
+    const empty = (await asUser(owner, rpc)).reviews;
+    assert.deepEqual(empty, {
+      total_reviews: 0, reviewers: 0, reviewed_matches: 0,
+      compatibility: { total: 0, average: null, distribution: [1, 2, 3, 4, 5].map(rating => ({ rating, review_count: 0 })) },
+      book: { total: 0, average: null, distribution: [1, 2, 3, 4, 5].map(rating => ({ rating, review_count: 0 })) },
+    });
+    await db.exec("insert into public.matchmaking_books(work_id,title,author) values ('OL5W','A private recommendation','Private author')");
+    async function pair(participants, release = "2000-01-01") {
+      const id = (await db.query("insert into public.matchmaking_matches(week_start,intent,reason,recommended_book_id,recommendation_reason) values('2026-11-02','friends','Shared shelves','OL5W','A shared recommendation') returning id")).rows[0].id;
+      for (const user of participants) await db.query("insert into public.matchmaking_match_members(match_id,week_start,user_id) values($1,'2026-11-02',$2)", [id, user]);
+      if (release) await db.query("update public.matchmaking_matches set released_at=$2 where id=$1", [id, release]);
+      return id;
+    }
+    const pairs = [await pair([owner, ids[2]]), await pair([owner, ids[4]]), await pair([ids[2], ids[4]])];
+    const values = [[pairs[0], owner, 1, 5], [pairs[0], ids[2], 2, 4], [pairs[1], owner, 3, 3], [pairs[1], ids[4], 4, 2], [pairs[2], ids[2], 5, 1], [pairs[2], ids[4], 5, null]];
+    for (const [match, user, compatibility, book] of values) await db.query("insert into public.matchmaking_match_reviews(match_id,user_id,compatibility_rating,book_rating,recommended_book_id) values($1,$2,$3,$4,$5)", [match, user, compatibility, book, book ? "OL5W" : null]);
+    const before = (await asUser(owner, rpc)).reviews;
+    assert.equal(before.total_reviews, 6); assert.equal(before.reviewers, 3); assert.equal(before.reviewed_matches, 3);
+    assert.equal(before.compatibility.average, 3.33); assert.equal(before.compatibility.total, 6);
+    assert.deepEqual(before.compatibility.distribution.map(row => row.review_count), [1, 1, 1, 1, 2]);
+    assert.equal(before.book.total, 5); assert.equal(before.book.average, 3);
+    assert.deepEqual(before.book.distribution.map(row => row.review_count), [1, 1, 1, 1, 1]);
+    await asUser(owner, () => db.query("select public.save_matchmaking_match_review($1,5,1,'OL5W')", [pairs[0]]));
+    const edited = (await asUser(owner, rpc)).reviews;
+    assert.equal(edited.total_reviews, 6); assert.equal(edited.compatibility.average, 4);
+    assert.deepEqual(edited.compatibility.distribution.map(row => row.review_count), [0, 1, 1, 1, 3]);
+    assert.deepEqual(edited.book.distribution.map(row => row.review_count), [2, 1, 1, 1, 0]);
+    assert.equal(edited.book.average, 2.2);
+    // Seed inaccessible legacy states as the privileged test owner, never through a browser RPC.
+    for (const release of [null, "2999-01-01", "2000-01-01"]) {
+      const id = await pair([owner, ids[2]], release);
+      await db.query("insert into public.matchmaking_match_reviews(match_id,user_id,compatibility_rating) values($1,$2,1)", [id, owner]);
+      if (release === "2000-01-01") await db.query("delete from public.matchmaking_match_members where match_id=$1 and user_id=$2", [id, ids[2]]);
+    }
+    assert.deepEqual((await asUser(owner, rpc)).reviews, edited, "unreleased, future, and incomplete pairs are excluded");
+    await db.query("update public.matchmaking_profiles set is_active=false where user_id=$1", [ids[2]]);
+    assert.deepEqual((await asUser(owner, rpc)).reviews, edited, "pausing does not erase submitted reviews");
+    await db.query("update public.matchmaking_profiles set is_active=true where user_id=$1", [ids[2]]);
+    const json = JSON.stringify(edited);
+    assert.doesNotMatch(json, /user_id|match_id|email|recommended_book_id|Private|OL5W/);
+    for (const id of [...ids, ...pairs]) assert.ok(!json.includes(id));
+    for (const id of [owner, ids[2]]) {
+      await assert.rejects(asUser(id, () => db.query("select * from public.matchmaking_match_reviews")), permissionDenied);
+    }
+    for (const id of [ids[2], null]) await assert.rejects(asUser(id, rpc), /ADMIN_ONLY/);
+    await assert.rejects(asUser(owner, rpc, "anon"), permissionDenied);
+    const security = (await db.query("select prosecdef,proconfig from pg_proc where oid='public.get_matchmaking_admin_stats()'::regprocedure")).rows[0];
+    assert.equal(security.prosecdef, true); assert.deepEqual(security.proconfig, ['search_path=""']);
+  });
+
   await t.test("revocation takes effect on the very next request", async () => {
     await db.exec("delete from public.matchmaking_admin_access");
     await assert.rejects(asUser(owner, rpc), /ADMIN_ONLY/);
@@ -316,5 +367,8 @@ test("admin statistics enforce server-owned access and accurate, aggregate-only 
     assert.deepEqual(stats.cities, []); assert.deepEqual(stats.countries, []);
     assert.ok([...stats.age_groups, ...stats.genders, ...stats.connection_types].every(row => row.member_count === 0));
     assert.deepEqual(await asUser(owner, profiles), { total_count: 0, page: 1, page_size: 20, profiles: [] });
+    assert.equal(stats.reviews.total_reviews, 0);
+    assert.equal(stats.reviews.compatibility.average, null);
+    assert.equal(stats.reviews.book.average, null);
   });
 });

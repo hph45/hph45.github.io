@@ -8,7 +8,7 @@
   <link rel="icon" type="image/jpeg" href="/zebra%20white.jpeg">
   <title>Admin | Zebra Book Club</title>
   <link rel="stylesheet" href="/matchmaking/styles.css?v=20261023.1">
-  <link rel="stylesheet" href="./styles.css?v=20261025.1">
+  <link rel="stylesheet" href="./styles.css?v=20261102.1">
 </head>
 <body>
   <header class="site-header">
@@ -43,6 +43,23 @@
         <div><dt>Countries</dt><dd id="summary-countries">—</dd></div>
         <div><dt>Cities</dt><dd id="summary-cities">—</dd></div>
       </dl>
+      <section class="review-section" aria-labelledby="reviews-title">
+        <div class="review-heading"><h2 id="reviews-title">Match reviews</h2><p id="review-summary" class="small-copy"></p></div>
+        <p id="reviews-unavailable" class="chart-note" hidden>Review statistics aren’t available yet.</p>
+        <div id="review-charts" class="review-grid">
+          <section class="demographic-panel review-panel" aria-labelledby="compatibility-title">
+            <h3 id="compatibility-title">Match compatibility</h3>
+            <div class="review-score"><p><strong id="compatibility-average">—</strong><span> / 5</span><span class="visually-hidden"> average rating</span></p><span id="compatibility-count" class="small-copy"></span></div>
+            <ol id="compatibility-chart" class="bar-chart" aria-label="Match compatibility ratings, count and share"></ol>
+          </section>
+          <section class="demographic-panel review-panel" aria-labelledby="book-ratings-title">
+            <h3 id="book-ratings-title">Book recommendations</h3>
+            <div class="review-score"><p><strong id="book-rating-average">—</strong><span> / 5</span><span class="visually-hidden"> average rating</span></p><span id="book-rating-count" class="small-copy"></span></div>
+            <ol id="book-rating-chart" class="bar-chart" aria-label="Book recommendation ratings, count and share"></ol>
+          </section>
+        </div>
+        <p id="review-note" class="chart-note">All time · One review per reader per match. Updated ratings replace earlier ones.</p>
+      </section>
       <div class="demographics-grid">
         <section class="demographic-panel" aria-labelledby="ages-title">
           <div class="panel-heading"><h2 id="ages-title">Age</h2><span class="eyebrow">Readers · Share</span></div>
@@ -134,6 +151,6 @@
   </dialog>
   <footer class="admin-footer"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a></footer>
   <noscript><p class="notice">Please enable JavaScript, then return to <a href="/matchmaking/">matchmaking</a> to sign in.</p><meta http-equiv="refresh" content="0;url=/matchmaking/"></noscript>
-  <script type="module" src="./app.js?v=20261028.1"></script>
+  <script type="module" src="./app.js?v=20261102.1"></script>
 </body>
 </html>

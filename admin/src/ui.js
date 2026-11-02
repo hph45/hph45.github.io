@@ -40,9 +40,9 @@ export function createAdminApp({ client, document, window }) {
     poetry.clear();
     selectTab("matchmaking");
     $("#admin-view").hidden = true;
-    for (const id of ["age-chart", "gender-chart", "connection-chart", "location-rows", "map-markers"]) $(`#${id}`).replaceChildren();
-    for (const id of ["population-note", "updated-at", "member-count", "member-count-label", "map-selection", "location-status"]) $(`#${id}`).textContent = "";
-    for (const id of ["summary-total", "summary-age", "summary-countries", "summary-cities"]) $(`#${id}`).textContent = "—";
+    for (const id of ["age-chart", "gender-chart", "connection-chart", "location-rows", "map-markers", "compatibility-chart", "book-rating-chart"]) $(`#${id}`).replaceChildren();
+    for (const id of ["population-note", "updated-at", "member-count", "member-count-label", "map-selection", "location-status", "review-summary", "compatibility-count", "book-rating-count"]) $(`#${id}`).textContent = "";
+    for (const id of ["summary-total", "summary-age", "summary-countries", "summary-cities", "compatibility-average", "book-rating-average"]) $(`#${id}`).textContent = "—";
     $("#previous-locations").disabled = $("#next-locations").disabled = true;
     zoom.reset();
   }
@@ -80,21 +80,42 @@ export function createAdminApp({ client, document, window }) {
     });
   }
 
-  function renderChart(selector, groups) {
+  function renderChart(selector, groups, total = stats.total_members, countKey = "member_count") {
     const fragment = document.createDocumentFragment();
     for (const group of groups) {
       const row = document.createElement("li");
       const label = document.createElement("div"); label.className = "bar-label";
       const name = document.createElement("span"); name.textContent = group.label;
       const values = document.createElement("span"); values.className = "bar-value";
-      const readers = document.createElement("strong"); readers.textContent = number(group.member_count);
-      const proportion = document.createElement("span"); proportion.textContent = percent(group.member_count, stats.total_members);
+      const readers = document.createElement("strong"); readers.textContent = number(group[countKey]);
+      const proportion = document.createElement("span"); proportion.textContent = percent(group[countKey], total);
       values.append(readers, proportion); label.append(name, values);
       const track = document.createElement("div"); track.className = "bar-track"; track.setAttribute("aria-hidden", "true");
-      const fill = document.createElement("div"); fill.className = "bar-fill"; fill.style.width = `${share(group.member_count, stats.total_members)}%`;
+      const fill = document.createElement("div"); fill.className = "bar-fill"; fill.style.width = `${share(group[countKey], total)}%`;
       track.append(fill); row.append(label, track); fragment.append(row);
     }
     $(selector).replaceChildren(fragment);
+  }
+
+  function renderReviews(reviews) {
+    // An older backend must never appear to have zero reviews.
+    $("#reviews-unavailable").hidden = Boolean(reviews);
+    $("#review-charts").hidden = $("#review-note").hidden = !reviews;
+    if (!reviews) return;
+    const label = (value, singular, plural = `${singular}s`) => `${number(value)} ${value === 1 ? singular : plural}`;
+    $("#review-summary").textContent = `${label(reviews.total_reviews, "review")} · ${label(reviews.reviewers, "reader")} · ${label(reviews.reviewed_matches, "match", "matches")}`;
+    for (const [key, prefix] of [["compatibility", "compatibility"], ["book", "book-rating"]]) {
+      const summary = reviews[key];
+      if (!summary || !Number.isInteger(summary.total) || summary.total < 0 || !Array.isArray(summary.distribution)
+        || summary.distribution.length !== 5 || summary.distribution.some((row, index) => row.rating !== index + 1 || !Number.isInteger(row.review_count) || row.review_count < 0)
+        || summary.distribution.reduce((sum, row) => sum + row.review_count, 0) !== summary.total
+        || (summary.total ? !Number.isFinite(summary.average) || summary.average < 1 || summary.average > 5 : summary.average !== null)) {
+        throw new Error("Invalid review statistics response");
+      }
+      $(`#${prefix}-average`).textContent = summary.total ? summary.average.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : "—";
+      $(`#${prefix}-count`).textContent = summary.total ? label(summary.total, "rating") : "No ratings yet";
+      renderChart(`#${prefix}-chart`, summary.distribution.map(row => ({ ...row, label: `${row.rating} ${row.rating === 1 ? "star" : "stars"}` })), summary.total, "review_count");
+    }
   }
 
   function renderLocations() {
@@ -143,6 +164,7 @@ export function createAdminApp({ client, document, window }) {
     renderChart("#age-chart", data.age_groups);
     renderChart("#gender-chart", data.genders);
     renderChart("#connection-chart", data.connection_types);
+    renderReviews(data.reviews);
     renderCommunityMap(document, data);
     zoom.reset();
     renderLocations();

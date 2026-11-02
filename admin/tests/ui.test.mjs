@@ -5,9 +5,11 @@ import { Window } from "happy-dom";
 import { createAdminApp } from "../src/ui.js";
 
 const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
+const ratings = counts => ({ total: counts.reduce((a, b) => a + b, 0), average: counts.some(Boolean) ? counts.reduce((sum, n, i) => sum + n * (i + 1), 0) / counts.reduce((a, b) => a + b, 0) : null, distribution: counts.map((review_count, i) => ({ rating: i + 1, review_count })) });
 const sample = {
   generated_at: "2026-10-22T12:00:00Z", total_members: 20, active_members: 17, median_age: 31.5,
   city_count: 14, country_count: 2,
+  reviews: { total_reviews: 8, reviewers: 6, reviewed_matches: 5, compatibility: ratings([0, 1, 1, 2, 4]), book: ratings([0, 0, 1, 1, 2]) },
   age_groups: [{ label: "18–24", member_count: 5 }, { label: "25–34", member_count: 15 }],
   genders: [{ key: "woman", label: "Woman", member_count: 12 }, { key: "not_provided", label: "Not provided", member_count: 8 }],
   connection_types: [{ key: "romance", label: "Romance", member_count: 12 }, { key: "friends", label: "Friends", member_count: 15 }, { key: "business_partners", label: "Business partners", member_count: 8 }],
@@ -204,6 +206,64 @@ test("authorized aggregates render clear counts, shares, and a zoomable map", as
   assert.equal(window.localStorage.length, 0, "no demographic data is persisted");
 });
 
+test("review charts show separate 1–5 star distributions, averages, and denominators without extra requests", async t => {
+  const { $, state, window, event } = await setup(t);
+  assert.equal($("#review-summary").textContent, "8 reviews · 6 readers · 5 matches");
+  assert.equal($("#compatibility-average").textContent, "4.1");
+  assert.equal($("#book-rating-average").textContent, "4.3");
+  assert.equal($("#compatibility-count").textContent, "8 ratings");
+  assert.equal($("#book-rating-count").textContent, "4 ratings");
+  assert.deepEqual([...window.document.querySelectorAll("#compatibility-chart .bar-label > span:first-child")].map(node => node.textContent), ["1 star", "2 stars", "3 stars", "4 stars", "5 stars"]);
+  assert.equal($("#compatibility-chart li:nth-child(2) .bar-value").textContent, "112.5%");
+  assert.equal($("#book-rating-chart li:nth-child(3) .bar-value").textContent, "125%");
+  assert.equal($("#book-rating-chart li:nth-child(5) .bar-fill").style.width, "50%");
+  assert.deepEqual(state.calls, ["get_matchmaking_admin_stats", "get_matchmaking_admin_profiles"]);
+  assert.equal(window.localStorage.length, 0); assert.equal(window.sessionStorage.length, 0);
+  state.response.data.reviews = { total_reviews: 1, reviewers: 1, reviewed_matches: 1, compatibility: ratings([0, 0, 0, 0, 1]), book: ratings([0, 0, 0, 0, 0]) };
+  await event("#refresh");
+  assert.equal($("#review-summary").textContent, "1 review · 1 reader · 1 match");
+  assert.equal($("#compatibility-average").textContent, "5.0");
+  assert.equal($("#book-rating-average").textContent, "—");
+  assert.equal($("#book-rating-count").textContent, "No ratings yet");
+});
+
+test("empty and unavailable review statistics are distinct, and invalid distributions cannot render", async t => {
+  const data = structuredClone(sample);
+  data.reviews = { total_reviews: 0, reviewers: 0, reviewed_matches: 0, compatibility: ratings([0, 0, 0, 0, 0]), book: ratings([0, 0, 0, 0, 0]) };
+  const empty = await setup(t, { response: { data, error: null } });
+  assert.equal(empty.$("#review-summary").textContent, "0 reviews · 0 readers · 0 matches");
+  assert.equal(empty.$("#compatibility-average").textContent, "—");
+  assert.equal(empty.$("#compatibility-count").textContent, "No ratings yet");
+  assert.equal(empty.$("#compatibility-chart").children.length, 5);
+  assert.ok([...empty.window.document.querySelectorAll("#review-charts .bar-fill")].every(node => node.style.width === "0%"));
+  const legacy = structuredClone(sample); delete legacy.reviews;
+  const unavailable = await setup(t, { response: { data: legacy, error: null } });
+  assert.equal(unavailable.$("#reviews-unavailable").hidden, false);
+  assert.equal(unavailable.$("#review-charts").hidden, true);
+  assert.equal(unavailable.$("#review-summary").textContent, "");
+  data.reviews.compatibility.distribution[0].review_count = 1;
+  const invalid = await setup(t, { response: { data, error: null } });
+  assert.equal(invalid.$("#error-view").hidden, false);
+  assert.equal(invalid.$("#compatibility-chart").children.length, 0);
+});
+
+test("review aggregates are erased on sign-out, account switch, navigation, and destruction", async t => {
+  for (const action of ["sign-out", "switch", "navigation", "destroy"]) {
+    const { $, app, state, auth, window } = await setup(t);
+    assert.equal($("#compatibility-chart").children.length, 5);
+    if (action === "destroy") app.destroy();
+    else if (action === "navigation") window.dispatchEvent(new window.Event("pagehide"));
+    else if (action === "sign-out") auth("SIGNED_OUT");
+    else { state.response = forbidden; auth("SIGNED_IN", "another-member"); }
+    await app.settled();
+    assert.equal($("#review-summary").textContent, "");
+    assert.equal($("#compatibility-chart").children.length, 0);
+    assert.equal($("#book-rating-chart").children.length, 0);
+    assert.equal($("#compatibility-average").textContent, "—");
+    assert.equal($("#book-rating-count").textContent, "");
+  }
+});
+
 test("location modes, pagination, and accent-insensitive search retain the full-population shares", async t => {
   const { $, event, window } = await setup(t);
   assert.equal($("#location-status").textContent, "1–2 of 2");
@@ -244,6 +304,7 @@ test("a failed refresh clears old data, supports retry, and checks revocation ag
   assert.equal($("#error-view").hidden, false);
   assert.equal($("#admin-view").hidden, true);
   assert.equal($("#age-chart").children.length, 0);
+  assert.equal($("#compatibility-chart").children.length, 0);
   assert.equal($("#map-markers").children.length, 0);
   assert.equal($("#member-list").children.length, 0);
   assert.equal($("#summary-total").textContent, "—");
@@ -267,6 +328,8 @@ test("a late authorized response cannot restore data after sign-out, account swi
     delayed.resolve(success()); await loading; await app.settled();
     assert.equal($("#admin-view").hidden, true);
     assert.equal($("#age-chart").children.length, 0);
+    assert.equal($("#compatibility-chart").children.length, 0);
+    assert.equal($("#review-summary").textContent, "");
     assert.equal($("#summary-total").textContent, "—");
     if (action !== "destroy") assert.equal(window.location.pathname, "/matchmaking/");
   }

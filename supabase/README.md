@@ -226,6 +226,10 @@ Migration `20261102000100_match_reviews.sql` adds `matchmaking_match_reviews`, `
 
 The browser reads a review only when the member opens the review dialog, caches it in memory for the current signed-in session, and writes only on **Save review**. Account changes clear that cache and invalidate pending responses. Apply the migration before publishing the updated HTML, CSS, and rebuilt matchmaking bundle.
 
+Migration `20261102000200_admin_match_reviews.sql` adds aggregate review statistics to the existing admin-only `get_matchmaking_admin_stats()` response. The Matchmaking tab shows separate compatibility and book recommendation averages and 1–5 star distributions, with counts and percentages. Totals cover all currently released two-person matches; each reader’s latest review of each match counts once. Book ratings use their own denominator, excluding reviews without a book score. No reviews is shown as zero counts and an unset average, never a zero-star rating.
+
+These charts load with the rest of the admin statistics and update on **Refresh**. They add no request, polling, browser storage, or public data. The owner still cannot read the raw review table through the browser. Sign-out, account changes, navigation, and failed authorization clear the charts. Apply the migration before publishing the updated admin HTML, CSS, and rebuilt `admin/app.js`.
+
 ## Friend matchmaking suggestions
 
 The header’s **Matchmake friends** button is available to signed-in members with a completed profile. Its dialog accepts two Instagram handles or profile links and clearly describes the feature as romance only. Migration `20261029000200_friend_matchmaking_suggestions.sql` stores submissions privately in `matchmaking_friend_suggestions` through `suggest_matchmaking_friends`. Review that table through Supabase’s privileged Table Editor or a service connection; it is not exposed in the public site or member profile directory.
