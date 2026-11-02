@@ -299,6 +299,10 @@ input[readonly], fieldset:disabled input, fieldset:disabled textarea { backgroun
 #match-notice-jump{display:block;width:100%;min-height:56px;padding:14px 18px;border:1px solid var(--ink);border-radius:4px;background:var(--wash);font-size:16px;line-height:1.5;text-align:center;text-decoration:none;text-wrap:balance}
 #match-notice-jump:hover{background:var(--ink);color:var(--paper);opacity:1}
 .matches-section{scroll-margin-top:24px}
+.match-photo-note{display:none;max-width:48ch;color:var(--muted);font:14px/1.5 var(--sans)}
+.matches-section.has-introductions>.card-heading{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px 24px}
+.matches-section.has-introductions .match-photo-note{display:block}
+@media(max-width:760px){.matches-section.has-introductions>.card-heading{grid-template-columns:minmax(0,1fr) auto;gap:12px}.match-photo-note{grid-column:1/-1;grid-row:2;max-width:none}.matches-section.has-introductions .reveal-carousel-controls{grid-column:2;grid-row:1}}
 .reveal-book-link{color:inherit;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px}
 @media(hover:none){.match-reveal-card:hover{background:white;color:var(--ink);border-color:var(--line)}.match-reveal-card:hover .reveal-card-hint,.match-reveal-card:hover .reveal-card-person>span,.match-reveal-card:hover .reveal-card-location{color:var(--muted)}}
 
