@@ -186,6 +186,14 @@ Instagram is the default contact action. If the other member has no Instagram, t
 
 Validation: `npm run test:matchmaking`, `npm run test:admin`, and `npm run build:matchmaking`. The in-memory database tests cover paging across more than 60 same-drop introductions, shared recommendations, participant authorization, reveal isolation, contact consent/revocation, and account deletion. Matching algorithms, duplicate-pair prevention, load balancing, recommendation selection, admin review of a batch, scheduling, and notification delivery remain separate release work.
 
+## Private match reviews
+
+Each released introduction has a **Review this match** button. Its smaller dialog stays above the open introduction and collects separate 1–5 star scores for compatibility and the recommended book. A saved review can be edited; it is not shown to the other participant. The book score is tied to the recommendation that was displayed, so a stale page cannot rate a replacement book accidentally. Older introductions without a recommendation can still receive a compatibility rating.
+
+Migration `20261102000100_match_reviews.sql` adds `matchmaking_match_reviews`, `get_my_matchmaking_match_review(uuid)`, and `save_matchmaking_match_review(uuid, integer, integer, text)`. Both RPCs require the signed-in caller to belong to a released two-person introduction. There is one review per match and reviewing member. Raw table access is denied to browser roles; trusted service/database access can read the private feedback. Reviews cascade when their match membership is deleted. No ratings are added to introduction, map, or community responses.
+
+The browser reads a review only when the member opens the review dialog, caches it in memory for the current signed-in session, and writes only on **Save review**. Account changes clear that cache and invalidate pending responses. Apply the migration before publishing the updated HTML, CSS, and rebuilt matchmaking bundle.
+
 ## Friend matchmaking suggestions
 
 The header’s **Matchmake friends** button is available to signed-in members with a completed profile. Its dialog accepts two Instagram handles or profile links and clearly describes the feature as romance only. Migration `20261029000200_friend_matchmaking_suggestions.sql` stores submissions privately in `matchmaking_friend_suggestions` through `suggest_matchmaking_friends`. Review that table through Supabase’s privileged Table Editor or a service connection; it is not exposed in the public site or member profile directory.

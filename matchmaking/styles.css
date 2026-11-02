@@ -304,6 +304,32 @@ input[readonly], fieldset:disabled input, fieldset:disabled textarea { backgroun
 .matches-section.has-introductions .match-photo-note{display:block}
 @media(max-width:760px){.matches-section.has-introductions>.card-heading{grid-template-columns:minmax(0,1fr) auto;gap:12px}.match-photo-note{grid-column:1/-1;grid-row:2;max-width:none}.matches-section.has-introductions .reveal-carousel-controls{grid-column:2;grid-row:1}}
 .reveal-book-link{color:inherit;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px}
+.reveal-review-row{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:18px}
+.reveal-review-button{min-height:44px;padding:9px 16px;border:1px solid var(--ink);background:var(--paper);color:var(--ink);font:15px/1.4 var(--serif)}
+.reveal-review-button:hover{background:var(--ink);color:var(--paper)}
+.reveal-review-status{font:13px/1.4 var(--serif);color:var(--muted)}
+.match-review-dialog{width:min(440px,calc(100% - 32px));max-height:calc(100dvh - 32px);padding:32px;overflow:auto}
+.match-review-dialog::backdrop{background:rgba(17,17,17,.38);backdrop-filter:blur(2px)}
+#match-review-close{position:absolute;top:12px;right:12px;width:44px;height:44px}
+.match-review-dialog h2{padding-right:28px;margin:6px 0 9px;font-size:32px;line-height:1.15}
+.match-review-context{margin:0 0 27px;color:var(--muted);font-size:15px;overflow-wrap:anywhere}
+.match-review-dialog fieldset{padding:0 0 22px;margin:0 0 22px;border-bottom:1px solid var(--line)}
+.match-review-dialog legend{font:22px/1.25 var(--serif);padding:0;margin-bottom:10px}
+.match-review-book{font:15px/1.4 var(--serif);color:var(--muted);margin:-4px 0 10px;overflow-wrap:anywhere}
+.review-rating-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.review-stars{display:flex;gap:4px;flex-shrink:0}
+.review-stars label{position:relative;display:flex;align-items:center;justify-content:center;width:44px;height:44px;margin:0;cursor:pointer}
+.review-stars input[type=radio]{position:absolute;width:1px;height:1px;min-height:0;padding:0;margin:0;opacity:0}
+.review-stars svg{width:30px;height:30px;fill:none;stroke:var(--ink);stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}
+.review-stars [data-filled=true] svg{fill:var(--ink)}
+.review-stars input:focus-visible+svg{outline:2px solid var(--ink);outline-offset:5px;border-radius:2px}
+.review-stars input:disabled+svg{opacity:.45;cursor:default}
+.review-rating-row output{font:13px/1.4 var(--serif);color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.match-review-message:empty{display:none}
+.match-review-message,.match-review-privacy{font:14px/1.5 var(--serif);color:var(--muted);margin:0 0 16px}
+.match-review-dialog .form-actions{margin-top:20px}
+.match-review-dialog .form-actions button{min-height:44px}
+@media(max-width:480px){.match-review-dialog{padding:26px 20px}.match-review-dialog h2{font-size:29px}.match-review-dialog legend{font-size:21px}.review-rating-row{gap:8px}.review-stars{gap:2px}.review-stars svg{width:28px;height:28px}}
 @media(hover:none){.match-reveal-card:hover{background:white;color:var(--ink);border-color:var(--line)}.match-reveal-card:hover .reveal-card-hint,.match-reveal-card:hover .reveal-card-person>span,.match-reveal-card:hover .reveal-card-location{color:var(--muted)}}
 
 /* Compact profile and bottom-of-dashboard settings. */

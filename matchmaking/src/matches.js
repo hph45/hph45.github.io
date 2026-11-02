@@ -1,6 +1,7 @@
 import { favoriteBooks, locationLabel, instagramProfileURL, normalizeLinkedInURL } from "./profile.js";
 import { bookPresentation } from "./review-catalog.js";
 import { createMatchNotice } from "./match-notice.js";
+import { createMatchReview } from "./match-review.js";
 
 const kinds = { romance: "Romance", friends: "Friend", business_partners: "Business partner" };
 const paths = {
@@ -17,6 +18,7 @@ const sameBook = (a, b) => a.work_id && b.work_id ? a.work_id === b.work_id
 // profile data in browser storage. Each lifecycle reset invalidates pending work.
 export function createMatches({ client, document, window, action, getCatalog, getProfile, getUserId }) {
   const notice = createMatchNotice({ document, window, getUserId });
+  const review = createMatchReview({ client, document });
   const container = document.querySelector("#matches-list");
   const heading = document.querySelector(".matches-section > .card-heading");
   const eyebrow = heading.querySelector(".eyebrow");
@@ -118,6 +120,12 @@ export function createMatches({ client, document, window, action, getCatalog, ge
     name.append(element("span", "", `, ${match.age}`));
     const place = element("p", "reveal-location"); place.append(icon("pin"), document.createTextNode(locationLabel(match)));
     header.append(element("p", "reveal-kind", kinds[match.intent] || "Introduction"), name, place);
+    const reviewRow = element("div", "reveal-review-row");
+    const reviewButton = button("reveal-review-button", "Review this match");
+    reviewButton.setAttribute("aria-haspopup", "dialog"); reviewButton.setAttribute("aria-controls", "match-review-dialog");
+    const reviewStatus = element("span", "reveal-review-status"); reviewStatus.setAttribute("role", "status");
+    action(reviewButton, "click", () => review.open(match, reviewButton, () => { reviewStatus.textContent = "Review saved."; }));
+    reviewRow.append(reviewButton, reviewStatus); header.append(reviewRow);
     content.append(header, section("reveal-reason", "Why you crossed paths", match.reason));
     if (match.recommended_book) {
       const book = match.recommended_book;
@@ -252,6 +260,7 @@ export function createMatches({ client, document, window, action, getCatalog, ge
     finally { if (current === version) { loading = false; older.disabled = false; updatePosition(); } }
   }
   function finishClose() {
+    review.close();
     if (overflow !== null) { document.body.style.overflow = overflow; overflow = null; }
     activeMatch = null; content.replaceChildren(); contact.replaceChildren(); status.replaceChildren();
     trigger?.focus({ preventScroll: true }); trigger = null;
@@ -265,6 +274,7 @@ export function createMatches({ client, document, window, action, getCatalog, ge
   });
   function reset() {
     notice.reset();
+    review.reset();
     version++; trigger = null;
     if (dialog.open) dialog.close(); finishClose();
     observer?.disconnect(); controls?.remove(); eyebrow.hidden = false;
@@ -290,5 +300,5 @@ export function createMatches({ client, document, window, action, getCatalog, ge
       container.replaceChildren(document.createTextNode("We couldn’t load your matches. "), retry);
     }
   }
-  return { load, reset, destroy() { reset(); notice.destroy(); cleanups.forEach(cleanup => cleanup()); } };
+  return { load, reset, destroy() { reset(); notice.destroy(); review.destroy(); cleanups.forEach(cleanup => cleanup()); } };
 }

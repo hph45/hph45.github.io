@@ -7,7 +7,7 @@
   <title>Matchmaking | Zebra Book Club</title>
   <meta name="description" content="Meet through the books you love. Find romance, friends, or business partners with Zebra Book Club.">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <link rel="stylesheet" href="./styles.css?v=20261102.2">
+  <link rel="stylesheet" href="./styles.css?v=20261102.3">
   <link rel="stylesheet" href="/assets/match-countdown.css?v=20261024.1">
 </head>
 <body>
@@ -289,10 +289,25 @@
     </div>
   </dialog>
 
+  <dialog id="match-review-dialog" class="match-review-dialog" aria-labelledby="match-review-title" aria-describedby="match-review-privacy">
+    <button id="match-review-close" class="reveal-close" type="button" aria-label="Close review"><svg class="reveal-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M6 18 18 6"/></svg></button>
+    <h2 id="match-review-title">Review this match</h2>
+    <p id="match-review-context" class="match-review-context"></p>
+    <form id="match-review-form" novalidate>
+      <fieldset data-rating="compatibility_rating"><legend>Compatibility</legend><div class="review-rating-row"><div class="review-stars"></div><output aria-live="polite">Not rated</output></div></fieldset>
+      <fieldset data-rating="book_rating"><legend>Book recommendation</legend><p id="match-review-book" class="match-review-book"></p><div class="review-rating-row"><div class="review-stars"></div><output aria-live="polite">Not rated</output></div></fieldset>
+      <p id="match-review-message" class="match-review-message" role="status"></p>
+      <p id="match-review-error" class="form-error" role="alert" hidden></p>
+      <button id="match-review-retry" class="text-button" type="button" hidden>Try again</button>
+      <p id="match-review-privacy" class="match-review-privacy">Your review is private and won’t be shown to your match.</p>
+      <div class="form-actions"><button id="match-review-cancel" class="text-button" type="button">Cancel</button><button id="match-review-save" class="button" type="submit" disabled>Save review</button></div>
+    </form>
+  </dialog>
+
   <dialog id="delete-dialog" aria-labelledby="delete-title"><form id="delete-form"><p class="eyebrow">Close this chapter</p><h2 id="delete-title">Delete your account?</h2><p>This permanently removes your matchmaking profile, preferences, and match memberships. Your Google account is unchanged.</p><label>Type DELETE to confirm<input id="delete-confirmation" autocomplete="off" required pattern="DELETE"></label><p id="delete-error" class="form-error" role="alert" hidden></p><div class="form-actions"><button id="cancel-delete" class="text-button" type="button">Keep my account</button><button id="confirm-delete" class="button" type="submit">Delete account</button></div></form></dialog>
   <footer class="site-footer"><span>© 2026 Zebra Book Club</span><nav class="legal-links" aria-label="Legal"><a href="/privacy/" target="_blank" rel="noopener">Privacy</a><a href="/terms/" target="_blank" rel="noopener">Terms</a></nav><span class="data-credits">Books: <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">Open Library</a> · Cities: <a href="https://www.geonames.org" target="_blank" rel="noopener noreferrer">GeoNames</a> · Map: <a href="https://naturalearthdata.com" target="_blank" rel="noopener noreferrer">Natural Earth</a></span></footer>
   <noscript><p class="notice">Please enable JavaScript to sign in and create your matchmaking profile.</p></noscript>
-  <script type="module" src="./app.js?v=20261101.1"></script>
+  <script type="module" src="./app.js?v=20261102.1"></script>
   <script type="module" src="/assets/match-countdown.js?v=20261101.1"></script>
 </body>
 </html>
