@@ -13,7 +13,7 @@ const sample = {
   age_groups: [{ label: "18–24", member_count: 5 }, { label: "25–34", member_count: 15 }],
   genders: [{ key: "woman", label: "Woman", member_count: 12 }, { key: "not_provided", label: "Not provided", member_count: 8 }],
   connection_types: [{ key: "romance", label: "Romance", member_count: 12 }, { key: "friends", label: "Friends", member_count: 15 }, { key: "business_partners", label: "Business partners", member_count: 8 }],
-  countries: [{ country: "United States", member_count: 19 }, { country: "Brazil", member_count: 1 }],
+  countries: [{ country: "United States", member_count: 19, top_book: { work_id: "OL1W", title: "Favorite in the US", author: "An author", votes: 8 } }, { country: "Brazil", member_count: 1, top_book: { work_id: "OL2W", title: "Favorite in Brazil", author: "Another author", votes: 1 } }],
   cities: Array.from({ length: 14 }, (_, i) => ({ id: i + 1, name: i === 13 ? "São Paulo" : `City ${i + 1}`, region: "Region", country: i === 13 ? "Brazil" : "United States", latitude: 35, longitude: -120 + i * 10, member_count: i === 0 ? 7 : 1 })),
 };
 const success = () => ({ data: structuredClone(sample), error: null });
@@ -190,7 +190,7 @@ test("signed-in non-admins and expired sessions redirect without rendering data"
 });
 
 test("authorized aggregates render clear counts, shares, and a zoomable map", async t => {
-  const { $, window, event } = await setup(t);
+  const { $, window, event, state } = await setup(t);
   assert.equal($("#admin-view").hidden, false);
   assert.equal($("#loading-view").hidden, true);
   assert.equal($("#summary-total").textContent, "20");
@@ -201,6 +201,12 @@ test("authorized aggregates render clear counts, shares, and a zoomable map", as
   assert.match($("#gender-chart").textContent, /Not provided840%/);
   assert.match($("#connection-chart").textContent, /Friends1575%/);
   assert.equal(window.document.querySelectorAll(".map-marker").length, 14);
+  const calls = state.calls.length;
+  await event('[data-country="United States"]', "mouseenter");
+  assert.equal($("#map-selection").textContent, "United States · 19 readers · Top book: Favorite in the US by An author");
+  await event(".map-marker", "mouseenter");
+  assert.match($("#map-selection").textContent, /City 1.*7 readers/);
+  assert.equal(state.calls.length, calls);
   await event("#map-zoom-in");
   assert.match($("#map-content").getAttribute("transform"), /scale\(1.5\)/);
   assert.equal(window.localStorage.length, 0, "no demographic data is persisted");
@@ -306,6 +312,7 @@ test("a failed refresh clears old data, supports retry, and checks revocation ag
   assert.equal($("#age-chart").children.length, 0);
   assert.equal($("#compatibility-chart").children.length, 0);
   assert.equal($("#map-markers").children.length, 0);
+  assert.equal($("#map-countries").children.length, 0);
   assert.equal($("#member-list").children.length, 0);
   assert.equal($("#summary-total").textContent, "—");
   state.response = success(); await event("#retry");
@@ -328,6 +335,7 @@ test("a late authorized response cannot restore data after sign-out, account swi
     delayed.resolve(success()); await loading; await app.settled();
     assert.equal($("#admin-view").hidden, true);
     assert.equal($("#age-chart").children.length, 0);
+    assert.equal($("#map-countries").children.length, 0);
     assert.equal($("#compatibility-chart").children.length, 0);
     assert.equal($("#review-summary").textContent, "");
     assert.equal($("#summary-total").textContent, "—");

@@ -131,7 +131,8 @@ test("admin statistics enforce server-owned access and accurate, aggregate-only 
     assert.deepEqual(stats.genders.map(row => [row.key, row.member_count]), [["woman", 4], ["man", 4], ["other", 3], ["not_provided", 3]]);
     assert.deepEqual(stats.connection_types.map(row => [row.key, row.member_count]), [["romance", 11], ["friends", 14], ["business_partners", 2]]);
     assert.equal(stats.city_count, 3); assert.equal(stats.country_count, 2);
-    assert.deepEqual(stats.countries, [{ country: "United States", member_count: 10 }, { country: "United Kingdom", member_count: 4 }]);
+    assert.deepEqual(stats.countries.map(({ country, member_count }) => ({ country, member_count })), [{ country: "United States", member_count: 10 }, { country: "United Kingdom", member_count: 4 }]);
+    assert.ok(stats.countries.every(row => row.top_book.work_id === "OL1W" && row.top_book.votes === row.member_count));
     assert.deepEqual(stats.cities.map(row => [row.id, row.member_count]), [[5128581, 5], [5378538, 5], [2643743, 4]]);
     for (const key of ["age_groups", "genders", "cities", "countries"]) {
       assert.equal(stats[key].reduce((sum, row) => sum + row.member_count, 0), 14);
@@ -147,7 +148,9 @@ test("admin statistics enforce server-owned access and accurate, aggregate-only 
     assert.deepEqual(Object.keys(stats).sort(), ["generated_at", "total_members", "active_members", "median_age", "city_count", "country_count", "age_groups", "genders", "connection_types", "cities", "countries", "reviews"].sort());
     for (const city of stats.cities) assert.deepEqual(Object.keys(city).sort(), ["id", "name", "region", "country", "latitude", "longitude", "member_count"].sort());
     const json = JSON.stringify(stats);
-    assert.doesNotMatch(json, /Private|birth_date|user_id|email|favorite|ideal_match|interested_in/);
+    const demographics = { ...stats, countries: stats.countries.map(({ top_book, ...country }) => country) };
+    assert.doesNotMatch(JSON.stringify(demographics), /Private|birth_date|user_id|email|favorite|ideal_match|interested_in/);
+    assert.doesNotMatch(json, /birth_date|user_id|email|ideal_match|interested_in/);
     for (const id of ids) assert.ok(!json.includes(id));
     const readable = await asUser(owner, () => db.query("select user_id from public.matchmaking_profiles"));
     assert.deepEqual(readable.rows, [{ user_id: owner }]);

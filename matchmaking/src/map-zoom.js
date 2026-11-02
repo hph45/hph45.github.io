@@ -133,9 +133,12 @@ export function attachMapZoom(document) {
     event.preventDefault();
   });
   listen(svg, "focusin", event => {
-    if (!event.target.matches?.(".map-marker") || view.scale <= 1) return;
-    const x = Number(event.target.getAttribute("cx")) * view.scale + view.x;
-    const y = Number(event.target.getAttribute("cy")) * view.scale + view.y;
+    if (!event.target.matches?.(".map-marker, .map-country") || view.scale <= 1) return;
+    // A mouse/touch selection of an island must not jump to a country's
+    // mainland. Recenter countries only for keyboard navigation.
+    if (event.target.matches(".map-country") && !event.target.matches(":focus-visible")) return;
+    const x = Number(event.target.dataset.mapX ?? event.target.getAttribute("cx")) * view.scale + view.x;
+    const y = Number(event.target.dataset.mapY ?? event.target.getAttribute("cy")) * view.scale + view.y;
     if (x < 20 || x > WIDTH - 20 || y < 20 || y > HEIGHT - 20) {
       render({ ...view, x: view.x + WIDTH / 2 - x, y: view.y + HEIGHT / 2 - y });
     }

@@ -5,7 +5,7 @@ export function worldProjection() {
   return geoNaturalEarth1().fitExtent([[14, 14], [986, 486]], { type: "Sphere" });
 }
 
-export function renderCommunityMap(document, community, { showCounts = true, hoverOnly = false } = {}) {
+export function renderCommunityMap(document, community, { showCounts = true, hoverOnly = false, countrySummaries } = {}) {
   const group = document.querySelector("#map-markers");
   group.replaceChildren();
   const total = Number(community.total_members) || 0;
@@ -22,7 +22,8 @@ export function renderCommunityMap(document, community, { showCounts = true, hov
     const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     const memberCount = Math.max(1, Number(city.member_count) || 1);
     const location = [city.name, city.region, city.country].filter(Boolean).join(", ");
-    const label = showCounts ? `${location} · ${memberCount} ${memberCount === 1 ? "reader" : "readers"}` : location;
+    const country = showCounts && countrySummaries?.get(city.country);
+    const label = showCounts ? `${location} · ${memberCount} ${memberCount === 1 ? "reader" : "readers"}${country ? ` · ${country}` : ""}` : location;
     circle.setAttribute("cx", point[0]); circle.setAttribute("cy", point[1]);
     const radius = .8 * Math.min(12, 4 + Math.log2(memberCount + 1));
     circle.setAttribute("r", radius); circle.dataset.mapRadius = radius;

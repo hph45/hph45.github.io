@@ -58,7 +58,7 @@ function mockClient({ signedIn = true, initialProfile = null, matches = [], risi
         if (match) match.revealed_at ||= new Date().toISOString();
         return { data: match?.revealed_at, error: null };
       }
-      return ({ data: name === "get_matchmaking_community" ? { total_members: 1, cities: [{ id: 5378538, name: "Oakland", region: "California", country: "United States", latitude: 37.8, longitude: -122.27, member_count: 1 }], top_books: [{ work_id: "OL1W", title: "A book", author: "An author", votes: 1 }], rising_books: risingBooks } : state.matches, error: name === "get_matchmaking_community" && state.communityError ? new Error("Unavailable") : null });
+      return ({ data: name === "get_matchmaking_community" ? { total_members: 1, cities: [{ id: 5378538, name: "Oakland", region: "California", country: "United States", latitude: 37.8, longitude: -122.27, member_count: 1 }], countries: [{ country: "United States", member_count: 1, top_book: { work_id: "OL1W", title: "A book", author: "An author", votes: 1 } }], top_books: [{ work_id: "OL1W", title: "A book", author: "An author", votes: 1 }], rising_books: risingBooks } : state.matches, error: name === "get_matchmaking_community" && state.communityError ? new Error("Unavailable") : null });
     },
     functions: { invoke: async name => { state.functionCalls.push(name); return { data: { deleted: true }, error: null }; } },
   };
@@ -707,12 +707,20 @@ test("signed-out Google setup state is honest and sign-in has a fixed callback",
 });
 
 test("the dashboard renders the real count, city dots, and community book ranking", async t => {
-  const { $ } = await setup(t, { initialProfile: profile });
+  const { $, event, state } = await setup(t, { initialProfile: profile });
   assert.equal($("#member-count").textContent, "1");
   assert.equal($("#map-markers").children.length, 1);
   assert.match($("#map-markers circle").getAttribute("aria-label"), /Oakland/);
   assert.match($("#top-books-list").textContent, /A book/);
   assert.match($("#top-books-list").textContent, /1 favorite/);
+  const calls = state.rpcCalls.length;
+  await event('[data-country="United States"]', "mouseenter");
+  assert.equal($("#map-selection").textContent, "United States · 1 reader · Top book: A book by An author");
+  await event(".map-marker", "mouseenter");
+  assert.match($("#map-selection").textContent, /Oakland.*1 reader/);
+  assert.equal(state.rpcCalls.length, calls, "hover does not fetch from Supabase");
+  await event("#sign-out");
+  assert.equal($("#map-countries").children.length, 0);
 });
 
 test("signed-in visits skip provider requests and reuse only aggregates while profiles and matches stay fresh", async t => {

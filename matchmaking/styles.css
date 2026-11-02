@@ -5,6 +5,10 @@
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 
 input[type=hidden] { display: none !important; }
+.map-country { fill: transparent; stroke: transparent; stroke-width: .8; vector-effect: non-scaling-stroke; pointer-events: all; }
+.map-country:hover, .map-country:focus { fill: rgba(53, 104, 75, .12); stroke: #6a8b75; outline: none; }
+.map-country:focus-visible { stroke: #315b41; stroke-width: 2; }
+.map-caption #map-selection { overflow-wrap: anywhere; }
 .profile-instagram { margin: 0 0 20px; }
 .match-contact { margin: 24px 0 0; }
 #instagram-dialog .form-actions { margin-top: 24px; }

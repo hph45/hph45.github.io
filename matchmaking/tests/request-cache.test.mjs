@@ -9,6 +9,7 @@ const storage = () => {
   return { getItem: key => values.get(key), setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key) };
 };
 const aggregate = () => ({ total_members: 1, cities: [{ id: 1, name: "Oakland", region: "California", country: "United States", latitude: 37.8, longitude: -122.27, member_count: 1 }],
+  countries: [{ country: "United States", member_count: 1, top_book: { work_id: "OL1W", title: "A book", author: "An author", votes: 1 } }],
   top_books: [{ work_id: "OL1W", title: "A book", author: "An author", votes: 1 }], rising_books: [] });
 
 test("enabled Google checks survive page reload, expire, and are refreshed after an OAuth failure", async () => {
@@ -58,6 +59,7 @@ test("community caches are bounded, reusable across reloads, and scoped to the s
 test("only aggregate fields are cached; corrupt, expired, or future entries trigger a fresh read", async () => {
   const value = aggregate(); value.profiles = [{ email: "private@example.invalid" }]; value.cities[0].instagram = "private.handle";
   value.top_books[0].user_ids = ["private-user"]; value.matches = [{ name: "Private Name" }];
+  value.countries[0].members = ["private-user"]; value.countries[0].top_book.email = "private@example.invalid";
   assert.deepEqual(parseCommunity(value), aggregate());
   let calls = 0;
   const saved = storage(), client = { rpc: async () => { calls++; return { data: value }; } };
@@ -79,9 +81,19 @@ test("invalidation during a request cannot repopulate a signed-out or edited acc
   } };
   const cache = createCommunityCache({ client, storage: saved, now: () => instant });
   const old = cache.load("A"); cache.invalidate();
-  await cache.load("B"); finish({ data: { ...aggregate(), total_members: 0, cities: [] } }); await old;
+  await cache.load("B"); finish({ data: { ...aggregate(), total_members: 0, cities: [], countries: [] } }); await old;
   assert.equal(JSON.parse(saved.getItem(COMMUNITY_CACHE_KEY)).user_id, "B");
   assert.equal(JSON.parse(saved.getItem(COMMUNITY_CACHE_KEY)).data.total_members, 1);
+});
+
+test("country caches reject inconsistent counts, duplicate countries, and impossible favorite totals", () => {
+  for (const change of [
+    value => { value.countries[0].member_count = 2; },
+    value => { value.countries.push(value.countries[0]); },
+    value => { value.countries[0].top_book.votes = 2; },
+  ]) {
+    const data = aggregate(); change(data); assert.throws(() => parseCommunity(data));
+  }
 });
 
 test("community errors are retryable and only changes affecting counts require invalidation", async () => {

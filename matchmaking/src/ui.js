@@ -4,6 +4,7 @@ import { attachAutocomplete } from "./autocomplete.js";
 import { createStaticCatalogSearch } from "./static-catalogs.js";
 import { attachAgeRange } from "./age-range.js";
 import { renderCommunityMap } from "./map.js";
+import { renderCountryMap, clearCountryMap, cityCountrySummaries } from "./country-map.js";
 import { attachMapZoom } from "./map-zoom.js";
 import { loadReviewCatalog } from "./review-catalog.js";
 import { renderTopBooks } from "./top-books.js";
@@ -331,7 +332,8 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
         community.load(user?.id), reviewCatalog ||= loadReviewCatalog(fetch),
       ]);
       if (version !== generation || request !== communityRequest) return;
-      renderCommunityMap(document, data);
+      renderCommunityMap(document, data, { countrySummaries: cityCountrySummaries(data.countries) });
+      renderCountryMap(document, data.countries);
       mapZoom.refresh();
       renderTopBooks(document, data.top_books || [], catalog);
       renderRisingBooks(document, data.rising_books || [], data.top_books || [], catalog);
@@ -339,6 +341,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     } catch {
       if (version !== generation || request !== communityRequest) return;
       text("#member-count", "—");
+      clearCountryMap(document);
       text("#map-selection", "We couldn’t load the community right now.");
       $("#rising-books-list").replaceChildren();
       $("#rising-books-status").hidden = false;
@@ -375,6 +378,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     text("#profile-more-label", "View more");
     user = session?.user || null;
     profile = null;
+    clearCountryMap(document);
     instagramPromptDismissed = false;
     clearInstagramPrompt();
     setMutationBusy(false);
@@ -665,6 +669,6 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       }
     },
     async settled() { while (pending.size) await Promise.allSettled([...pending]); },
-    destroy() { subscription?.unsubscribe(); generation++; matches.destroy(); friendMatchmaking.destroy(); clearInstagramPrompt(); window.clearTimeout(bookTimer); ageRange.destroy(); mapZoom.destroy(); invites.destroy(); autocompletes.forEach(control => control.destroy()); },
+    destroy() { subscription?.unsubscribe(); generation++; matches.destroy(); friendMatchmaking.destroy(); clearInstagramPrompt(); clearCountryMap(document); window.clearTimeout(bookTimer); ageRange.destroy(); mapZoom.destroy(); invites.destroy(); autocompletes.forEach(control => control.destroy()); },
   };
 }

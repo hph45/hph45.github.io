@@ -47,7 +47,9 @@ test("optional Instagram preserves profiles, eligibility checks, and released-ma
   await t.test("migration leaves all answers, timestamps, favorites, current reads, and totals intact", async () => {
     assert.deepEqual(await profiles(), before.map(row => ({ ...row, instagram_handle: null, share_email_with_matches: true })));
     assert.deepEqual(await selections(), beforeSelections);
-    assert.deepEqual(await community(), beforeCommunity);
+    const { countries, ...previousCommunityFields } = await community();
+    assert.deepEqual(previousCommunityFields, beforeCommunity);
+    assert.deepEqual(countries, [{ country: "United States", member_count: 3, top_book: { work_id: "OL1W", title: "A book", author: "An author", votes: 3 } }]);
     // New and older clients can save profiles without Instagram.
     const saved = (await asUser(D, () => insert(D, basics))).rows[0];
     assert.equal(saved.instagram_handle, null);

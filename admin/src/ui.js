@@ -1,4 +1,5 @@
 import { renderCommunityMap } from "../../matchmaking/src/map.js";
+import { renderCountryMap, clearCountryMap, cityCountrySummaries } from "../../matchmaking/src/country-map.js";
 import { attachMapZoom } from "../../matchmaking/src/map-zoom.js";
 import { createMemberDirectory } from "./members.js";
 import { createPoetryLibrary } from "./poetry.js";
@@ -36,6 +37,7 @@ export function createAdminApp({ client, document, window }) {
   }
   function clear() {
     stats = null;
+    clearCountryMap(document);
     directory.clear();
     poetry.clear();
     selectTab("matchmaking");
@@ -170,7 +172,8 @@ export function createAdminApp({ client, document, window }) {
     renderChart("#gender-chart", data.genders);
     renderChart("#connection-chart", data.connection_types);
     renderReviews(data.reviews);
-    renderCommunityMap(document, data);
+    renderCommunityMap(document, data, { countrySummaries: cityCountrySummaries(data.countries) });
+    renderCountryMap(document, data.countries);
     zoom.reset();
     renderLocations();
     view("admin");
