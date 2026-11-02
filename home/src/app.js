@@ -1,5 +1,5 @@
 import { renderCommunityMap } from "../../matchmaking/src/map.js";
-import { createPublicMapLoader, CACHE_AGE } from "./community.js";
+import { createPublicMapLoader, CACHE_AGE, MAX_SNAPSHOT_AGE } from "./community.js";
 
 const section = document.querySelector("#community");
 if (section) {
@@ -19,12 +19,12 @@ if (section) {
     try {
       const data = await load();
       renderCommunityMap(document, data, { showCounts: false, hoverOnly: true });
-      // Expire from the server's snapshot time, not fetch time, so the two
-      // caches cannot combine into two hours of stale member locations.
-      nextRefresh = Date.parse(data.generated_at) + CACHE_AGE;
+      // A scheduled publication can be delayed. Check the static file at a
+      // bounded interval, never loop on a snapshot's already-passed hourly age.
+      nextRefresh = Math.min(Date.now() + CACHE_AGE, Date.parse(data.generated_at) + MAX_SNAPSHOT_AGE);
     } catch {
       document.querySelector("#map-markers").replaceChildren();
-      nextRefresh = Date.now() + 5 * 60 * 1000;
+      nextRefresh = Date.now() + CACHE_AGE;
     } finally {
       running = false;
       if (visible && !document.hidden) timer = setTimeout(refresh, Math.max(1000, nextRefresh - Date.now()));

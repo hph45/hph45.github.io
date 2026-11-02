@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { CACHE_AGE, CACHE_KEY, createPublicMapLoader, parsePublicMap } from "../src/community.js";
+import { CACHE_AGE, CACHE_KEY, MAX_SNAPSHOT_AGE, SNAPSHOT_URL, createPublicMapLoader, parsePublicMap } from "../src/community.js";
 
 const instant = Date.parse("2026-10-27T12:00:00Z");
 const snapshot = (time = instant) => ({
@@ -17,10 +17,11 @@ test("public map sends no login/session data, deduplicates requests, and reuses 
   let calls = 0;
   const fetch = async (url, options) => {
     calls++;
-    assert.match(url, /\/rpc\/get_public_matchmaking_map$/);
+    assert.equal(url, SNAPSHOT_URL);
     assert.equal(options.credentials, "omit");
-    assert.equal(options.body, "{}");
-    assert.deepEqual(Object.keys(options.headers).sort(), ["Content-Type", "apikey"]);
+    assert.equal(options.body, undefined);
+    assert.equal(options.headers, undefined);
+    assert.equal(options.cache, "no-cache");
     return { ok: true, json: async () => snapshot() };
   };
   const load = createPublicMapLoader({ fetch, storage, now: () => instant });
@@ -30,9 +31,9 @@ test("public map sends no login/session data, deduplicates requests, and reuses 
   assert.equal(calls, 1, "a new page visit uses browser storage");
 });
 
-test("browser and server cache lifetimes do not stack into two hours", async () => {
+test("static snapshots are rechecked at bounded intervals even when an hourly publication is delayed", async () => {
   const storage = memoryStorage();
-  storage.setItem(CACHE_KEY, JSON.stringify(snapshot()));
+  storage.setItem(CACHE_KEY, JSON.stringify({ checked_at: instant, data: snapshot() }));
   let time = instant + CACHE_AGE - 1000, calls = 0;
   const load = createPublicMapLoader({ storage, now: () => time, fetch: async () => {
     calls++; return { ok: true, json: async () => snapshot(time) };
@@ -41,7 +42,7 @@ test("browser and server cache lifetimes do not stack into two hours", async () 
   assert.equal(calls, 0);
   time += 1000;
   assert.equal((await load()).generated_at, snapshot(time).generated_at);
-  assert.equal(calls, 1, "expire at one hour from generation even if fetched a moment ago");
+  assert.equal(calls, 1, "revalidate the shared file after 15 minutes");
 });
 
 test("bad or unavailable storage does not block the live map", async () => {
@@ -62,11 +63,21 @@ test("failed requests can be retried and expired snapshots are never presented a
   const load = createPublicMapLoader({ now: () => instant, fetch: async () => {
     calls++;
     if (calls === 1) return { ok: false };
-    return { ok: true, json: async () => snapshot(calls === 2 ? instant - CACHE_AGE : instant) };
+    return { ok: true, json: async () => snapshot(calls === 2 ? instant - MAX_SNAPSHOT_AGE : instant) };
   } });
   await assert.rejects(load(), /unavailable/);
   await assert.rejects(load(), /expired/);
   assert.deepEqual(await load(), snapshot());
+});
+
+test("an hour-old published snapshot remains usable without a request loop or Supabase fallback", async () => {
+  let calls = 0;
+  const load = createPublicMapLoader({ now: () => instant, fetch: async url => {
+    assert.equal(url, SNAPSHOT_URL); calls++;
+    return { ok: true, json: async () => snapshot(instant - 70 * 60 * 1000) };
+  } });
+  await load(); await load(); await load();
+  assert.equal(calls, 1);
 });
 
 test("a hung request times out and a later attempt can recover", async () => {

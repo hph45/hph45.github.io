@@ -1,7 +1,7 @@
-import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "../../matchmaking/src/config.js";
-
-export const CACHE_KEY = "zbc.public-community-map.v1";
-export const CACHE_AGE = 60 * 60 * 1000;
+export const CACHE_KEY = "zbc.public-community-map.v2";
+export const CACHE_AGE = 15 * 60 * 1000;
+export const MAX_SNAPSHOT_AGE = 3 * 60 * 60 * 1000;
+export const SNAPSHOT_URL = "/assets/community-map.json";
 
 // Whitelist the public response before rendering or saving it in browser storage.
 // The home page never reads a login session or requests individual profiles.
@@ -28,15 +28,18 @@ export function parsePublicMap(value) {
 
 export function createPublicMapLoader({ fetch, storage, now = Date.now, timeout = 10000 }) {
   let cached, pending;
-  const fresh = data => data && now() - Date.parse(data.generated_at) >= -300000
-    && now() - Date.parse(data.generated_at) < CACHE_AGE;
+  const usable = data => data && now() - Date.parse(data.generated_at) >= -300000
+    && now() - Date.parse(data.generated_at) < MAX_SNAPSHOT_AGE;
+  const fresh = entry => entry && Number.isFinite(entry.checked_at) && now() >= entry.checked_at
+    && now() - entry.checked_at < CACHE_AGE && usable(entry.data);
   return async function load() {
-    if (fresh(cached)) return cached;
+    if (fresh(cached)) return cached.data;
     try {
       const saved = storage?.getItem(CACHE_KEY);
       if (saved) {
-        const data = parsePublicMap(JSON.parse(saved));
-        if (fresh(data)) return (cached = data);
+        const entry = JSON.parse(saved);
+        entry.data = parsePublicMap(entry.data);
+        if (fresh(entry)) { cached = entry; return cached.data; }
       }
       storage?.removeItem(CACHE_KEY);
     } catch { /* Storage may be disabled or contain an obsolete snapshot. */ }
@@ -45,15 +48,16 @@ export function createPublicMapLoader({ fetch, storage, now = Date.now, timeout 
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeout);
       try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_public_matchmaking_map`, {
-          method: "POST", headers: { apikey: SUPABASE_PUBLISHABLE_KEY, "Content-Type": "application/json" },
-          body: "{}", credentials: "omit", signal: controller.signal,
+        // Every visitor reads the same CDN-hosted file. Never fall back to the
+        // database on a miss/outage: that would recreate traffic-proportional logs.
+        const response = await fetch(SNAPSHOT_URL, {
+          cache: "no-cache", credentials: "omit", signal: controller.signal,
         });
         if (!response.ok) throw new Error("Community map unavailable");
         const data = parsePublicMap(await response.json());
-        if (!fresh(data)) throw new Error("Community snapshot expired");
-        cached = data;
-        try { storage?.setItem(CACHE_KEY, JSON.stringify(data)); } catch { /* The in-memory cache still works. */ }
+        if (!usable(data)) throw new Error("Community snapshot expired");
+        cached = { checked_at: now(), data };
+        try { storage?.setItem(CACHE_KEY, JSON.stringify(cached)); } catch { /* The in-memory cache still works. */ }
         return data;
       } finally { clearTimeout(timer); }
     })();

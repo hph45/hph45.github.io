@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import { Window } from "happy-dom";
 import { createMatchmakingApp } from "../src/ui.js";
 import { makeProfile } from "../src/profile.js";
+import { COMMUNITY_CACHE_KEY } from "../src/community-cache.js";
 
 const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
 const member = { id: "00000000-0000-4000-8000-000000000001", email: "reader@example.invalid", user_metadata: { given_name: "Reader" } };
@@ -67,6 +68,7 @@ function mockClient({ signedIn = true, initialProfile = null, matches = [], risi
 async function setup(t, options = {}) {
   const window = new Window({ url: "http://127.0.0.1:8080/matchmaking/", settings: { disableCSSFileLoading: true, disableJavaScriptFileLoading: true, enableJavaScriptEvaluation: false } });
   window.document.write(html);
+  for (const [key, value] of Object.entries(options.stored || {})) window.localStorage.setItem(key, value);
   if (options.intent) window.localStorage.setItem("zebra-matchmaking-intent", options.intent);
   if (options.intents) window.localStorage.setItem("zebra-matchmaking-intents", JSON.stringify(options.intents));
   const mock = mockClient(options);
@@ -713,6 +715,33 @@ test("the dashboard renders the real count, city dots, and community book rankin
   assert.match($("#top-books-list").textContent, /1 favorite/);
 });
 
+test("signed-in visits skip provider requests and reuse only aggregates while profiles and matches stay fresh", async t => {
+  const first = await setup(t, { initialProfile: profile });
+  assert.equal(first.state.requests.filter(url => url.endsWith("/auth/v1/settings")).length, 0);
+  const cached = first.window.localStorage.getItem(COMMUNITY_CACHE_KEY);
+  const next = await setup(t, { initialProfile: profile, stored: { [COMMUNITY_CACHE_KEY]: cached } });
+  assert.equal(next.state.rpcCalls.filter(call => call.name === "get_matchmaking_community").length, 0);
+  assert.equal(next.state.rpcCalls.filter(call => call.name === "get_my_matchmaking_introductions").length, 1);
+  assert.equal(next.state.tables.filter(table => table === "matchmaking_profiles").length, 1);
+  assert.equal(next.$("#member-count").textContent, "1");
+  await next.event("#sign-out");
+  assert.equal(next.window.localStorage.getItem(COMMUNITY_CACHE_KEY), null);
+  assert.equal(next.state.requests.filter(url => url.endsWith("/auth/v1/settings")).length, 1);
+  assert.equal(next.$("#google-sign-in").disabled, false);
+});
+
+test("profile edits preserve the community cache unless city or favorites changed", async t => {
+  const { state, set, event } = await setup(t, { initialProfile: profile });
+  const count = () => state.rpcCalls.filter(call => call.name === "get_matchmaking_community").length;
+  assert.equal(count(), 1);
+  await event("#edit-profile"); set("display_name", "Changed name");
+  for (let i = 0; i < 3; i++) await event("#profile-form", "submit");
+  assert.equal(count(), 1);
+  await event("#edit-profile"); set("city_id", 2964574); set("city", "Dublin"); set("country", "Ireland");
+  for (let i = 0; i < 3; i++) await event("#profile-form", "submit");
+  assert.equal(count(), 2, "a changed city refreshes counts immediately");
+});
+
 test("rising favorites recover after a community error, then clear on sign-out with map zoom", async t => {
   const { $, event, state } = await setup(t, { initialProfile: profile, communityError: true, risingBooks: [
     { work_id: "OL2W", title: "A rising book", author: "An author" },
@@ -846,7 +875,8 @@ test("sign-out clears the open introduction and a late reveal cannot restore it"
   assert.equal($("#matches-list").textContent, "");
   assert.equal($("#reveal-content").textContent, "");
   assert.equal(window.document.body.style.overflow, "");
-  assert.equal(window.localStorage.length, 1, "only connection-type preference is stored");
+  assert.deepEqual(Array.from({ length: window.localStorage.length }, (_, i) => window.localStorage.key(i)).sort(),
+    ["zbc.google-provider.v1", "zebra-matchmaking-intents"], "only non-personal welcome preferences remain");
 });
 
 test("members without matches retain the original empty state without carousel controls", async t => {

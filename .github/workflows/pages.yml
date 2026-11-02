@@ -1,0 +1,65 @@
+name: Publish site and refresh public map
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.repository == 'hph45/hph45.github.io' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/configure-pages@v5
+      # A scheduled run must not bypass validation after a failed push build.
+      - name: Validate and build website code
+        run: |
+          npm ci
+          npm run test:matchmaking
+          npm run test:home
+          npm run test:admin
+          npm run build:matchmaking
+          npm run build:home
+          npm run build:admin
+      - name: Stage only public assets
+        run: node scripts/build-pages.mjs _site
+      - name: Refresh anonymous map snapshot (one Supabase request)
+        run: node scripts/refresh-public-map.mjs _site/assets/community-map.json
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+          retention-days: 1
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment

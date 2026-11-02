@@ -66,6 +66,38 @@ When logs are needed for a specific failure, start with a **1–5 minute window*
 
 Budget new scans against the remaining allowance and days until reset, leaving a reserve for incidents. The Usage page can lag by an hour; compare readings after that delay and across subsequent days. These are operating practices, not an automatic quota cap. A rising counter without intentional log searches needs investigation of integrations or Supabase metering before further broad scans.
 
+The operational target is **20 MB/day of ingestion** while the organization is on the 1 GB Free allowance. Check Usage every few days and before/after a release; use the actual cycle end shown there, not the calendar month. Recalculate `(allowance − used − reserve) / remaining days` after growth or a spike, reserving roughly 150 MB of ingestion and 20 GB of query allowance for incidents. This is a planning target, not an automated shutdown or a guarantee that the other Free limits will last until 50,000 MAUs.
+
+For a configuration check, run `npm run inspect:logging`. It reads only Postgres settings and function metadata in a read-only transaction, returning no member data and performing no log searches. Run it on demand, not on a schedule. The November 2 audit found connection/disconnection logs, temporary-file logs, duration logs, and broad pgAudit logging already disabled. `log_statement=ddl` records schema changes; normal API reads/writes are not being logged as SQL statements. Keep warnings, errors, and lock-wait diagnostics. Do not set a duration/temp-file threshold to `0` thinking it means disabled: it enables logging every qualifying event.
+
+For an incident, identify the failing request/time locally first, then query one log source over 1–5 minutes. Filter the query itself, inspect the result once, and leave the log view. Expand only if needed. Do not leave live log reports running, add scripted log searches, or use broad log queries for routine member counts and ranking checks. The public-map publisher below makes one ordinary aggregate RPC per run; it never queries logs. Nothing in this change turns off security logging or alters session lifetimes.
+
+### Browser request reductions
+
+Signed-in visits skip `/auth/v1/settings` entirely. The welcome screen checks Google when needed and caches only a confirmed enabled response for 24 hours; an OAuth-start failure forces a fresh check. A settings outage still permits a normal OAuth attempt. This cache cannot grant access or replace Google/Supabase authentication.
+
+Signed-in dashboards cache only whitelisted community counts, cities, Top Ten, and Rising Favorites for 15 minutes. The browser entry belongs to the current account and is cleared on sign-out/account change/deletion. New profiles and changed cities/favorites invalidate it immediately; unrelated edits reuse it. Failed and malformed responses are not cached. Profiles, match/contact data, review ratings, and consent continue to load through their authenticated requests and never enter this aggregate cache.
+
+### Shared hourly map publication
+
+`.github/workflows/pages.yml` publishes the site on a push to `main`, manual dispatch, and at minute 17 of each hour. It builds/tests locally on the runner, stages an explicit allowlist of website assets, fetches the existing public map RPC **once**, validates/whitelists its output, and places it at `/assets/community-map.json` in the Pages artifact. It uses the public publishable key already in the site; no Supabase secret or member export is required. Generated snapshots are deployment artifacts, not hourly Git commits. A failed fetch or validation aborts the deployment and keeps the last successful site live.
+
+In [repository Settings → Pages](https://github.com/hph45/hph45.github.io/settings/pages), the publishing Source must be **GitHub Actions**. Commit the workflow, scripts, source, and rebuilt bundles together. The next push starts the first publication; the hourly job exists only after the workflow reaches `main`. Deployments use the existing `github-pages` environment and custom domain. The workflow has no repository-content write permission.
+
+Schedules are approximate: GitHub may delay runs, and disables scheduled workflows in public repositories after 60 days without repository activity. Check the latest successful run in Actions if map updates stop; re-enable/run it there if needed. The browser checks the static file at most every 15 minutes while the map is visible, tolerates delayed publication, and hides dots older than three hours. An outage never causes visitors to fall back to Supabase. See [GitHub Pages workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages) and [schedule behavior](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule).
+
+To preview the actual artifact locally, use a new output directory:
+
+```sh
+npm run build:matchmaking
+npm run build:home
+npm run build:pages -- /private/tmp/zbc-public-preview
+npm run refresh:map -- /private/tmp/zbc-public-preview/assets/community-map.json
+python3 -m http.server 8098 --bind 127.0.0.1 --directory /private/tmp/zbc-public-preview
+```
+
+`build-pages.mjs` refuses an existing destination and symlinked public assets. Private matching files, database scripts, local credentials, source tests, and development folders are outside the publication allowlist.
+
 ## Private admin dashboard
 
 `/admin/` is an unlinked dashboard on the main domain. Sign in with the owner’s existing Google account at `/matchmaking/`, then open `/admin/` on that same origin. Signed-out visitors and other members are redirected to matchmaking. The page is marked `noindex` and is not included in public navigation.
@@ -147,9 +179,9 @@ Both Edge Functions validate the bearer token with Supabase Auth themselves. The
 
 On the home page, the live map sits behind the countdown. Its dots have city-only hover and accessible labels, with no click selection, focus stops, displayed reader totals, or zoom controls. The countdown's outlined phase has transparent fill so the map remains visible through the digits. The shared marker renderer preserves counts and the full interactive map on the signed-in dashboard. Home-page map attribution is on the Privacy page, linked from the footer.
 
-The home-page community map uses `get_public_matchmaking_map()` (migration `20261027000100`). This dedicated public RPC exposes only the completed-profile count, city-center coordinates, city labels, and counts per city, including paused members, exactly as in the member map. It returns no personal identifiers, contacts, books, or preferences. The existing dashboard RPC remains authenticated-only. A private RLS-protected singleton caches the aggregate for one hour; concurrent refreshes serialize on its row and recheck freshness. Only the function can refresh it for visitors. Changes and deletions appear after the snapshot expires.
+The home-page community map publisher uses `get_public_matchmaking_map()` (migration `20261027000100`). This dedicated public RPC exposes only the completed-profile count, city-center coordinates, city labels, and counts per city, including paused members, exactly as in the member map. It returns no personal identifiers, contacts, books, or preferences. The existing dashboard RPC remains authenticated-only. A private RLS-protected singleton caches the aggregate for one hour; concurrent refreshes serialize on its row and recheck freshness. Legacy clients can still call this endpoint; the current home-page bundle reads only the published JSON file.
 
-The home page fetches the map only near the viewport, through a small bundle built with `npm run build:home`. It uses the public publishable key without loading the auth client or reading a session. Browser storage caches only the whitelisted aggregate until the server snapshot's one-hour expiry, so browser and server caches do not stack into a two-hour delay. Visible maps refresh after expiry; background tabs and offscreen maps do not poll. No scheduled job, Edge Function, external map tiles, or extra catalog lookup is needed. Run `npm run test:home` for the public data boundary and cache checks. Apply the new migration before publishing the home-page files.
+The home page fetches the shared map file only near the viewport, through a small bundle built with `npm run build:home`. It sends no Supabase request, API key, or login/session data. Browser storage holds only the whitelisted aggregate. Visible maps recheck the static file every 15 minutes; background tabs and offscreen maps do not poll. The hourly Pages workflow provides updates without per-visitor database traffic, Edge Functions, external map tiles, or catalog lookups. Updates are approximate and depend on publication timing. Run `npm run test:home` for the public-data boundary, cache, and artifact-publication checks.
 
 Book and city autocomplete search **static reference catalogs in the browser**. The initial snapshot contains 34,784 Open Library works and 34,174 cities. Each catalog downloads only when its field is first focused or searched; all four book fields share one download. Content-hashed URLs allow HTTP caching across visits, and typing never sends search text to Supabase or an external provider. Search matches titles/authors or city/region/country names without requiring exact casing, accents, or punctuation. Identical title-and-author suggestions are deduplicated; selected IDs still receive database validation on save.
 

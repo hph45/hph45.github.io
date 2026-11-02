@@ -11,6 +11,8 @@ import { renderRisingBooks } from "./rising-books.js";
 import { attachInvites } from "./invite.js";
 import { createMatches } from "./matches.js";
 import { createFriendMatchmaking } from "./friend-matchmaking.js";
+import { createGoogleProviderCheck } from "./google-provider.js";
+import { createCommunityCache, communityChanged } from "./community-cache.js";
 
 export function createMatchmakingApp({ client, document, window, fetch = window.fetch.bind(window) }) {
   const $ = (selector) => document.querySelector(selector);
@@ -39,6 +41,10 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   const friendMatchmaking = createFriendMatchmaking({ client, document, window, action });
   const catalogSearch = createStaticCatalogSearch(fetch);
   let reviewCatalog;
+  let storage;
+  try { storage = window.localStorage; } catch { /* Browser storage is optional. */ }
+  const community = createCommunityCache({ client, storage });
+  const googleProvider = createGoogleProviderCheck({ fetch, storage, url: SUPABASE_URL, key: SUPABASE_PUBLISHABLE_KEY });
   const matches = createMatches({ client, document, window, action,
     getCatalog: () => reviewCatalog ||= loadReviewCatalog(fetch), getProfile: () => profile,
     getUserId: () => user?.id,
@@ -80,21 +86,20 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   }
   rememberIntents(selectedIntents);
 
-  async function checkGoogle() {
+  async function checkGoogle(options) {
+    const version = generation;
     text("#google-button-label", "Continue with Google");
     try {
-      const response = await fetch(`${SUPABASE_URL}/auth/v1/settings`, {
-        headers: { apikey: SUPABASE_PUBLISHABLE_KEY }, signal: AbortSignal.timeout(8000),
-      });
-      if (!response.ok) throw new Error("Settings unavailable");
-      const settings = await response.json();
-      const unavailable = settings.external?.google === false;
+      const unavailable = !await googleProvider(options);
+      if (version !== generation || user) return;
       $("#google-sign-in").disabled = unavailable;
       $("#sign-in-status").hidden = !unavailable;
       return !unavailable;
     } catch {
       // An unavailable settings endpoint need not prevent an OAuth attempt.
+      if (version !== generation || user) return;
       $("#google-sign-in").disabled = false;
+      $("#sign-in-status").hidden = true;
       return true;
     }
   }
@@ -322,11 +327,10 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   async function loadCommunity(version) {
     const request = ++communityRequest;
     try {
-      const [{ data, error }, catalog] = await Promise.all([
-        client.rpc("get_matchmaking_community"), reviewCatalog ||= loadReviewCatalog(fetch),
+      const [data, catalog] = await Promise.all([
+        community.load(user?.id), reviewCatalog ||= loadReviewCatalog(fetch),
       ]);
       if (version !== generation || request !== communityRequest) return;
-      if (error || !data) throw error || new Error("No community data");
       renderCommunityMap(document, data);
       mapZoom.refresh();
       renderTopBooks(document, data.top_books || [], catalog);
@@ -364,6 +368,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
 
   async function acceptSession(session) {
     const version = ++generation;
+    if (!session?.user || (user && user.id !== session.user.id)) community.invalidate();
     matches.reset();
     friendMatchmaking.reset();
     $("#profile-more").open = false;
@@ -386,6 +391,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       $$("#dashboard-view [id^='profile-']:not(#profile-more):not(#profile-more-label), #account-email, #contact-email-account, #matches-list, #top-books-list, #rising-books-list, #rising-books-status, #map-markers").forEach((element) => element.replaceChildren());
       if ($("#delete-dialog").open) $("#delete-dialog").close();
       showView("welcome-view");
+      await checkGoogle();
     }
   }
 
@@ -448,6 +454,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       const { data, error } = await query.select("*").single();
       if (version !== generation) return;
       if (error) throw error;
+      if (communityChanged(profile, data)) community.invalidate();
       profile = data;
       // Leaving Instagram blank in the form is already a deliberate choice.
       instagramPromptDismissed = true;
@@ -546,7 +553,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       window.location.assign(data.url);
     } catch {
       notice("We couldn’t start Google sign-in. Please try again in a moment.");
-      await checkGoogle();
+      await checkGoogle({ force: true });
     }
   });
 
@@ -632,7 +639,6 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       showView("loading-view");
       const initialURL = new URL(window.location.href);
       const hadOAuthError = initialURL.searchParams.has("error") || new URLSearchParams(initialURL.hash.slice(1)).has("error");
-      const googleCheck = checkGoogle();
       const listener = client.auth.onAuthStateChange((_event, session) => {
         // Never await another Auth method in this callback: it holds Auth's lock.
         if (authReady && (session?.user?.id || null) !== (user?.id || null)) {
@@ -656,7 +662,6 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
         for (const name of ["code", "error", "error_code", "error_description"]) initialURL.searchParams.delete(name);
         if (/access_token=|error=|refresh_token=/.test(initialURL.hash)) initialURL.hash = "";
         window.history.replaceState({}, "", `${initialURL.pathname}${initialURL.search}${initialURL.hash}`);
-        await googleCheck;
       }
     },
     async settled() { while (pending.size) await Promise.allSettled([...pending]); },
