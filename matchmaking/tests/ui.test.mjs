@@ -715,7 +715,7 @@ test("the dashboard renders the real count, city dots, and community book rankin
   assert.match($("#top-books-list").textContent, /1 favorite/);
   const calls = state.rpcCalls.length;
   await event('[data-country="United States"]', "mouseenter");
-  assert.equal($("#map-selection").textContent, "United States · 1 reader · Top book: A book by An author");
+  assert.equal($("#map-selection").textContent, "United States · 1 reader");
   await event(".map-marker", "mouseenter");
   assert.match($("#map-selection").textContent, /Oakland.*1 reader/);
   assert.equal(state.rpcCalls.length, calls, "hover does not fetch from Supabase");

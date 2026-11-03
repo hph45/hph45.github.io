@@ -1,7 +1,7 @@
 import { parsePublicMap } from "../../home/src/community.js";
 
 export const COMMUNITY_CACHE_KEY = "zbc.member-community.v2";
-export const COMMUNITY_CACHE_AGE = 15 * 60 * 1000;
+export const COMMUNITY_CACHE_AGE = 60 * 60 * 1000;
 
 // Explicitly allow aggregate fields only. Profiles, contacts, introductions,
 // and ratings must never enter this browser cache.

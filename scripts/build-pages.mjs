@@ -10,6 +10,7 @@ export const PUBLIC_FILES = [
   "zebra white.jpeg", "zebra white and black.pdf", "zebra white and black (1).pdf",
   "matchmaking/index.html", "matchmaking/styles.css", "matchmaking/app.js", "matchmaking/world-outline.svg", "matchmaking/books.csv",
   "admin/index.html", "admin/styles.css", "admin/app.js", "privacy/index.html", "terms/index.html",
+  "assets/flags/LICENSE.txt",
 ];
 export const PUBLIC_DIRECTORIES = ["assets", "matchmaking/data"];
 

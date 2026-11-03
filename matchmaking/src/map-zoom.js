@@ -39,6 +39,7 @@ export function attachMapZoom(document) {
     zoomOut.disabled = scale <= 1;
     resetButton.disabled = scale <= 1;
     status.textContent = `Map zoom ${Math.round(scale * 100)} percent`;
+    svg.dispatchEvent(new document.defaultView.Event("map-view-change"));
   }
   function zoom(scale, anchor = { x: WIDTH / 2, y: HEIGHT / 2 }, start = view, destination = anchor) {
     const ratio = clamp(scale, 1, MAX_ZOOM) / start.scale;

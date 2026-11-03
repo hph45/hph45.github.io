@@ -1,3 +1,5 @@
+import { displayCountry } from "./country-names.js";
+
 export const INTENTS = {
   romance: "Romance",
   friends: "Friends",
@@ -191,7 +193,7 @@ export function validateProfile(profile, { consent, today = new Date() } = {}) {
 }
 
 export function locationLabel(profile) {
-  return [profile.city, profile.region, profile.country].filter(Boolean).join(", ");
+  return [profile.city, profile.region, displayCountry(profile.country)].filter(Boolean).join(", ");
 }
 
 export function bookEditTime(profile) {

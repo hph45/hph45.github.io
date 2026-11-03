@@ -1,4 +1,4 @@
-import { INTENTS, GENDERS, ageRangeLabel, normalizeLinkedInURL, normalizeInstagramHandle, instagramProfileURL } from "../../matchmaking/src/profile.js";
+import { INTENTS, GENDERS, ageRangeLabel, normalizeLinkedInURL, normalizeInstagramHandle, instagramProfileURL, locationLabel } from "../../matchmaking/src/profile.js";
 
 export function createMemberDirectory({ client, document, window, onDenied, isDenied }) {
   const $ = selector => document.querySelector(selector);
@@ -70,7 +70,7 @@ export function createMemberDirectory({ client, document, window, onDenied, isDe
     const row = element("li"), details = element("details"), summary = element("summary");
     const identity = element("span", "member-identity");
     identity.append(element("strong", "member-name", profile.display_name));
-    identity.append(element("span", "member-location", `${profile.age} · ${[profile.city, profile.region, profile.country].filter(Boolean).join(", ")}`));
+    identity.append(element("span", "member-location", `${profile.age} · ${locationLabel(profile)}`));
     identity.append(element("span", "member-types", profile.intents.map(type => INTENTS[type]).filter(Boolean).join(" · ") + (profile.is_active ? "" : " · Paused")));
     const books = element("span", "member-books");
     for (const [i, book] of profile.favorite_books.entries()) {

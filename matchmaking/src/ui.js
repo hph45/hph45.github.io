@@ -5,6 +5,7 @@ import { createStaticCatalogSearch } from "./static-catalogs.js";
 import { attachAgeRange } from "./age-range.js";
 import { renderCommunityMap } from "./map.js";
 import { renderCountryMap, clearCountryMap, cityCountrySummaries } from "./country-map.js";
+import { displayCountry } from "./country-names.js";
 import { attachMapZoom } from "./map-zoom.js";
 import { loadReviewCatalog } from "./review-catalog.js";
 import { renderTopBooks } from "./top-books.js";
@@ -182,6 +183,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
           : input.name === "share_email_with_matches" ? values[input.name] !== false : values[input.name] === true;
       } else if (values[input.name] !== undefined) input.value = values[input.name] ?? (input.type === "range" ? input.defaultValue : "");
     }
+    field("country").value = displayCountry(field("country").value);
     ageRange.sync();
     text("#form-eyebrow", profile ? "Edit your chapter" : "Your first chapter");
     showStep(0, false);
@@ -333,7 +335,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       ]);
       if (version !== generation || request !== communityRequest) return;
       renderCommunityMap(document, data, { countrySummaries: cityCountrySummaries(data.countries) });
-      renderCountryMap(document, data.countries);
+      renderCountryMap(document, data.countries, catalog);
       mapZoom.refresh();
       renderTopBooks(document, data.top_books || [], catalog);
       renderRisingBooks(document, data.rising_books || [], data.top_books || [], catalog);
@@ -612,8 +614,8 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     document, window, delay: 150,
     emptyMessage: "No city found. Try a nearby city or its local name.",
     search: catalogSearch.cities,
-    describe: city => [city.name, [city.region, city.country].filter(Boolean).join(", ")],
-    onSelect(city) { field("city_id").value = city.id; field("city").value = city.name; field("region").value = city.region; field("country").value = city.country; },
+    describe: city => [city.name, [city.region, displayCountry(city.country)].filter(Boolean).join(", ")],
+    onSelect(city) { field("city_id").value = city.id; field("city").value = city.name; field("region").value = city.region; field("country").value = displayCountry(city.country); },
     onClear() { field("city_id").value = ""; field("region").value = ""; field("country").value = ""; },
   }));
   const bookFields = ["", "_2", "_3"].map(suffix => [`favorite_book${suffix}`, `favorite_author${suffix}`]);

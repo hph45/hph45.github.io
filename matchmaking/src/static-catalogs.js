@@ -1,4 +1,5 @@
 import manifest from "../data/manifest.json" with { type: "json" };
+import { displayCountry } from "./country-names.js";
 
 // Only public book/city reference metadata lives in these files. Query text stays
 // in the browser; profile saves still validate the selected IDs in Supabase.
@@ -20,7 +21,7 @@ function indexCatalog(data, kind) {
     const [id, name, searchName, region, country, population] = row;
     if (row.length !== 6 || !Number.isSafeInteger(id) || id <= 0 || !row.slice(1, 5).every(value => typeof value === "string") || !Number.isSafeInteger(population) || population < 0) throw new Error("Invalid city record");
     const normalizedName = normalize(name);
-    return { value: { id, name, region, country }, name: normalizedName, all: normalize(`${name} ${searchName} ${region} ${country}`), key: id, order: -population };
+    return { value: { id, name, region, country }, name: normalizedName, all: normalize(`${name} ${searchName} ${region} ${country} ${displayCountry(country)}`), key: id, order: -population };
   });
 }
 

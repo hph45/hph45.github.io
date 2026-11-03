@@ -17,6 +17,7 @@ const cities = [
   [2964574, "Dublin", "dublin", "Leinster", "Ireland", 1024027],
   [5344157, "Dublin", "dublin", "California", "United States", 57721],
   [3448439, "São Paulo", "sao paulo", "São Paulo", "Brazil", 12400232],
+  [282239, "Ramallah", "ramallah", "West Bank", "Palestinian Territories", 42642],
 ];
 const response = data => ({ ok: true, json: async () => data });
 
@@ -35,6 +36,8 @@ test("local search preserves work IDs, matches title/author and accents, and kee
   assert.deepEqual((await search.cities("dublin")).map(city => city.country), ["Ireland", "United States"]);
   assert.equal((await search.cities("dublin california"))[0].id, 5344157);
   assert.equal((await search.cities("sao paulo brazil"))[0].name, "São Paulo");
+  assert.equal((await search.cities("ramallah palestine"))[0].id, 282239);
+  assert.equal((await search.cities("palestine"))[0].country, "Palestinian Territories", "display aliases preserve the catalog's geographic key");
   assert.deepEqual(calls.map(call => call.url), [manifest.books.url, manifest.cities.url]);
   assert.ok(calls.every(call => call.options.cache === "force-cache"));
   assert.ok(calls.every(call => !call.url.includes("query") && !call.options.body), "queries never leave the browser");

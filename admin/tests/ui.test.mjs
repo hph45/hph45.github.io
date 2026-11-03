@@ -44,7 +44,7 @@ async function setup(t, { signedIn = true, response = success(), profileResponse
     },
     rpc: async (name, args) => { state.calls.push(name); state.requests.push({ name, args }); return name === "get_admin_poetry" ? state.poetryResponse : name === "get_matchmaking_admin_profiles" ? state.profileResponse : state.response; },
   };
-  const app = createAdminApp({ client, document: window.document, window });
+  const app = createAdminApp({ client, document: window.document, window, fetch: async () => ({ ok: false }) });
   const $ = selector => window.document.querySelector(selector);
   const event = async (selector, type = "click") => { $(selector).dispatchEvent(new window.Event(type, { bubbles: true })); await app.settled(); };
   const auth = (event, id = null) => { state.session = id ? { user: { id } } : null; state.onAuth(event, state.session); };
@@ -203,7 +203,7 @@ test("authorized aggregates render clear counts, shares, and a zoomable map", as
   assert.equal(window.document.querySelectorAll(".map-marker").length, 14);
   const calls = state.calls.length;
   await event('[data-country="United States"]', "mouseenter");
-  assert.equal($("#map-selection").textContent, "United States · 19 readers · Top book: Favorite in the US by An author");
+  assert.equal($("#map-selection").textContent, "United States · 19 readers");
   await event(".map-marker", "mouseenter");
   assert.match($("#map-selection").textContent, /City 1.*7 readers/);
   assert.equal(state.calls.length, calls);

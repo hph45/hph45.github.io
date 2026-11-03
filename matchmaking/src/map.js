@@ -1,4 +1,5 @@
 import { geoNaturalEarth1 } from "d3-geo";
+import { displayCountry } from "./country-names.js";
 
 // Keep the marker projection identical to scripts/build-matchmaking-geography.mjs.
 export function worldProjection() {
@@ -21,7 +22,7 @@ export function renderCommunityMap(document, community, { showCounts = true, hov
     if (!point || point.some(value => !Number.isFinite(value))) continue;
     const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     const memberCount = Math.max(1, Number(city.member_count) || 1);
-    const location = [city.name, city.region, city.country].filter(Boolean).join(", ");
+    const location = [city.name, city.region, displayCountry(city.country)].filter(Boolean).join(", ");
     const country = showCounts && countrySummaries?.get(city.country);
     const label = showCounts ? `${location} · ${memberCount} ${memberCount === 1 ? "reader" : "readers"}${country ? ` · ${country}` : ""}` : location;
     circle.setAttribute("cx", point[0]); circle.setAttribute("cy", point[1]);
@@ -29,6 +30,7 @@ export function renderCommunityMap(document, community, { showCounts = true, hov
     circle.setAttribute("r", radius); circle.dataset.mapRadius = radius;
     circle.setAttribute("fill-opacity", Math.min(.85, .3 + .15 * Math.log2(memberCount)));
     circle.setAttribute("class", "map-marker");
+    circle.dataset.country = city.country;
     if (hoverOnly) circle.setAttribute("focusable", "false");
     else circle.setAttribute("tabindex", "0");
     circle.setAttribute("role", "img"); circle.setAttribute("aria-label", label);

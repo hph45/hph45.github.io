@@ -1,5 +1,7 @@
 import { renderCommunityMap } from "../../matchmaking/src/map.js";
 import { renderCountryMap, clearCountryMap, cityCountrySummaries } from "../../matchmaking/src/country-map.js";
+import { displayCountry } from "../../matchmaking/src/country-names.js";
+import { loadReviewCatalog } from "../../matchmaking/src/review-catalog.js";
 import { attachMapZoom } from "../../matchmaking/src/map-zoom.js";
 import { createMemberDirectory } from "./members.js";
 import { createPoetryLibrary } from "./poetry.js";
@@ -13,7 +15,7 @@ const searchable = value => String(value).normalize("NFD").replace(/\p{Diacritic
 const denied = error => ["42501", "PGRST301", "PGRST302", "refresh_token_not_found", "refresh_token_already_used"].includes(error?.code)
   || [401, 403].includes(error?.status);
 
-export function createAdminApp({ client, document, window }) {
+export function createAdminApp({ client, document, window, fetch = window.fetch.bind(window) }) {
   const $ = selector => document.querySelector(selector);
   const zoom = attachMapZoom(document);
   const directory = createMemberDirectory({ client, document, window, onDenied: redirect, isDenied: denied });
@@ -21,6 +23,7 @@ export function createAdminApp({ client, document, window }) {
   const tabs = [...document.querySelectorAll("[data-admin-tab]")];
   const pending = new Set(), removers = [];
   let stats = null, mode = "countries", page = 0, userId = null;
+  let reviewCatalog;
   let generation = 0, started = false, destroyed = false, away = false, authTimer = null, subscription;
 
   function listen(target, event, handler) {
@@ -129,17 +132,19 @@ export function createAdminApp({ client, document, window }) {
     if (!stats) return;
     const query = searchable($("#location-search").value.trim());
     const cities = mode === "cities";
-    const rows = stats[mode].filter(row => searchable(cities ? [row.name, row.region, row.country].join(" ") : row.country).includes(query));
+    const rows = stats[mode].filter(row => searchable([
+      ...(cities ? [row.name, row.region] : []), row.country, displayCountry(row.country),
+    ].join(" ")).includes(query));
     page = Math.min(page, Math.max(0, Math.ceil(rows.length / PAGE_SIZE) - 1));
     const first = page * PAGE_SIZE;
     const fragment = document.createDocumentFragment();
     for (const row of rows.slice(first, first + PAGE_SIZE)) {
       const tr = document.createElement("tr");
       const label = document.createElement("th"); label.scope = "row";
-      label.textContent = cities ? row.name : row.country;
+      label.textContent = cities ? row.name : displayCountry(row.country);
       if (cities) {
         const detail = document.createElement("span"); detail.className = "location-detail";
-        detail.textContent = [row.region, row.country].filter(Boolean).join(", "); label.append(detail);
+        detail.textContent = [row.region, displayCountry(row.country)].filter(Boolean).join(", "); label.append(detail);
       }
       const readers = document.createElement("td"); readers.textContent = number(row.member_count);
       const proportion = document.createElement("td"); proportion.textContent = percent(row.member_count, stats.total_members);
@@ -155,7 +160,7 @@ export function createAdminApp({ client, document, window }) {
     $("#next-locations").disabled = first + PAGE_SIZE >= rows.length;
   }
 
-  function render(data) {
+  function render(data, catalog) {
     if (!data || !Number.isFinite(data.total_members) || !["age_groups", "genders", "connection_types", "cities", "countries"].every(key => Array.isArray(data[key]))) {
       throw new Error("Invalid statistics response");
     }
@@ -173,7 +178,7 @@ export function createAdminApp({ client, document, window }) {
     renderChart("#connection-chart", data.connection_types);
     renderReviews(data.reviews);
     renderCommunityMap(document, data, { countrySummaries: cityCountrySummaries(data.countries) });
-    renderCountryMap(document, data.countries);
+    renderCountryMap(document, data.countries, catalog);
     zoom.reset();
     renderLocations();
     view("admin");
@@ -192,10 +197,12 @@ export function createAdminApp({ client, document, window }) {
       if (!userId) { redirect(); return; }
       // Session presence is only a convenience. This RPC checks the signed JWT
       // against the server's allowlist, including when access has been revoked.
-      const result = await client.rpc("get_matchmaking_admin_stats");
+      const [result, catalog] = await Promise.all([
+        client.rpc("get_matchmaking_admin_stats"), reviewCatalog ||= loadReviewCatalog(fetch),
+      ]);
       if (!current(request)) return;
       if (result.error) throw result.error;
-      render(result.data);
+      render(result.data, catalog);
       await directory.start();
     } catch (error) {
       if (!current(request)) return;

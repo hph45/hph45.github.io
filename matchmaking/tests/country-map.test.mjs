@@ -25,16 +25,17 @@ test("country hover, focus, and tap show totals and favorite while city dots ret
   const country = $('[data-country="United States"]');
   for (const type of ["mouseenter", "focus", "click"]) {
     country.dispatchEvent(new window.Event(type, { bubbles: true }));
-    assert.equal($("#map-selection").textContent, "United States · 4 readers · Top book: A shared favorite by An author");
+    assert.equal($("#map-selection").textContent, "United States · 4 readers");
     $(".map-marker").dispatchEvent(new window.Event(type, { bubbles: true }));
     assert.equal($("#map-selection").textContent, "Oakland, California, United States · 4 readers");
   }
-  assert.equal(country.querySelector("title").textContent, country.getAttribute("aria-label"));
+  assert.match(country.getAttribute("aria-label"), /Top book: A shared favorite by An author/);
+  assert.equal(country.querySelector("title"), null, "the native tooltip does not duplicate the popup");
   assert.equal(country.getAttribute("tabindex"), "0");
   assert.equal($("#map-countries").nextElementSibling, $("#map-markers"));
   assert.equal($("#map-countries").parentElement, $("#map-markers").parentElement);
   $('[data-country="Brazil"]').dispatchEvent(new window.Event("click", { bubbles: true }));
-  assert.equal($("#map-selection").textContent, "Brazil · 0 readers · No favorites yet.");
+  assert.equal($("#map-selection").textContent, "Brazil · 0 readers");
   renderCountryMap(document, undefined);
   assert.equal($("#map-countries").children.length, 0, "an older response cannot invent zero country counts");
   assert.equal($("#map-markers").children.length, 1);
@@ -45,12 +46,31 @@ test("country summaries use text, replace previous data, and clear on demand", a
   renderCountryMap(document, [{ country: "United States", member_count: 1, top_book: { title: '<img src=x onerror="unsafe()">', author: "<script>unsafe()</script>" } }]);
   const path = $('[data-country="United States"]');
   path.dispatchEvent(new window.Event("click"));
-  assert.match($("#map-selection").textContent, /1 reader · Top book: <img/);
+  assert.match($("#country-popup").textContent, /1 reader.*Top book<img/);
   assert.equal($("#map-countries img"), null); assert.equal($("#map-countries script"), null);
   assert.equal($("#map-selection img"), null);
+  assert.equal($("#country-popup script"), null);
+  assert.equal($("#country-popup img[src=x]"), null);
   assert.equal($("#map-countries").children.length, COUNTRY_SHAPES.length);
   clearCountryMap(document);
   assert.equal($("#map-countries").children.length, 0);
+});
+
+test("Palestine keeps its counts and favorite when geographic data uses the original country key", async t => {
+  const { $, document, window } = await setup(t);
+  const country = "Palestinian Territories";
+  const data = { total_members: 4, cities: [{ ...community.cities[0], name: "Ramallah", region: "West Bank", country }],
+    countries: [{ ...community.countries[0], country }] };
+  renderCommunityMap(document, data); renderCountryMap(document, data.countries);
+  const path = $('[data-country="Palestinian Territories"]');
+  path.dispatchEvent(new window.Event("mouseenter"));
+  assert.equal($("#map-selection").textContent, "Palestine · 4 readers");
+  assert.match(path.getAttribute("aria-label"), /Palestine · 4 readers · Top book: A shared favorite/);
+  assert.equal($(".country-popup-flag").getAttribute("src"), "/assets/flags/ps.svg");
+  $(".map-marker").dispatchEvent(new window.Event("mouseenter"));
+  assert.equal($("#map-selection").textContent, "Ramallah, West Bank, Palestine · 4 readers");
+  renderCommunityMap(document, data, { showCounts: false, hoverOnly: true });
+  assert.equal($(".map-marker title").textContent, "Ramallah, West Bank, Palestine");
 });
 
 test("zoom and dragging preserve country/city alignment without accidental selection", async t => {
@@ -64,7 +84,8 @@ test("zoom and dragging preserve country/city alignment without accidental selec
   assert.equal(click.defaultPrevented, true);
   assert.doesNotMatch($("#map-selection").textContent, /Top book/);
   path.dispatchEvent(new window.Event("click", { bubbles: true, cancelable: true }));
-  assert.match($("#map-selection").textContent, /Top book/);
+  assert.equal($(".country-popup-layer").hidden, false);
+  assert.match($("#country-popup").textContent, /Top book/);
 });
 
 test("static shapes keep distinct country identities and valid projected geometry", () => {

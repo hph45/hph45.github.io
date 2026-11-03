@@ -49,9 +49,13 @@ test("community caches are bounded, reusable across reloads, and scoped to the s
   const first = createCommunityCache(options);
   assert.deepEqual(await Promise.all([first.load("A"), first.load("A")]), [aggregate(), aggregate()]);
   await createCommunityCache(options).load("A"); assert.equal(calls, 1);
-  await createCommunityCache(options).load("B"); assert.equal(calls, 2);
-  now += COMMUNITY_CACHE_AGE;
+  now = instant + 59 * 60 * 1000;
+  await createCommunityCache(options).load("A"); assert.equal(calls, 1, "reloads reuse statistics for the full hour");
+  now = instant + 60 * 60 * 1000;
+  await createCommunityCache(options).load("A"); assert.equal(calls, 2, "the first load after one hour fetches current statistics");
   await createCommunityCache(options).load("B"); assert.equal(calls, 3);
+  now += COMMUNITY_CACHE_AGE;
+  await createCommunityCache(options).load("B"); assert.equal(calls, 4);
   first.invalidate(); assert.equal(saved.getItem(COMMUNITY_CACHE_KEY), undefined);
   await assert.rejects(first.load(null), /Sign in/);
 });
