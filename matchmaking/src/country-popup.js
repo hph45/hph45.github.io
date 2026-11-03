@@ -42,11 +42,10 @@ export function createCountryPopup(document, catalog) {
     active = null;
   }
   function leave() { keepOpen(); if (!pinned) leaveTimer = window.setTimeout(hide, 160); }
-  function anchorFor(target, event, rect) {
-    if (event && event.type !== "focus" && event.type !== "focusin"
-      && Number.isFinite(event.clientX) && Number.isFinite(event.clientY) && (event.clientX || event.clientY)) {
-      return { x: event.clientX - rect.left, y: event.clientY - rect.top };
-    }
+  function anchorFor(target, rect) {
+    // Use the country's projected center for every input method, so entering
+    // at a different border or clicking to pin cannot move the popup.
+    // Tiny countries without an outline use the center of their city marker.
     const x = Number(target.dataset.mapX ?? target.getAttribute("cx"));
     const y = Number(target.dataset.mapY ?? target.getAttribute("cy"));
     const matrix = target.getScreenCTM?.();
@@ -54,11 +53,11 @@ export function createCountryPopup(document, catalog) {
     const fit = Math.min(rect.width / 1000, rect.height / 500);
     return { x: (rect.width - 1000 * fit) / 2 + x * fit, y: (rect.height - 500 * fit) / 2 + y * fit };
   }
-  function position(event) {
+  function position() {
     if (!active) return;
     const rect = svg.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
-    const point = anchorFor(active.target, event, rect);
+    const point = anchorFor(active.target, rect);
     const x = clamp(point.x, 6, rect.width - 6), y = clamp(point.y, 6, rect.height - 6);
     const width = Math.min(232, rect.width - 16);
     card.style.width = `${width}px`;
@@ -117,7 +116,7 @@ export function createCountryPopup(document, catalog) {
       target.setAttribute("aria-expanded", "true");
     }
     if (event?.type === "click") { pinned = true; viewport.classList.add("has-pinned-country"); }
-    layer.hidden = false; position(event);
+    layer.hidden = false; position();
   }
   listen(card, "mouseenter", keepOpen); listen(card, "mouseleave", leave);
   listen(card, "focusin", keepOpen);
