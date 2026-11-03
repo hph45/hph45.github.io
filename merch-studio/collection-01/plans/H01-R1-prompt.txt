@@ -1,9 +1,0 @@
-Use case: product-mockup; precise edit of an existing garment design.
-Create a new polished photorealistic product-render board using the attached black hoodie render as the garment reference and the attached official zebra logo as the artwork reference. Preserve the black heavyweight boxy pullover hoodie, warm cream decoration, big cream official crest on the back, fabric quality and warm gray studio background.
-Requested front change: remove the entire woven chest patch. In its position on the wearer's LEFT chest, print a small refined cream serif wordmark directly onto the black fabric. It reads EXACTLY these three lines, title case:
-Zebra
-Book
-Club
-Each word must be on its own line. The text is left-aligned, in a confident classic Times-style serif, approximately 70 mm wide overall and 60 mm tall, with clean line spacing. No front zebra illustration, box, badge or patch. Keep the front quiet and wearable.
-Back: the large existing original zebra-head crest, including the tall Z, 20 and 25 and curved BOOK CLUB lettering, in cream screenprint centered below the hood.
-Composition: ONE design shown as front three-quarter view left and rear view right at equal scale; include a small close-up of the new stacked chest wordmark below. Landscape image, whole garments visible with clear margins, no people, no outside labels or captions, no manufacturer marks. Photorealistic textile printing, soft studio light and grounded shadows. Do not change the reference into a different hoodie style.
