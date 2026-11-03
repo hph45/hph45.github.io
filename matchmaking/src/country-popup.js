@@ -1,6 +1,6 @@
 import { displayCountry } from "./country-names.js";
 import { COUNTRY_FLAGS } from "./country-flags.js";
-import { bookPresentation } from "./review-catalog.js";
+import { countryBookPresentation } from "./country-books.js";
 import { createBookCover } from "./book-cover.js";
 
 const NS = "http://www.w3.org/2000/svg";
@@ -13,7 +13,7 @@ export function createCountryPopup(document, catalog) {
   const svg = document.querySelector("#world-map");
   const viewport = svg.closest(".map-viewport");
   const removers = [];
-  let active, leaveTimer;
+  let active, leaveTimer, pinned = false;
   const listen = (target, type, handler, options) => {
     target.addEventListener(type, handler, options);
     removers.push(() => target.removeEventListener(type, handler, options));
@@ -29,17 +29,19 @@ export function createCountryPopup(document, catalog) {
   const line = document.createElementNS(NS, "line");
   const dot = document.createElementNS(NS, "circle"); dot.setAttribute("r", "2.5");
   connector.append(line, dot);
-  const card = node("div", "country-popup"); card.id = "country-popup"; card.setAttribute("role", "tooltip");
+  const card = node("div", "country-popup"); card.id = "country-popup"; card.setAttribute("role", "dialog");
   layer.append(connector, card); viewport.append(layer);
 
   function keepOpen() { window.clearTimeout(leaveTimer); }
   function hide() {
     keepOpen(); layer.hidden = true;
     active?.target.removeAttribute("aria-describedby");
+    active?.target.setAttribute("aria-expanded", "false");
     active?.target.classList.remove("is-country-selected");
+    pinned = false; viewport.classList.remove("has-pinned-country");
     active = null;
   }
-  function leave() { keepOpen(); leaveTimer = window.setTimeout(hide, 160); }
+  function leave() { keepOpen(); if (!pinned) leaveTimer = window.setTimeout(hide, 160); }
   function anchorFor(target, event, rect) {
     if (event && event.type !== "focus" && event.type !== "focusin"
       && Number.isFinite(event.clientX) && Number.isFinite(event.clientY) && (event.clientX || event.clientY)) {
@@ -77,10 +79,12 @@ export function createCountryPopup(document, catalog) {
     dot.setAttribute("cx", x); dot.setAttribute("cy", y);
   }
   function show(info, target, event) {
+    if (pinned && event?.type !== "click") return;
     keepOpen();
     if (active?.target !== target) {
       hide(); active = { target, info };
       const country = displayCountry(info.country), count = info.member_count || 0;
+      card.setAttribute("aria-label", `${country} · Top book`);
       const heading = node("div", "country-popup-heading");
       const flag = COUNTRY_FLAGS[info.country];
       if (flag) {
@@ -92,21 +96,37 @@ export function createCountryPopup(document, catalog) {
       const identity = node("div", "country-popup-identity");
       identity.append(node("strong", "country-popup-name", country), node("span", "country-popup-count", `${count.toLocaleString()} ${count === 1 ? "reader" : "readers"}`));
       heading.append(identity);
-      const body = node("div", "country-popup-book");
+      const body = node(info.top_book ? "a" : "div", "country-popup-book");
       if (info.top_book) {
         const book = info.top_book;
-        const cover = createBookCover(document, bookPresentation(book, catalog), { width: 44, height: 66, className: "country-popup-cover" });
+        const presentation = countryBookPresentation(book, catalog);
+        body.href = presentation.url; body.target = "_blank"; body.rel = "sponsored noopener noreferrer";
+        body.setAttribute("aria-label", `${book.title}${book.author && book.author !== "Unknown author" ? ` by ${book.author}` : ""}. Find on Amazon (opens in a new tab).`);
+        const cover = createBookCover(document, presentation, { width: 44, height: 66, className: "country-popup-cover" });
         const details = node("div", "country-popup-book-details");
-        details.append(node("span", "country-popup-kicker", "Top book"), node("span", "country-popup-title", book.title), node("span", "country-popup-author", book.author));
+        details.append(node("span", "country-popup-kicker", "Top book"), node("span", "country-popup-title", book.title), node("span", "country-popup-author", book.author === "Unknown author" ? presentation.coverAuthor || "" : book.author));
+        if (presentation.approximate) {
+          const note = node("span", "country-popup-cover-note", "Closest cover match");
+          note.title = `Cover shown: ${presentation.coverTitle} by ${presentation.coverAuthor}. The saved favorite is unchanged.`;
+          details.append(note);
+        }
         body.append(cover, details);
       } else body.append(node("span", "country-popup-empty", count ? "Top book unavailable." : "No favorites yet."));
       card.replaceChildren(heading, body);
       target.setAttribute("aria-describedby", card.id); target.classList.add("is-country-selected");
+      target.setAttribute("aria-expanded", "true");
     }
+    if (event?.type === "click") { pinned = true; viewport.classList.add("has-pinned-country"); }
     layer.hidden = false; position(event);
   }
   listen(card, "mouseenter", keepOpen); listen(card, "mouseleave", leave);
-  listen(document, "keydown", event => { if (event.key === "Escape") hide(); });
+  listen(card, "focusin", keepOpen);
+  listen(card, "focusout", event => { if (!card.contains(event.relatedTarget)) leave(); });
+  listen(document, "keydown", event => {
+    if (event.key !== "Escape") return;
+    const restoreFocus = card.contains(document.activeElement);
+    hide(); if (restoreFocus) svg.focus();
+  });
   listen(document, "pointerdown", event => { if (!card.contains(event.target)) hide(); }, true);
   listen(window, "resize", hide);
   listen(svg, "map-view-change", () => {
@@ -116,12 +136,22 @@ export function createCountryPopup(document, catalog) {
   // Keep the card reachable across its short connector gap. A normal city dot
   // replaces country details; tiny countries use their city as the anchor.
   function bind(target, info, { city = false } = {}) {
+    if (info) { target.setAttribute("aria-haspopup", "dialog"); target.setAttribute("aria-expanded", "false"); }
     for (const type of ["mouseenter", "focus", "click"]) listen(target, type, event => {
+      if (pinned && type !== "click") {
+        const current = active.info;
+        document.querySelector("#map-selection").textContent = `${displayCountry(current.country)} · ${(current.member_count || 0).toLocaleString()} ${current.member_count === 1 ? "reader" : "readers"}`;
+        return;
+      }
       if (!info) { hide(); return; }
       if (!city) document.querySelector("#map-selection").textContent = `${displayCountry(info.country)} · ${(info.member_count || 0).toLocaleString()} ${info.member_count === 1 ? "reader" : "readers"}`;
       show(info, target, event);
     });
     listen(target, "mouseleave", leave); listen(target, "blur", leave);
+    if (info) listen(target, "keydown", event => {
+      if (!["Enter", " "].includes(event.key)) return;
+      event.preventDefault(); show(info, target, { type: "click" }); card.querySelector("a")?.focus();
+    });
   }
   return { bind, hide, destroy() { hide(); removers.forEach(remove => remove()); layer.remove(); } };
 }

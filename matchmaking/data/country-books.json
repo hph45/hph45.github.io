@@ -1,0 +1,696 @@
+{
+  "version": 1,
+  "books": [
+    {
+      "work_ids": [
+        "OL5782000W"
+      ],
+      "title": "A Thousand Splendid Suns",
+      "author": "Khaled Hosseini",
+      "source_page": "https://openlibrary.org/works/OL5782000W",
+      "source_url": "https://covers.openlibrary.org/b/id/8579790-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol5782000w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL42412330W"
+      ],
+      "title": "Atmosphere",
+      "author": "Taylor Jenkins Reid",
+      "source_page": "https://openlibrary.org/works/OL42412330W",
+      "source_url": "https://covers.openlibrary.org/b/id/15098710-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol42412330w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL26443093W"
+      ],
+      "title": "Babel",
+      "author": "R. F. Kuang",
+      "source_page": "https://www.harperreach.com/products/babel-or-the-necessity-of-violence-an-arcane-history-of-the-oxford-translators-revolution-rf-kuang-9780008501815/",
+      "source_url": "https://i.harperapps.com/hcuk/covers/9780008501815.JPG",
+      "aliases": [
+        {
+          "title": "Babel",
+          "author": "R. F. Kuang"
+        }
+      ],
+      "cover": "/assets/matchmaking-covers/country-ol26443093w.jpg",
+      "isbn": "9780008501815",
+      "amazon_url": "https://www.amazon.com/dp/0008501815?tag=zebrabookclub-20"
+    },
+    {
+      "work_ids": [
+        "OL8034526W"
+      ],
+      "title": "Call Me by Your Name",
+      "author": "André Aciman",
+      "source_page": "https://openlibrary.org/works/OL8034526W",
+      "source_url": "https://covers.openlibrary.org/b/id/11123807-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol8034526w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL70988W"
+      ],
+      "title": "The Chronicles of Narnia",
+      "author": "C. S. Lewis",
+      "source_page": "https://openlibrary.org/books/OL9247395M",
+      "source_url": "https://covers.openlibrary.org/b/isbn/9780064471107-L.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol70988w.jpg",
+      "isbn": "9780064471107",
+      "amazon_url": "https://www.amazon.com/dp/0064471101?tag=zebrabookclub-20",
+      "first_book": {
+        "title": "The Magician's Nephew",
+        "author": "C. S. Lewis",
+        "order": "Publisher numbering (chronological)"
+      }
+    },
+    {
+      "work_ids": [
+        "OL17352669W"
+      ],
+      "title": "A Court of Thorns and Roses",
+      "author": "Sarah J. Maas",
+      "source_page": "https://www.bloomsbury.com/us/court-of-thorns-and-roses-9781635575569/",
+      "source_url": "https://media.bloomsbury.com/rep/bj/9781635575569.jpg",
+      "cover": "/assets/matchmaking-covers/country-ol17352669w.jpg",
+      "isbn": "9781635575569",
+      "amazon_url": "https://www.amazon.com/dp/1635575567?tag=zebrabookclub-20"
+    },
+    {
+      "work_ids": [
+        "OL20054906W"
+      ],
+      "title": "If We Were Villains",
+      "author": "M. L. Rio",
+      "source_page": "https://openlibrary.org/works/OL20054906W",
+      "source_url": "https://covers.openlibrary.org/b/id/8835640-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol20054906w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL893414W"
+      ],
+      "title": "Dune",
+      "author": "Frank Herbert",
+      "source_page": "https://openlibrary.org/works/OL893414W",
+      "source_url": "https://covers.openlibrary.org/b/id/11481354-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol893414w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL16653954W"
+      ],
+      "title": "A Short Stay in Hell",
+      "author": "Steven L. Peck",
+      "source_page": "https://openlibrary.org/works/OL16653954W",
+      "source_url": "https://covers.openlibrary.org/b/id/13012357-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol16653954w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL20646061W"
+      ],
+      "title": "A Good Girl's Guide to Murder",
+      "author": "Holly Jackson",
+      "source_page": "https://openlibrary.org/works/OL20646061W",
+      "source_url": "https://covers.openlibrary.org/b/id/13156188-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol20646061w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL24520413W"
+      ],
+      "title": "Against White Feminism",
+      "author": "Rafia Zakaria",
+      "source_page": "https://openlibrary.org/works/OL24520413W",
+      "source_url": "https://covers.openlibrary.org/b/id/11150258-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol24520413w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL26803918W"
+      ],
+      "title": "Brothers Karamazov",
+      "author": "Fyodor Dostoyevsky",
+      "source_page": "https://www.penguinrandomhouse.com/books/241840/the-brothers-karamazov-by-fyodor-dostoevsky-translated-by-richard-pevear-and-larissa-volokhonsky-introduction-by-malcolm-jones/9780679410034/",
+      "source_url": "https://images.penguinrandomhouse.com/cover/9780679410034",
+      "cover": "/assets/matchmaking-covers/country-ol26803918w.jpg",
+      "isbn": "9780679410034",
+      "amazon_url": "https://www.amazon.com/dp/0679410031?tag=zebrabookclub-20"
+    },
+    {
+      "work_ids": [
+        "OL482454W"
+      ],
+      "title": "Cloud Atlas",
+      "author": "David Mitchell",
+      "source_page": "https://openlibrary.org/works/OL482454W",
+      "source_url": "https://covers.openlibrary.org/b/id/6714077-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol482454w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL27774839W"
+      ],
+      "title": "Alone with You in the Ether",
+      "author": "Olivie Blake",
+      "source_page": "https://openlibrary.org/works/OL27774839W",
+      "source_url": "https://covers.openlibrary.org/b/id/13183577-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol27774839w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL257943W"
+      ],
+      "title": "A Game of Thrones",
+      "author": "George R. R. Martin",
+      "source_page": "https://openlibrary.org/works/OL257943W",
+      "source_url": "https://covers.openlibrary.org/b/id/9269962-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol257943w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL24801992W"
+      ],
+      "title": "Book Lovers",
+      "author": "Emily Henry",
+      "source_page": "https://openlibrary.org/works/OL24801992W",
+      "source_url": "https://covers.openlibrary.org/b/id/11567819-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol24801992w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL21008331W"
+      ],
+      "title": "Bastard of Istanbul",
+      "author": "Elif Şafak, Sonia Tapia Sánchez, David Fernández Giménez",
+      "source_page": "https://www.penguinrandomhouse.com/books/299229/the-bastard-of-istanbul-by-elif-shafak/9780143112716/",
+      "source_url": "https://images.penguinrandomhouse.com/cover/9780143112716",
+      "cover": "/assets/matchmaking-covers/country-ol21008331w.jpg",
+      "isbn": "9780143112716",
+      "amazon_url": "https://www.amazon.com/dp/0143112716?tag=zebrabookclub-20"
+    },
+    {
+      "work_ids": [
+        "OL5819884W"
+      ],
+      "title": "Brisingr",
+      "author": "Christopher Paolini",
+      "source_page": "https://openlibrary.org/works/OL5819884W",
+      "source_url": "https://covers.openlibrary.org/b/id/2411585-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol5819884w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL17478478W"
+      ],
+      "title": "Half Bad",
+      "author": "Sally Green",
+      "source_page": "https://openlibrary.org/works/OL17478478W",
+      "source_url": "https://covers.openlibrary.org/b/id/7659124-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol17478478w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL34309851W"
+      ],
+      "title": "The Lady's Mine",
+      "author": "Francine Rivers",
+      "source_page": "https://www.tyndale.com/p/the-ladys-mine/9781496447579",
+      "source_url": "https://covers.openlibrary.org/b/isbn/9781496447579-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol34309851w.jpg",
+      "isbn": "9781496447579",
+      "amazon_url": "https://www.amazon.com/dp/1496447573?tag=zebrabookclub-20"
+    },
+    {
+      "work_ids": [
+        "OL25338421W"
+      ],
+      "title": "Alice Oseman Four-Book Collection Box Set (Solitaire, Radio Silence, I Was Born for This, Loveless)",
+      "author": "Alice Oseman",
+      "source_page": "https://www.harperreach.com/products/solitaire-alice-oseman-9780008659271/",
+      "source_url": "https://i.harperapps.com/hcuk/covers/9780008659271.JPG",
+      "cover": "/assets/matchmaking-covers/country-ol25338421w.jpg",
+      "isbn": "9780008659271",
+      "amazon_url": "https://www.amazon.com/dp/0008659273?tag=zebrabookclub-20",
+      "first_book": {
+        "title": "Solitaire",
+        "author": "Alice Oseman"
+      }
+    },
+    {
+      "work_ids": [
+        "OL1168007W"
+      ],
+      "title": "Animal Farm",
+      "author": "George Orwell",
+      "source_page": "https://www.penguinrandomhouse.com/books/327220/animal-farm-by-george-orwell-with-a-foreword-by-ann-patchett-and-a-new-introduction-by-tea-obreht/",
+      "source_url": "https://images.penguinrandomhouse.com/cover/9780452284241",
+      "cover": "/assets/matchmaking-covers/country-ol1168007w.jpg",
+      "isbn": "9780452284241",
+      "amazon_url": "https://www.amazon.com/dp/0452284244?tag=zebrabookclub-20"
+    },
+    {
+      "work_ids": [
+        "OL66338W"
+      ],
+      "title": "All My Sons",
+      "author": "Arthur Miller",
+      "source_page": "https://openlibrary.org/works/OL66338W",
+      "source_url": "https://covers.openlibrary.org/b/id/9184453-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol66338w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL138052W"
+      ],
+      "title": "Alice's Adventures in Wonderland",
+      "author": "Lewis Carroll",
+      "source_page": "https://www.penguinrandomhouse.com/books/315064/alices-adventures-in-wonderland-by-lewis-carroll/",
+      "source_url": "https://images.penguinrandomhouse.com/cover/9780147510983",
+      "cover": "/assets/matchmaking-covers/country-ol138052w.jpg",
+      "isbn": "9780147510983",
+      "amazon_url": "https://www.amazon.com/dp/0147510988?tag=zebrabookclub-20"
+    },
+    {
+      "work_ids": [
+        "OL515754W"
+      ],
+      "title": "Flowers for Algernon",
+      "author": "Daniel Keyes",
+      "source_page": "https://openlibrary.org/works/OL515754W",
+      "source_url": "https://covers.openlibrary.org/b/id/12947700-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol515754w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL24210358W"
+      ],
+      "title": "Empire of the Vampire",
+      "author": "Jay Kristoff",
+      "source_page": "https://openlibrary.org/works/OL24210358W",
+      "source_url": "https://covers.openlibrary.org/b/id/10659062-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol24210358w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL514629W"
+      ],
+      "title": "\"Surely You're Joking, Mr. Feynman\"",
+      "author": "Richard Phillips Feynman, Ralph Leighton",
+      "source_page": "https://openlibrary.org/isbn/9780393316049",
+      "source_url": "https://covers.openlibrary.org/b/isbn/9780393316049-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol514629w.jpg",
+      "isbn": "9780393316049",
+      "amazon_url": "https://www.amazon.com/dp/0393316041?tag=zebrabookclub-20"
+    },
+    {
+      "work_ids": [
+        "OL19622295W"
+      ],
+      "title": "A Court of Thorns and Roses / A Court of Mist and Fury / A Court of Wings and Ruin / A Court of Frost and Starlight / A Court of Silver Flames",
+      "author": "Sarah J. Maas",
+      "source_page": "https://www.bloomsbury.com/us/court-of-thorns-and-roses-9781635575569/",
+      "source_url": "https://media.bloomsbury.com/rep/bj/9781635575569.jpg",
+      "cover": "/assets/matchmaking-covers/country-ol19622295w.jpg",
+      "isbn": "9781635575569",
+      "amazon_url": "https://www.amazon.com/dp/1635575567?tag=zebrabookclub-20",
+      "first_book": {
+        "title": "A Court of Thorns and Roses",
+        "author": "Sarah J. Maas"
+      }
+    },
+    {
+      "work_ids": [
+        "OL472688W"
+      ],
+      "title": "Absent in the Spring",
+      "author": "Agatha Christie",
+      "source_page": "https://openlibrary.org/works/OL472688W",
+      "source_url": "https://covers.openlibrary.org/b/id/12824428-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol472688w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL25172750W"
+      ],
+      "title": "Half of a Yellow Sun, Americanah, Purple Hibiscus",
+      "author": "Chimamanda Ngozi Adichie",
+      "source_page": "https://www.penguinrandomhouse.com/books/879/half-of-a-yellow-sun-by-chimamanda-ngozi-adichie/",
+      "source_url": "https://images.penguinrandomhouse.com/cover/9781400095209",
+      "cover": "/assets/matchmaking-covers/country-ol25172750w.jpg",
+      "isbn": "9781400095209",
+      "amazon_url": "https://www.amazon.com/dp/1400095204?tag=zebrabookclub-20",
+      "first_book": {
+        "title": "Half of a Yellow Sun",
+        "author": "Chimamanda Ngozi Adichie",
+        "order": "First title listed in this collection of standalone novels"
+      }
+    },
+    {
+      "work_ids": [
+        "OL16819897W"
+      ],
+      "title": "Braiding Sweetgrass",
+      "author": "Robin Wall Kimmerer",
+      "source_page": "https://openlibrary.org/works/OL16819897W",
+      "source_url": "https://covers.openlibrary.org/b/id/7281575-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol16819897w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL17886378W"
+      ],
+      "title": "Heartless",
+      "author": "Marissa Meyer",
+      "source_page": "https://openlibrary.org/works/OL17886378W",
+      "source_url": "https://covers.openlibrary.org/b/id/8197844-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol17886378w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL796465W"
+      ],
+      "title": "O Alquimista",
+      "author": "Paulo Coelho",
+      "source_page": "https://openlibrary.org/works/OL796465W",
+      "source_url": "https://covers.openlibrary.org/b/id/7414780-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol796465w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL8034119W"
+      ],
+      "title": "A Long Way Gone",
+      "author": "Ishmael Beah",
+      "source_page": "https://us.macmillan.com/books/9780374531263/alongwaygone/",
+      "source_url": "https://covers.openlibrary.org/b/isbn/9780374531263-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol8034119w.jpg",
+      "isbn": "9780374531263",
+      "amazon_url": "https://www.amazon.com/dp/0374531269?tag=zebrabookclub-20"
+    },
+    {
+      "work_ids": [
+        "OL103123W"
+      ],
+      "title": "Fahrenheit 451",
+      "author": "Ray Bradbury",
+      "source_page": "https://openlibrary.org/works/OL103123W",
+      "source_url": "https://covers.openlibrary.org/b/id/12993656-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol103123w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL81613W"
+      ],
+      "title": "It",
+      "author": "Stephen King",
+      "source_page": "https://openlibrary.org/works/OL81613W",
+      "source_url": "https://covers.openlibrary.org/b/id/8569284-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol81613w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL262454W"
+      ],
+      "title": "The Hound of the Baskervilles",
+      "author": "Arthur Conan Doyle",
+      "source_page": "https://openlibrary.org/works/OL262454W",
+      "source_url": "https://covers.openlibrary.org/b/id/8063264-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol262454w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL16002093W"
+      ],
+      "title": "Clockwork prince",
+      "author": "Cassandra Clare",
+      "source_page": "https://openlibrary.org/works/OL16002093W",
+      "source_url": "https://covers.openlibrary.org/b/id/6934916-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol16002093w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL20354498W"
+      ],
+      "title": "Heartstopper, Volume 1",
+      "author": "Alice Oseman",
+      "source_page": "https://openlibrary.org/works/OL20354498W",
+      "source_url": "https://covers.openlibrary.org/b/id/9020805-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol20354498w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL15456729W"
+      ],
+      "title": "A Discovery of Witches",
+      "author": "Deborah Harkness",
+      "source_page": "https://openlibrary.org/works/OL15456729W",
+      "source_url": "https://covers.openlibrary.org/b/id/6998669-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol15456729w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL20758604W"
+      ],
+      "title": "Gentle and Lowly",
+      "author": "Dane C. Ortlund",
+      "source_page": "https://openlibrary.org/works/OL20758604W",
+      "source_url": "https://covers.openlibrary.org/b/id/10723876-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol20758604w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL27482W"
+      ],
+      "title": "The Hobbit",
+      "author": "J.R.R. Tolkien",
+      "source_page": "https://openlibrary.org/works/OL27482W",
+      "source_url": "https://covers.openlibrary.org/b/id/14627509-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol27482w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL5738147W"
+      ],
+      "title": "Elantris",
+      "author": "Brandon Sanderson",
+      "source_page": "https://openlibrary.org/works/OL5738147W",
+      "source_url": "https://covers.openlibrary.org/b/id/14658083-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol5738147w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL82536W"
+      ],
+      "title": "Harry Potter and the Prisoner of Azkaban",
+      "author": "J. K. Rowling",
+      "source_page": "https://openlibrary.org/works/OL82536W",
+      "source_url": "https://covers.openlibrary.org/b/id/10580435-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol82536w.jpg"
+    },
+    {
+      "work_ids": [
+        "OL42397860W"
+      ],
+      "title": "Katabasis",
+      "author": "R. F. Kuang",
+      "source_page": "https://openlibrary.org/works/OL42397860W",
+      "source_url": "https://covers.openlibrary.org/b/id/15117021-M.jpg?default=false",
+      "cover": "/assets/matchmaking-covers/country-ol42397860w.jpg"
+    },
+    {
+      "title": "All Quiet on the Western Front",
+      "author": "Erich Maria Remarque",
+      "isbn": "9781101908082",
+      "source_url": "https://images.penguinrandomhouse.com/cover/9781101908082",
+      "work_ids": [
+        "OL38898913W"
+      ],
+      "source_page": "https://openlibrary.org/isbn/9781101908082",
+      "cover": "/assets/matchmaking-covers/country-ol38898913w.jpg",
+      "amazon_url": "https://www.amazon.com/dp/1101908084?tag=zebrabookclub-20"
+    },
+    {
+      "title": "Blood over Bright Haven",
+      "author": "M. L. Wang",
+      "isbn": "9780593873359",
+      "source_url": "https://images.penguinrandomhouse.com/cover/9780593873359",
+      "work_ids": [
+        "OL37942515W"
+      ],
+      "source_page": "https://openlibrary.org/isbn/9780593873359",
+      "cover": "/assets/matchmaking-covers/country-ol37942515w.jpg",
+      "amazon_url": "https://www.amazon.com/dp/0593873351?tag=zebrabookclub-20"
+    },
+    {
+      "title": "A Moveable Feast",
+      "author": "Ernest Hemingway",
+      "isbn": "9780684824994",
+      "source_url": "https://covers.openlibrary.org/b/isbn/9780684824994-M.jpg?default=false",
+      "work_ids": [
+        "OL63001W"
+      ],
+      "source_page": "https://openlibrary.org/isbn/9780684824994",
+      "cover": "/assets/matchmaking-covers/country-ol63001w.jpg",
+      "amazon_url": "https://www.amazon.com/dp/068482499X?tag=zebrabookclub-20"
+    },
+    {
+      "title": "Anna Karenina",
+      "author": "Leo Tolstoy",
+      "isbn": "9780143035008",
+      "source_url": "https://images.penguinrandomhouse.com/cover/9780143035008",
+      "work_ids": [
+        "OL42983314W"
+      ],
+      "source_page": "https://openlibrary.org/isbn/9780143035008",
+      "cover": "/assets/matchmaking-covers/country-ol42983314w.jpg",
+      "amazon_url": "https://www.amazon.com/dp/0143035002?tag=zebrabookclub-20"
+    },
+    {
+      "title": "Africanus",
+      "author": "Santiago Posteguillo",
+      "isbn": "9788466664004",
+      "source_url": "https://covers.openlibrary.org/b/isbn/9788466664004-M.jpg?default=false",
+      "work_ids": [
+        "OL16797025W"
+      ],
+      "source_page": "https://openlibrary.org/isbn/9788466664004",
+      "cover": "/assets/matchmaking-covers/country-ol16797025w.jpg",
+      "amazon_url": "https://www.amazon.com/dp/8466664009?tag=zebrabookclub-20"
+    },
+    {
+      "title": "A Man Called Ove",
+      "author": "Fredrik Backman",
+      "isbn": "9781476738024",
+      "source_url": "https://covers.openlibrary.org/b/isbn/9781476738024-M.jpg?default=false",
+      "work_ids": [],
+      "source_page": "https://openlibrary.org/isbn/9781476738024",
+      "cover": "/assets/matchmaking-covers/country-a-man-called-ove.jpg",
+      "amazon_url": "https://www.amazon.com/dp/1476738025?tag=zebrabookclub-20"
+    },
+    {
+      "title": "Collected Poems",
+      "author": "Edna St. Vincent Millay",
+      "isbn": "9780062015273",
+      "source_url": "https://covers.openlibrary.org/b/isbn/9780062015273-M.jpg?default=false",
+      "work_ids": [],
+      "source_page": "https://openlibrary.org/isbn/9780062015273",
+      "cover": "/assets/matchmaking-covers/country-collected-poems-millay.jpg",
+      "amazon_url": "https://www.amazon.com/dp/0062015273?tag=zebrabookclub-20"
+    },
+    {
+      "title": "House of Day, House of Night",
+      "author": "Olga Tokarczuk",
+      "isbn": "9780593716380",
+      "source_url": "https://images.penguinrandomhouse.com/cover/9780593716380",
+      "work_ids": [],
+      "source_page": "https://openlibrary.org/isbn/9780593716380",
+      "cover": "/assets/matchmaking-covers/country-house-of-day-house-of-night.jpg",
+      "amazon_url": "https://www.amazon.com/dp/0593716388?tag=zebrabookclub-20"
+    },
+    {
+      "title": "Belladonna",
+      "author": "Adalyn Grace",
+      "isbn": "9780316158237",
+      "source_url": "https://covers.openlibrary.org/b/isbn/9780316158237-M.jpg?default=false",
+      "work_ids": [],
+      "source_page": "https://openlibrary.org/isbn/9780316158237",
+      "aliases": [
+        {
+          "title": "Belladonna",
+          "author": "Unknown author"
+        }
+      ],
+      "approximate_aliases": true,
+      "cover": "/assets/matchmaking-covers/country-belladonna.jpg",
+      "amazon_url": "https://www.amazon.com/dp/0316158232?tag=zebrabookclub-20"
+    },
+    {
+      "title": "Crisis in the Red Zone",
+      "author": "Richard Preston",
+      "isbn": "9780812988154",
+      "source_url": "https://images.penguinrandomhouse.com/cover/9780812988154",
+      "work_ids": [],
+      "source_page": "https://openlibrary.org/isbn/9780812988154",
+      "cover": "/assets/matchmaking-covers/country-crisis-in-the-red-zone.jpg",
+      "amazon_url": "https://www.amazon.com/dp/0812988159?tag=zebrabookclub-20"
+    },
+    {
+      "title": "Magical Fairy Tales",
+      "author": "Enid Blyton",
+      "isbn": "9781444954265",
+      "source_url": "https://covers.openlibrary.org/b/isbn/9781444954265-M.jpg?default=false",
+      "work_ids": [],
+      "source_page": "https://openlibrary.org/isbn/9781444954265",
+      "aliases": [
+        {
+          "title": "Fairytale",
+          "author": "Enid Blyton"
+        }
+      ],
+      "approximate_aliases": true,
+      "cover": "/assets/matchmaking-covers/country-magical-fairy-tales.jpg",
+      "amazon_url": "https://www.amazon.com/dp/1444954261?tag=zebrabookclub-20"
+    },
+    {
+      "title": "Decisive Moments in History",
+      "author": "Stefan Zweig",
+      "isbn": "9781572410671",
+      "source_url": "https://covers.openlibrary.org/b/isbn/9781572410671-M.jpg?default=false",
+      "work_ids": [],
+      "source_page": "https://openlibrary.org/isbn/9781572410671",
+      "aliases": [
+        {
+          "title": "Decisive Moments in History",
+          "author": "Zweig"
+        }
+      ],
+      "cover": "/assets/matchmaking-covers/country-decisive-moments-in-history.jpg",
+      "amazon_url": "https://www.amazon.com/dp/1572410671?tag=zebrabookclub-20"
+    },
+    {
+      "title": "Arch of Triumph",
+      "author": "Erich Maria Remarque",
+      "isbn": "9780449912454",
+      "source_url": "https://images.penguinrandomhouse.com/cover/9780449912454",
+      "work_ids": [],
+      "source_page": "https://openlibrary.org/isbn/9780449912454",
+      "cover": "/assets/matchmaking-covers/country-arch-of-triumph.jpg",
+      "amazon_url": "https://www.amazon.com/dp/0449912450?tag=zebrabookclub-20"
+    },
+    {
+      "title": "Beautiful Fiend",
+      "author": "Lola King",
+      "source_url": "https://books2read-prod.s3.amazonaws.com/ubl_book_images/4X0kl5",
+      "work_ids": [],
+      "source_page": "https://www.authorlolaking.com/books",
+      "aliases": [
+        {
+          "title": "Lola King",
+          "author": "Unknown author"
+        }
+      ],
+      "approximate_aliases": true,
+      "cover": "/assets/matchmaking-covers/country-beautiful-fiend.jpg"
+    },
+    {
+      "work_ids": [
+        "OL27448W"
+      ],
+      "title": "The Lord of the Rings",
+      "author": "J.R.R. Tolkien",
+      "cover": "/assets/matchmaking-covers/the-fellowship-of-the-ring.jpg",
+      "source_url": "https://i.harperapps.com/hcuk/covers/9780261103573.JPG",
+      "source_page": "https://www.harperreach.com/products/the-fellowship-of-the-ring-the-lord-of-the-rings-book-1-j-r-r-tolkien-9780261103573/",
+      "isbn": "9780261103573",
+      "amazon_url": "https://www.amazon.com/dp/0261103571?tag=zebrabookclub-20",
+      "first_book": {
+        "title": "The Fellowship of the Ring",
+        "author": "J.R.R. Tolkien"
+      }
+    }
+  ]
+}
