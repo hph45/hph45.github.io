@@ -1,0 +1,68 @@
+[
+  {
+    "key": "hoodie-front",
+    "reference": "merch-studio/collection-01/renders/H01-R1-founders-stack.png",
+    "source": "/Users/henry/.codex/generated_images/01a15f18-032e-7e60-8ad2-9dd6758ee477/exec-3fda2c72-6b39-473b-87c0-231f00e85977.png",
+    "prompt": "merch-studio/collection-01/plans/product-views/hoodie-front.txt",
+    "original": "merch-studio/collection-01/renders/product-views/hoodie-front.png",
+    "web": "assets/merch/hoodie-front.webp",
+    "thumbnail": "assets/merch/hoodie-front-small.webp",
+    "tool": "image_gen.imagegen (built-in)",
+    "visual_check": "One complete garment; requested front/back; approved lettering and crest; no inset panels."
+  },
+  {
+    "key": "hoodie-back",
+    "reference": "merch-studio/collection-01/renders/H01-R1-founders-stack.png",
+    "source": "/Users/henry/.codex/generated_images/01a15f18-032e-7e60-8ad2-9dd6758ee477/exec-731b9fd1-1aae-44f7-aca0-92488c70b43c.png",
+    "prompt": "merch-studio/collection-01/plans/product-views/hoodie-back.txt",
+    "original": "merch-studio/collection-01/renders/product-views/hoodie-back.png",
+    "web": "assets/merch/hoodie-back.webp",
+    "thumbnail": "assets/merch/hoodie-back-small.webp",
+    "tool": "image_gen.imagegen (built-in)",
+    "visual_check": "One complete garment; requested front/back; approved lettering and crest; no inset panels."
+  },
+  {
+    "key": "t-shirt-front",
+    "reference": "merch-studio/collection-01/renders/T01-R1-founders-small-chest.png",
+    "source": "/Users/henry/.codex/generated_images/01a15f18-032e-7e60-8ad2-9dd6758ee477/exec-9a581027-d99a-4d48-be52-3cc4634f4b52.png",
+    "prompt": "merch-studio/collection-01/plans/product-views/t-shirt-front.txt",
+    "original": "merch-studio/collection-01/renders/product-views/t-shirt-front.png",
+    "web": "assets/merch/t-shirt-front.webp",
+    "thumbnail": "assets/merch/t-shirt-front-small.webp",
+    "tool": "image_gen.imagegen (built-in)",
+    "visual_check": "One complete garment; requested front/back; approved lettering and crest; no inset panels."
+  },
+  {
+    "key": "t-shirt-back",
+    "reference": "merch-studio/collection-01/renders/T01-R1-founders-small-chest.png",
+    "source": "/Users/henry/.codex/generated_images/01a15f18-032e-7e60-8ad2-9dd6758ee477/exec-f373b271-c320-4935-a226-3e503c70f432.png",
+    "prompt": "merch-studio/collection-01/plans/product-views/t-shirt-back.txt",
+    "original": "merch-studio/collection-01/renders/product-views/t-shirt-back.png",
+    "web": "assets/merch/t-shirt-back.webp",
+    "thumbnail": "assets/merch/t-shirt-back-small.webp",
+    "tool": "image_gen.imagegen (built-in)",
+    "visual_check": "One complete garment; requested front/back; approved lettering and crest; no inset panels."
+  },
+  {
+    "key": "cap-front",
+    "reference": "merch-studio/collection-01/renders/C04-R1-founders-two-tone.png",
+    "source": "/Users/henry/.codex/generated_images/01a15f18-032e-7e60-8ad2-9dd6758ee477/exec-a1e78751-fc7b-4f88-a683-1ec39dc1c4be.png",
+    "prompt": "merch-studio/collection-01/plans/product-views/cap-front.txt",
+    "original": "merch-studio/collection-01/renders/product-views/cap-front.png",
+    "web": "assets/merch/cap-front.webp",
+    "thumbnail": "assets/merch/cap-front-small.webp",
+    "tool": "image_gen.imagegen (built-in)",
+    "visual_check": "One complete garment; requested front/back; approved lettering and crest; no inset panels."
+  },
+  {
+    "key": "cap-back",
+    "reference": "merch-studio/collection-01/renders/C04-R1-founders-two-tone.png",
+    "source": "/Users/henry/.codex/generated_images/01a15f18-032e-7e60-8ad2-9dd6758ee477/exec-e211b35d-2349-46ad-89ad-4d18b7f56ab2.png",
+    "prompt": "merch-studio/collection-01/plans/product-views/cap-back.txt",
+    "original": "merch-studio/collection-01/renders/product-views/cap-back.png",
+    "web": "assets/merch/cap-back.webp",
+    "thumbnail": "assets/merch/cap-back-small.webp",
+    "tool": "image_gen.imagegen (built-in)",
+    "visual_check": "One complete garment; requested front/back; approved lettering and crest; no inset panels."
+  }
+]

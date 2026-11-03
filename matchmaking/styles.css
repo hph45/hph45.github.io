@@ -385,3 +385,19 @@ a.country-popup-book:hover .country-popup-title, a.country-popup-book:focus-visi
 #friend-match-success p{line-height:1.5}
 @media(max-width:1050px){.site-header{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"brand account" "invite invite";gap:12px 16px;padding-block:18px}.site-header .brand{grid-area:brand}.site-header .account-tools,#back-to-club{grid-area:account;justify-self:end}.header-community-actions{grid-area:invite;display:grid;grid-template-columns:minmax(0,1fr) auto;width:100%;margin:0;gap:10px}.header-community-actions .header-invite{grid-area:auto;justify-self:stretch}.header-matchmake{min-height:44px}}
 @media(max-width:480px){.header-community-actions{gap:8px}.header-community-actions .header-invite{padding:8px 10px;gap:7px;font-size:11px}.header-matchmake{font-size:12px;padding-inline:11px}}
+
+/* A preferred piece is optional; sharing uses the saved profile handle. */
+#invite-dialog{position:fixed;width:min(620px,calc(100vw - 28px));max-width:none;max-height:calc(100dvh - 32px);padding:32px;overflow-y:auto;border:1px solid var(--ink)}
+#invite-dialog h2{font-size:38px;line-height:1.05;margin:0 24px 18px 0;letter-spacing:-.03em}
+#invite-description{font-size:17px;color:var(--muted);line-height:1.5;margin-bottom:22px;max-width:48ch}
+.invite-close{position:absolute;right:16px;top:12px;width:36px;height:36px;border:0;background:none;color:var(--ink);font:28px/1 var(--serif)}
+.raffle-choices legend{font-size:16px;margin-bottom:12px}.raffle-gallery-layout{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:10px;align-items:start;margin-bottom:22px}.raffle-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.raffle-option{position:relative;display:flex;flex-direction:column;align-items:stretch;min-width:0;border:1px solid var(--line);margin:0;padding:0;text-align:left;cursor:pointer;background:var(--wash);color:var(--ink);transition:border-color .15s}
+.raffle-option[aria-pressed=true]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.raffle-option::before{content:"";position:absolute;top:8px;left:8px;width:17px;height:17px;background:#fff;border:1px solid #777;border-radius:50%;box-sizing:border-box}
+.raffle-option[aria-pressed=true]::before{background:var(--ink);border:3px solid #fff;box-shadow:0 0 0 1px var(--ink)}
+.raffle-options img{display:block;width:100%;height:auto}.raffle-option>span{display:block;padding:11px 12px;font-size:17px;line-height:1.2}.raffle-options small{display:block;font:11px/1.4 var(--sans);color:var(--muted);margin-top:5px}
+.invite-primary{display:flex;width:100%;align-items:center;justify-content:center;gap:12px;margin-top:10px}
+@media(max-width:480px){#invite-dialog{padding:28px 18px 22px}#invite-dialog h2{font-size:31px}.raffle-options{gap:7px}.raffle-option>span{font-size:15px;padding:10px 8px}.raffle-options small{font-size:10px}.invite-primary{font-size:16px;padding-inline:12px}#invite-description{font-size:16px}}
+
+@media(max-width:480px){.raffle-gallery-layout{gap:8px}.raffle-gallery-layout .product-view-controls button{font-size:11px;padding-inline:4px}.raffle-option>span{font-size:14px;padding:10px 6px}}

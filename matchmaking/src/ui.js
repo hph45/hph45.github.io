@@ -11,6 +11,7 @@ import { loadReviewCatalog } from "./review-catalog.js";
 import { renderTopBooks } from "./top-books.js";
 import { renderRisingBooks } from "./rising-books.js";
 import { attachInvites } from "./invite.js";
+import { createReferralDraft } from "./referrals.js";
 import { createMatches } from "./matches.js";
 import { createFriendMatchmaking } from "./friend-matchmaking.js";
 import { createGoogleProviderCheck } from "./google-provider.js";
@@ -39,7 +40,30 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   const autocompletes = [];
   const ageRange = attachAgeRange($(".age-range"));
   const mapZoom = attachMapZoom(document);
-  const invites = attachInvites(document, window);
+  const referralDraft = createReferralDraft(window);
+  const invites = attachInvites(document, window, { getProfile: () => profile, draft: referralDraft, action,
+    async savePreference(patch) {
+      if (mutationPending || !profile || !user) return null;
+      const version = generation;
+      setMutationBusy(true);
+      try {
+        const { data, error } = await client.from(PROFILE_TABLE).update(patch).eq("user_id", user.id).select("*").single();
+        if (version !== generation) return null;
+        if (error) throw error;
+        profile = data; instagramPromptDismissed = true;
+        if ($("#onboarding-view").hidden) renderDashboard();
+        else if (Object.hasOwn(patch, "instagram_handle")) field("instagram_handle").value = data.instagram_handle || "";
+        return data;
+      } finally { if (version === generation) setMutationBusy(false); }
+    },
+    beginSignup() {
+      if (user) {
+        if ($("#onboarding-view").hidden) openForm();
+        else { $("#onboarding-title").focus(); window.scrollTo(0, 0); }
+      } else { $("#google-sign-in").scrollIntoView({ block: "center" }); $("#google-sign-in").focus(); }
+    },
+    requestInstagram() { openInstagramPrompt(); },
+  });
   const friendMatchmaking = createFriendMatchmaking({ client, document, window, action });
   const catalogSearch = createStaticCatalogSearch(fetch);
   let reviewCatalog;
@@ -184,6 +208,8 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       } else if (values[input.name] !== undefined) input.value = values[input.name] ?? (input.type === "range" ? input.defaultValue : "");
     }
     field("country").value = displayCountry(field("country").value);
+    $("#referral-field").hidden = Boolean(profile);
+    field("referred_by_instagram").value = profile ? "" : referralDraft.handle;
     ageRange.sync();
     text("#form-eyebrow", profile ? "Edit your chapter" : "Your first chapter");
     showStep(0, false);
@@ -363,7 +389,10 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       profile = data;
       if (!profile) openForm();
       else {
+        referralDraft.consumeReferral();
+        if (referralDraft.shouldOpen) instagramPromptDismissed = true;
         renderDashboard(true);
+        invites.resume();
         await Promise.all([loadMatches(version), loadCommunity(version)]);
       }
     } catch {
@@ -376,6 +405,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     if (!session?.user || (user && user.id !== session.user.id)) community.invalidate();
     matches.reset();
     friendMatchmaking.reset();
+    invites.reset();
     $("#profile-more").open = false;
     text("#profile-more-label", "View more");
     user = session?.user || null;
@@ -398,6 +428,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       if ($("#delete-dialog").open) $("#delete-dialog").close();
       showView("welcome-view");
       await checkGoogle();
+      invites.resume();
     }
   }
 
@@ -434,6 +465,8 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     if (mutationPending || !user) return;
     const values = readProfile();
     const errors = validateProfile(values, { consent: field("profile_consent").checked });
+    const referrer = normalizeInstagramHandle(field("referred_by_instagram").value);
+    if (!profile && referrer === null) errors.unshift({ field: "referred_by_instagram", step: 0, message: "Enter your friend’s Instagram username or profile link, or leave it blank." });
     const invalid = errors.find((error) => currentStep === 2 || error.step === currentStep);
     if (invalid) {
       showStep(invalid.step, false);
@@ -456,17 +489,20 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     text("#next-step-label", "Saving…");
     try {
       const table = client.from(PROFILE_TABLE);
-      const query = profile ? table.update(values).eq("user_id", user.id) : table.insert({ ...values, user_id: user.id });
+      const query = profile ? table.update(values).eq("user_id", user.id) : table.insert({ ...values, user_id: user.id,
+        referred_by_instagram: referrer || null, merch_raffle_prize: referralDraft.prize || null });
       const { data, error } = await query.select("*").single();
       if (version !== generation) return;
       if (error) throw error;
       if (communityChanged(profile, data)) community.invalidate();
       profile = data;
+      referralDraft.consumeReferral();
       // Leaving Instagram blank in the form is already a deliberate choice.
       instagramPromptDismissed = true;
       rememberIntents(profileIntents(profile));
       renderDashboard(true);
       notice("Your profile is saved.");
+      invites.resume();
       await Promise.all([loadMatches(version), loadCommunity(version)]);
     } catch (error) {
       if (version !== generation) return;
@@ -474,6 +510,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       if (duplicateBook) showStep(1, false);
       text("#form-error", duplicateBook ? "Choose a different book for each of your favorites."
         : error?.message === "INVALID_INSTAGRAM" ? "Enter a valid Instagram username or profile link."
+        : error?.message === "INVALID_REFERRAL_INSTAGRAM" ? "Check the Instagram username for the friend who invited you."
         : error?.message === "BOOKS_LOCKED"
         ? "Your favorites can be changed once every 24 hours. Please wait until your next update is available."
         : error?.message === "CURRENT_READING_LOCKED"
@@ -504,10 +541,11 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     if (mutationPending) return;
     instagramPromptDismissed = true;
     clearInstagramPrompt();
+    invites.cancelInstagram();
   });
   $("#instagram-dialog").addEventListener("cancel", event => {
     if (mutationPending) event.preventDefault();
-    else { instagramPromptDismissed = true; clearInstagramPrompt(); }
+    else { instagramPromptDismissed = true; clearInstagramPrompt(); invites.cancelInstagram(); }
   });
   action($("#instagram-form"), "submit", async () => {
     if (mutationPending || !user || !profile) return;
@@ -531,7 +569,9 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       profile = data;
       instagramPromptDismissed = true;
       clearInstagramPrompt();
-      renderDashboard(true);
+      if ($("#onboarding-view").hidden) renderDashboard(true);
+      else field("instagram_handle").value = data.instagram_handle;
+      invites.instagramSaved();
       notice("Your Instagram is saved.");
     } catch {
       if (version !== generation) return;
@@ -568,6 +608,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     try {
       const { error } = await client.auth.signOut({ scope: "local" });
       if (error) throw error;
+      referralDraft.clear();
       await acceptSession(null);
     } catch { notice("We couldn’t sign you out. Please try again."); }
     finally { $("#sign-out").disabled = false; }
@@ -605,6 +646,9 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   });
 
   form.noValidate = true;
+  field("referred_by_instagram").addEventListener("input", () => {
+    if (!profile) referralDraft.rememberHandle(field("referred_by_instagram").value);
+  });
   const bounds = birthdayBounds();
   field("birth_date").min = bounds.min;
   field("birth_date").max = bounds.max;
@@ -665,12 +709,12 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
         notice("We couldn’t restore your sign-in. Please try signing in again.");
       } finally {
         // Remove OAuth return values from browser history once the SDK has handled them.
-        for (const name of ["code", "error", "error_code", "error_description"]) initialURL.searchParams.delete(name);
+        for (const name of ["code", "error", "error_code", "error_description", "ref", "raffle"]) initialURL.searchParams.delete(name);
         if (/access_token=|error=|refresh_token=/.test(initialURL.hash)) initialURL.hash = "";
         window.history.replaceState({}, "", `${initialURL.pathname}${initialURL.search}${initialURL.hash}`);
       }
     },
-    async settled() { while (pending.size) await Promise.allSettled([...pending]); },
+    async settled() { while (pending.size) await Promise.allSettled([...pending]); await invites.settled(); },
     destroy() { subscription?.unsubscribe(); generation++; matches.destroy(); friendMatchmaking.destroy(); clearInstagramPrompt(); clearCountryMap(document); window.clearTimeout(bookTimer); ageRange.destroy(); mapZoom.destroy(); invites.destroy(); autocompletes.forEach(control => control.destroy()); },
   };
 }

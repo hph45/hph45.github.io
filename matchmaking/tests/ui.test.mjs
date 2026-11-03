@@ -66,7 +66,7 @@ function mockClient({ signedIn = true, initialProfile = null, matches = [], risi
 }
 
 async function setup(t, options = {}) {
-  const window = new Window({ url: "http://127.0.0.1:8080/matchmaking/", settings: { disableCSSFileLoading: true, disableJavaScriptFileLoading: true, enableJavaScriptEvaluation: false } });
+  const window = new Window({ url: options.url || "http://127.0.0.1:8080/matchmaking/", settings: { disableCSSFileLoading: true, disableJavaScriptFileLoading: true, enableJavaScriptEvaluation: false } });
   window.document.write(html);
   for (const [key, value] of Object.entries(options.stored || {})) window.localStorage.setItem(key, value);
   if (options.intent) window.localStorage.setItem("zebra-matchmaking-intent", options.intent);
@@ -1046,4 +1046,166 @@ test("friend suggestions require a member profile and stale submissions cannot r
   finish({ data: true, error: null }); await signingOut; await app.settled();
   assert.equal($("#friend-match-success").hidden, true);
   assert.equal(window.document.body.style.overflow, "");
+});
+
+test("new referrals prefill the inviter, not the new reader's Instagram, and only submit on creation", async t => {
+  const { $, set, event, state } = await setup(t, { intent: 'friends', url: 'http://127.0.0.1:8080/matchmaking/?ref=Some.Friend' });
+  assert.equal($('[name="referred_by_instagram"]').value, 'some.friend');
+  assert.equal($('[name="instagram_handle"]').value, '');
+  for (const [key, value] of Object.entries({ birth_date: '1994-06-15', city_id: 5378538, city: 'Oakland', country: 'United States' })) set(key, value);
+  await event('#profile-form', 'submit');
+  set('favorite_book_id', 'OL1W'); set('favorite_book', 'A book'); set('favorite_author', 'An author');
+  await event('#profile-form', 'submit');
+  set('friendship_interests', 'Afternoons in bookshops'); set('profile_consent', true);
+  await event('#profile-form', 'submit');
+  assert.equal(state.calls.at(-1).values.referred_by_instagram, 'some.friend');
+  assert.equal(state.profile.instagram_handle, null);
+  await event('#edit-profile'); assert.equal($('#referral-field').hidden, true);
+  await event('#profile-form', 'submit'); await event('#profile-form', 'submit'); await event('#profile-form', 'submit');
+  assert.equal(Object.hasOwn(state.calls.at(-1).values, 'referred_by_instagram'), false);
+});
+
+
+test("the compact raffle popup saves an optional preference and keeps only Invite friends below the pieces", async t => {
+  const { $, state, event, window } = await setup(t, { initialProfile: profile });
+  const callsBefore = state.tables.length;
+  await event('[data-invite-friends]');
+  assert.equal($('#invite-dialog').open, true);
+  assert.equal(state.tables.length, callsBefore, 'opening invites adds no lookup');
+  assert.match($('#invite-title').textContent, /Get a chance to win merch\./);
+  assert.equal($('.raffle-choices legend').textContent, 'Do you have a preferred piece?');
+  assert.equal($('.raffle-choices').nextElementSibling.id, 'share-invite-link');
+  assert.equal($('#invite-form').lastElementChild.id, 'share-invite-link');
+  for (const selector of ['#invite-instagram', '#invite-url', '#copy-invite-link', '#save-invite-choice', '.invite-footnote', '#invite-dialog .eyebrow']) assert.equal($(selector), null);
+  await event('[data-raffle-prize="hoodie"]');
+  assert.deepEqual(state.calls.at(-1).values, { merch_raffle_prize: 'hoodie' });
+  assert.equal($('[data-raffle-prize="hoodie"]').getAttribute('aria-pressed'), 'true');
+  let copied, shared;
+  Object.defineProperty(window.navigator, 'clipboard', { configurable: true, value: { writeText: async value => { copied = value; } } });
+  await event('#invite-form', 'submit');
+  assert.equal(copied, 'https://zebrabookclub.com/matchmaking/?ref=reader.books');
+  assert.equal($('#invite-action-label').textContent, 'Link copied!');
+  Object.defineProperty(window.navigator, 'share', { configurable: true, value: async data => { shared = data; } });
+  await event('#invite-form', 'submit');
+  assert.equal(shared.url, copied);
+  assert.ok(!JSON.stringify(shared).includes(member.email));
+  assert.equal(state.calls.length, 1, 'sharing adds no database request');
+  await event('#sign-out');
+  assert.equal($('#invite-dialog').open, false);
+});
+
+test("front and back previews keep the raffle preference without database requests", async t => {
+  const { $, state, event } = await setup(t, { initialProfile: profile });
+  await event('[data-invite-friends]');
+  await event('[data-raffle-prize="hoodie"]');
+  const callsBefore = state.calls.length;
+  const tablesBefore = state.tables.length;
+  await event('#invite-dialog [data-product-view="back"]');
+  for (const piece of ['hoodie', 't_shirt', 'cap']) {
+    const image = $(`[data-raffle-prize="${piece}"] img`);
+    assert.equal(image.getAttribute('src'), image.dataset.backSrc);
+    assert.equal(image.alt, image.dataset.backAlt);
+  }
+  assert.equal($('#invite-dialog [data-product-view="back"]').getAttribute('aria-pressed'), 'true');
+  assert.equal($('#invite-dialog [data-product-view="front"]').getAttribute('aria-pressed'), 'false');
+  assert.equal($('[data-raffle-prize="hoodie"]').getAttribute('aria-pressed'), 'true');
+  assert.equal($('#invite-dialog').open, true);
+  assert.equal(state.calls.length, callsBefore);
+  assert.equal(state.tables.length, tablesBefore);
+  await event('#invite-close');
+  await event('[data-invite-friends]');
+  const image = $('[data-raffle-prize="hoodie"] img');
+  assert.equal(image.getAttribute('src'), image.dataset.frontSrc);
+  assert.equal($('[data-raffle-prize="hoodie"]').getAttribute('aria-pressed'), 'true');
+});
+
+test("members can invite without a preferred piece and clear an existing preference", async t => {
+  const { $, state, event, window } = await setup(t, { initialProfile: profile });
+  let shared;
+  Object.defineProperty(window.navigator, 'share', { configurable: true, value: async data => { shared = data; } });
+  await event('[data-invite-friends]');
+  await event('#invite-form', 'submit');
+  assert.match(shared.url, /ref=reader.books$/); assert.equal(state.calls.length, 0);
+  await event('[data-raffle-prize="cap"]');
+  assert.equal(state.profile.merch_raffle_prize, 'cap');
+  await event('[data-raffle-prize="cap"]');
+  assert.equal(state.profile.merch_raffle_prize, null);
+  assert.equal($('[data-raffle-prize="cap"]').getAttribute('aria-pressed'), 'false');
+});
+
+test("a failed preference save restores the saved selection and can be retried", async t => {
+  const { $, state, event } = await setup(t, { initialProfile: { ...profile, merch_raffle_prize: 'hoodie' } });
+  await event('[data-invite-friends]');
+  state.failNext = true; await event('[data-raffle-prize="cap"]');
+  assert.match($('#invite-error').textContent, /couldn’t save/);
+  assert.equal($('[data-raffle-prize="hoodie"]').getAttribute('aria-pressed'), 'true');
+  assert.equal($('[data-raffle-prize="cap"]').getAttribute('aria-pressed'), 'false');
+  assert.equal($('#share-invite-link').disabled, false);
+  await event('[data-raffle-prize="cap"]');
+  assert.equal(state.profile.merch_raffle_prize, 'cap');
+});
+
+test("unsigned visitors keep an optional choice for Google sign-in without database writes", async t => {
+  const { $, state, event, window } = await setup(t, { signedIn: false, url: 'http://127.0.0.1:8080/matchmaking/?raffle=t_shirt' });
+  assert.equal($('#invite-dialog').open, true);
+  assert.equal($('[data-raffle-prize="t_shirt"]').getAttribute('aria-pressed'), 'true');
+  await event('#invite-form', 'submit');
+  assert.equal($('#invite-dialog').open, false);
+  assert.equal(window.document.activeElement.id, 'google-sign-in');
+  assert.equal(state.calls.length, 0);
+  assert.equal(JSON.parse(window.localStorage.getItem('zebra-referral-signup')).prize, 't_shirt');
+});
+
+test("a stale raffle save cannot restore information after sign-out", async t => {
+  const { $, client, event, app, window } = await setup(t, { initialProfile: profile });
+  await event('[data-invite-friends]');
+  let complete;
+  const from = client.from;
+  client.from = table => { const query = from(table); query.single = () => new Promise(resolve => { complete = resolve; }); return query; };
+  $('[data-raffle-prize="hoodie"]').dispatchEvent(new window.Event('click', { bubbles: true }));
+  await Promise.resolve(); await Promise.resolve();
+  assert.equal($('#share-invite-link').disabled, true);
+  await client.auth.signOut(); await new Promise(resolve => setTimeout(resolve, 10));
+  complete({ data: { ...profile, merch_raffle_prize: 'hoodie' }, error: null }); await app.settled();
+  assert.equal($('#invite-dialog').open, false); assert.equal($('#welcome-view').hidden, false);
+  assert.equal($('[data-raffle-prize="hoodie"]').getAttribute('aria-pressed'), 'false');
+});
+
+test("choosing merch midway through signup or profile editing preserves the form", async t => {
+  for (const existing of [null, profile]) {
+    const { $, set, event, state } = await setup(t, { intent: 'friends', initialProfile: existing });
+    if (existing) await event('#edit-profile');
+    set('display_name', 'Draft name'); set('instagram_handle', 'draft.handle');
+    await event('[data-invite-friends]'); await event('[data-raffle-prize="cap"]');
+    if (existing) await event('#invite-close'); else await event('#invite-form', 'submit');
+    assert.equal($('#invite-dialog').open, false); assert.equal($('#onboarding-view').hidden, false);
+    assert.equal($('[name="display_name"]').value, 'Draft name');
+    assert.equal($('[name="instagram_handle"]').value, 'draft.handle');
+    assert.equal(state.calls.length, existing ? 1 : 0);
+  }
+});
+
+test("members without Instagram use the existing separate prompt before returning to Invite friends", async t => {
+  const { $, event, state, window } = await setup(t, { initialProfile: { ...profile, instagram_handle: null } });
+  await event('#instagram-later');
+  await event('[data-invite-friends]'); await event('[data-raffle-prize="cap"]');
+  await event('#invite-form', 'submit');
+  assert.equal($('#invite-dialog').open, false); assert.equal($('#instagram-dialog').open, true);
+  $('#instagram-prompt-input').value = 'new.reader';
+  await event('#instagram-form', 'submit');
+  assert.equal($('#instagram-dialog').open, false); assert.equal($('#invite-dialog').open, true);
+  assert.equal(state.profile.merch_raffle_prize, 'cap');
+  let shared;
+  Object.defineProperty(window.navigator, 'share', { configurable: true, value: async data => { shared = data; } });
+  await event('#invite-form', 'submit'); assert.match(shared.url, /ref=new.reader$/);
+});
+
+test("manual copying remains available if native share and clipboard are blocked", async t => {
+  const { window, event } = await setup(t, { initialProfile: profile });
+  let fallback;
+  Object.defineProperty(window.navigator, 'share', { configurable: true, value: async () => { throw new Error('Unavailable'); } });
+  Object.defineProperty(window.navigator, 'clipboard', { configurable: true, value: { writeText: async () => { throw new Error('Denied'); } } });
+  window.prompt = (message, url) => { fallback = url; return null; };
+  await event('[data-invite-friends]'); await event('#invite-form', 'submit');
+  assert.equal(fallback, 'https://zebrabookclub.com/matchmaking/?ref=reader.books');
 });

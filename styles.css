@@ -1353,3 +1353,6 @@ h2 {
     font-size: 0.86rem;
   }
 }
+
+.home-merch-preview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;width:100%;margin:10px 0 30px}.home-merch-preview img{display:block;width:100%;height:auto}.home-merch-preview:hover{opacity:.9}
+@media(max-width:600px){.home-merch-preview{gap:6px}}

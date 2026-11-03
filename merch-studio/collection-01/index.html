@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Zebra Book Club — Collection 01</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="stylesheet" href="gallery.css">
+  <script src="collection-data.js" defer></script><script src="gallery.js" defer></script>
+</head>
+<body>
+  <header class="masthead"><a class="brand" href="index.html"><span class="brand-z">Z</span><span>Zebra<br>Book Club</span></a><span class="edition">COLLECTION 01 / DESIGN STUDIO</span><a class="text-link" href="supplier-handoff.html">Supplier handoff <svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M6 5h13v13"/></svg></a></header>
+  <main>
+    <section class="intro"><p class="eyebrow">YOUR FIRST COLLECTION</p><h1>First edition.</h1><div class="intro-bottom"><p>Your chosen hoodie, T-shirt and cap, refined.<br>Explore the three selections or browse the original collection.</p><p class="tally">3 SELECTED PIECES<br>36 ORIGINAL CONCEPTS</p></div></section>
+    <section class="collection" aria-label="Merchandise designs">
+      <div class="toolbar"><nav class="filters" aria-label="Filter designs"><button type="button" data-filter="selected" aria-pressed="true">Selected <span>3</span></button><button type="button" data-filter="all" aria-pressed="false">All <span>39</span></button><button type="button" data-filter="hoodie" aria-pressed="false">Hoodies <span>13</span></button><button type="button" data-filter="shirt" aria-pressed="false">T-shirts <span>13</span></button><button type="button" data-filter="cap" aria-pressed="false">Baseball caps <span>13</span></button><button type="button" data-filter="saved" aria-pressed="false">Shortlist <span id="saved-count">0</span></button></nav><button class="export" id="export" type="button">Export shortlist</button></div>
+      <div class="results-line"><span id="results" aria-live="polite">3 designs</span><span>Click a design for details, artwork &amp; downloads</span></div>
+      <div id="grid" class="grid"></div>
+      <div id="empty" class="empty" hidden><h2>Your first picks go here.</h2><p>Save designs with the bookmark button. Your shortlist stays in this browser.</p><button type="button" id="show-all">Explore all designs</button></div>
+    </section>
+    <section class="endnote"><h2>Made to become real.</h2><p>Each design includes a detailed product render, outlined SVG artwork, transparent 300-DPI PNGs and proposed placements. These are design proposals; the selected supplier will confirm blanks, decoration templates, colors and physical samples before sale.</p><a href="supplier-handoff.html">Open the supplier handoff <svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M6 5h13v13"/></svg></a></section>
+  </main>
+  <footer><span>Zebra Book Club · Collection 01</span><span>Local design studio · Nothing published</span></footer>
+  <dialog id="detail" aria-labelledby="detail-title"><div class="dialog-top"><span id="detail-kicker"></span><button class="icon-button" id="close" type="button" aria-label="Close design"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><div id="detail-body"></div><div class="dialog-bottom"><button type="button" id="previous">Previous design</button><span id="detail-position"></span><button type="button" id="next">Next design</button></div></dialog>
+  <div class="toast" id="toast" role="status" hidden></div>
+</body></html>

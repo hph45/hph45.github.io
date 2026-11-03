@@ -1,0 +1,19 @@
+ZEBRA BOOK CLUB — COLLECTION 01
+
+Open index.html in a browser to explore the three selections and 36 original designs.
+The gallery works directly from this folder. Keep its subfolders together.
+Use the bookmark controls to shortlist designs, then Export shortlist.
+
+12 hoodies, 12 T-shirts, 12 baseball caps.
+39 product render boards, generated with the built-in image tool.
+56 outlined SVG front/back masters and matching 300-DPI PNGs.
+Product catalog, proposed placements, generation prompts and supplier notes.
+
+Read supplier-handoff.html before sending files to a manufacturer.
+These are supplier-neutral design proposals. Blanks, templates, final colors,
+embroidery digitization, physical samples, pricing and inventory are not yet
+confirmed. The flat artwork controls production; the renders visualize the
+design and are not photographs of finished inventory.
+
+Nothing has been committed, pushed, published, uploaded to a supplier or ordered.
+The merch-studio directory is outside the website publishing allowlist.

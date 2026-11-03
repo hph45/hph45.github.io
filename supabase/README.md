@@ -251,3 +251,56 @@ Apply both pending October 29 migrations before deploying the rebuilt matchmakin
 The current release supports login, profiles, the member dashboard, and displaying released matches. **No weekly scheduler or match emails are running yet.** Next, implement mutual compatibility rules and pair generation using the intersection of both members' `intents`, then add the weekly job and an email provider. Respect `is_active` and `email_matches`, prevent repeat pairings, and populate a shared recommended book and reason before releasing each pair. Email contact follows the setting below; no notifications or introductions are sent by this UI.
 
 The initial test suite covers form flows, failed saves, canonical book handling, the 24-hour interval, deletion authentication, database ownership, anonymous aggregates, match release rules, and cascade deletion. It uses in-memory Postgres (PGlite) and a DOM environment; the final Google OAuth round trip also needs a real enabled Google provider and test account.
+
+## Merch referral raffle
+
+Migration `20261103000100_merch_referrals.sql` adds two owner-only profile fields:
+`merch_raffle_prize` (`hoodie`, `t_shirt`, or `cap`) and insert-only
+`referred_by_instagram`. The existing profile request returns the prize; the
+invite modal does not fetch additional data. Choosing or clearing a preference is one profile update, saved automatically.
+The popup then uses one Invite friends button to share or copy the link. It does not change either book-edit clock.
+
+A personal link such as `/matchmaking/?ref=reader.books` prepopulates **Who
+invited you?** in onboarding, not the new member's own Instagram. A temporary
+browser draft preserves that credit across Google OAuth, expires after 30 days,
+and is cleared after signup or sign-out. The recipient can edit or remove the
+credit before submitting. `/matchmaking/?raffle=hoodie` opens the prize chooser
+from the public Merch page. Instagram remains optional for matchmaking; a
+member needs a handle to share an Instagram-credit invite link.
+
+A database trigger runs only on first profile creation, in the same transaction
+as that insert. It writes `matchmaking_merch_referrals`, keyed by the referred
+Auth user. A unique existing handle receives `credited` status and one entry;
+unknown handles, duplicate handles, and self-referrals are retained as
+`unresolved`, `ambiguous`, and `self_referral`, without awarding an entry. Profile
+edits and repeat sign-ins cannot create credits or rewrite signup attribution.
+Credits stay associated with the resolved user ID if their Instagram changes.
+New links should always be generated from their current handle.
+
+The ledger has RLS enabled and no browser-role privileges. Use a privileged
+operator connection or Supabase's table editor to review it; it is not exposed
+to the admin or public frontend. Account deletion removes associated credits.
+Referrers are not shown referred members' accounts or contact information.
+Instagram account ownership is not verified by this feature. Review entries
+for abuse and resolve ambiguous credits before drawing winners.
+
+The saved prize choice applies to all of a member's current campaign entries.
+A null choice means no preferred piece; it does not prevent an entry. Draw dates, quantities,
+and fulfillment details remain unannounced; this migration does not select
+winners, send notifications, or perform a draw. The campaign is
+`founding-collection-2026`.
+
+Read-only entry totals for the operator:
+
+```sql
+select p.user_id, p.instagram_handle, p.merch_raffle_prize, count(*) as entries
+from public.matchmaking_merch_referrals r
+join public.matchmaking_profiles p on p.user_id = r.referrer_user_id
+where r.status = 'credited' and r.campaign = 'founding-collection-2026'
+group by p.user_id, p.instagram_handle, p.merch_raffle_prize;
+```
+
+Apply the migration before publishing the rebuilt matchmaking bundle and HTML.
+`/merch/` and the six optimized images are included in the Pages allowlist; the
+local merch studio, original render boards, and supplier files remain outside
+the published artifact.

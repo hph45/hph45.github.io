@@ -6,10 +6,11 @@ import { fileURLToPath } from "node:url";
 // local private matching files, database tooling, tests, and development state.
 export const PUBLIC_FILES = [
   "index.html", "styles.css", "script.js", "legal.css", "logo.png", "CNAME",
-  "book_club_current.csv", "events.csv", "podcasts.csv", "recommended_reviews.csv", "reviews.csv", "tbr.csv",
+  "book_club_current.csv", "events.csv", "recommended_reviews.csv", "reviews.csv", "tbr.csv",
   "zebra white.jpeg", "zebra white and black.pdf", "zebra white and black (1).pdf",
   "matchmaking/index.html", "matchmaking/styles.css", "matchmaking/app.js", "matchmaking/world-outline.svg", "matchmaking/books.csv",
   "admin/index.html", "admin/styles.css", "admin/app.js", "privacy/index.html", "terms/index.html",
+  "merch/index.html", "merch/styles.css", "merch/gallery.js",
   "assets/flags/LICENSE.txt",
 ];
 export const PUBLIC_DIRECTORIES = ["assets", "matchmaking/data"];
