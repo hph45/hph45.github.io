@@ -37,7 +37,8 @@ test("admin statistics enforce server-owned access and accurate, aggregate-only 
   for (const [i, id] of ids.entries()) {
     const email = i === 3 ? null : i === 1 ? "reader_1+club@example.invalid" : i === 2 ? "Reader.2+Club@Example.invalid" : `reader.${i}+club@example.invalid`;
     await db.query("insert into auth.users(id,email) values ($1,$2)", [id, email]);
-    const birth = (await db.query("select (current_date - make_interval(years => $1))::date::text as birth", [ages[i]])).rows[0].birth;
+    // Seed tomorrow's 25th birthday at creation; birthdays cannot be edited later.
+    const birth = (await db.query("select (current_date - make_interval(years => $1) + make_interval(days => $2))::date::text as birth", [ages[i], i === 2 ? 1 : 0])).rows[0].birth;
     const values = { user_id: id, ...makeProfile({
       display_name: `Private reader ${i}`, birth_date: birth, city_id: [5378538, 5128581, 2643743][i % 3],
       favorite_book_id: "OL1W", location_preference: "anywhere",
@@ -127,7 +128,7 @@ test("admin statistics enforce server-owned access and accurate, aggregate-only 
     assert.equal(stats.total_members, 14);
     assert.equal(stats.active_members, 7, "paused profiles stay in all demographic totals");
     assert.equal(stats.median_age, 49.5);
-    assert.deepEqual(stats.age_groups.map(row => [row.label, row.member_count]), ["18–24", "25–34", "35–44", "45–54", "55–64", "65–79", "80+"].map(label => [label, 2]));
+    assert.deepEqual(stats.age_groups.map(row => [row.label, row.member_count]), [["18–24", 3], ["25–34", 1], ["35–44", 2], ["45–54", 2], ["55–64", 2], ["65–79", 2], ["80+", 2]], "tomorrow's birthday does not count a year early");
     assert.deepEqual(stats.genders.map(row => [row.key, row.member_count]), [["woman", 4], ["man", 4], ["other", 3], ["not_provided", 3]]);
     assert.deepEqual(stats.connection_types.map(row => [row.key, row.member_count]), [["romance", 11], ["friends", 14], ["business_partners", 2]]);
     assert.equal(stats.city_count, 3); assert.equal(stats.country_count, 2);
@@ -137,10 +138,6 @@ test("admin statistics enforce server-owned access and accurate, aggregate-only 
     for (const key of ["age_groups", "genders", "cities", "countries"]) {
       assert.equal(stats[key].reduce((sum, row) => sum + row.member_count, 0), 14);
     }
-    await db.query("update public.matchmaking_profiles set birth_date=(current_date - interval '25 years' + interval '1 day')::date where user_id=$1", [ids[2]]);
-    const beforeBirthday = await asUser(owner, rpc);
-    assert.equal(beforeBirthday.age_groups[0].member_count, 3, "tomorrow's birthday does not count a year early");
-    assert.equal(beforeBirthday.age_groups[1].member_count, 1);
   });
 
   await t.test("no personal records or wider table access are exposed, including to the admin browser", async () => {

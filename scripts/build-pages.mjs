@@ -9,7 +9,7 @@ export const PUBLIC_FILES = [
   "book_club_current.csv", "events.csv", "recommended_reviews.csv", "reviews.csv", "tbr.csv",
   "zebra white.jpeg", "zebra white and black.pdf", "zebra white and black (1).pdf",
   "matchmaking/index.html", "matchmaking/styles.css", "matchmaking/app.js", "matchmaking/world-outline.svg", "matchmaking/books.csv",
-  "admin/index.html", "admin/styles.css", "admin/app.js", "privacy/index.html", "terms/index.html",
+  "admin/index.html", "admin/styles.css", "admin/app.js", "privacy/index.html", "terms/index.html", "support/index.html",
   "merch/index.html", "merch/styles.css", "merch/gallery.js",
   "assets/flags/LICENSE.txt",
 ];

@@ -17,8 +17,8 @@ test("typed books save atomically while catalog identity, privacy, rankings, and
   `);
   const folder = new URL("../../supabase/migrations/", import.meta.url);
   for (const file of (await readdir(folder)).filter(file => file.endsWith(".sql")).sort()) await db.exec(await readFile(new URL(file, folder), "utf8"));
-  const [A, B, C, D] = [1, 2, 3, 4].map(i => `10000000-0000-4000-8000-00000000000${i}`);
-  for (const id of [A, B, C, D]) await db.query("insert into auth.users(id) values ($1)", [id]);
+  const [A, B, C, D, E] = [1, 2, 3, 4, 5].map(i => `10000000-0000-4000-8000-00000000000${i}`);
+  for (const id of [A, B, C, D, E]) await db.query("insert into auth.users(id) values ($1)", [id]);
   await db.exec(`insert into public.matchmaking_books(work_id,title,author) values
     ('OL100W','An Existing Book','E. Writer'),
     ('OL101W','An ambiguous title','One author'),('OL102W','An ambiguous title','Another author')`);
@@ -90,8 +90,11 @@ test("typed books save atomically while catalog identity, privacy, rankings, and
       await assert.rejects(db.query("update public.matchmaking_profiles set favorite_book_3_id='manual',favorite_book_3='An Existing Book',favorite_author_3='' where user_id=$1", [A]), /distinct_favorite_books/);
       await assert.rejects(db.query("update public.matchmaking_profiles set favorite_book_id='manual',favorite_book='   ' where user_id=$1", [A]), error => error.code === "22023");
       await assert.rejects(db.query("update public.matchmaking_profiles set favorite_book_id='manual',favorite_book=$2 where user_id=$1", [A, "x".repeat(301)]), error => error.code === "22023");
-      await assert.rejects(db.query("update public.matchmaking_profiles set favorite_book_id='manual',favorite_book='Rollback book',birth_date=current_date where user_id=$1", [A]), error => error.code === "23514");
+      await assert.rejects(db.query("update public.matchmaking_profiles set favorite_book_id='manual',favorite_book='Rollback book',birth_date=current_date where user_id=$1", [A]), /BIRTH_DATE_LOCKED/);
     });
+    // Age validation still applies on creation; existing birthdays are immutable.
+    const underage = (await db.query("select current_date::text as birthday")).rows[0].birthday;
+    await asUser(E, () => assert.rejects(insert(E, { favorite_book: "Rollback new profile", birth_date: underage }), error => error.code === "23514"));
     assert.equal(await catalogSize(), before);
   });
 

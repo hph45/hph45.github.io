@@ -40,6 +40,7 @@ test("the Pages artifact contains public assets and excludes private snapshots a
     ".matchmaking-private/members.json", "supabase/migrations/private.sql", ".env", ".DS_Store", "assets/.secret", "matchmaking/src/app.js"];
   for (const file of files) { await mkdir(dirname(join(source, file)), { recursive: true }); await writeFile(join(source, file), "fixture"); }
   await buildPages(source, destination);
+  assert.equal(await readFile(join(destination, "support/index.html"), "utf8"), "fixture", "The App Store support route must be published");
   for (const file of [...PUBLIC_FILES, "assets/icons.svg", "assets/review-covers/sources.csv", "matchmaking/data/books.hash.json"])
     assert.equal(await readFile(join(destination, file), "utf8"), "fixture");
   for (const file of [".matchmaking-private", "supabase", ".env", ".DS_Store", "assets/.secret", "matchmaking/src"])
