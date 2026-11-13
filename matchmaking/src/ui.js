@@ -208,6 +208,10 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       } else if (values[input.name] !== undefined) input.value = values[input.name] ?? (input.type === "range" ? input.defaultValue : "");
     }
     field("country").value = displayCountry(field("country").value);
+    field("birth_date").readOnly = Boolean(profile);
+    text("#birthday-help", profile
+      ? "Your birthday is fixed after signup. Only your age is shown to a match. Contact us if it is incorrect."
+      : "You must be 18 or older. Only your age is shown to a match. Your birthday cannot be changed after signup.");
     $("#referral-field").hidden = Boolean(profile);
     field("referred_by_instagram").value = profile ? "" : referralDraft.handle;
     ageRange.sync();
@@ -268,6 +272,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     }
     values.intents = [...form.querySelectorAll('[name="intents"]:checked')].map(input => input.value);
     values.interested_in = [...form.querySelectorAll('[name="interested_in"]:checked')].map((input) => input.value);
+    if (profile) values.birth_date = profile.birth_date;
     return makeProfile(values, { isActive: profile?.is_active ?? true });
   }
 
@@ -489,7 +494,9 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     text("#next-step-label", "Saving…");
     try {
       const table = client.from(PROFILE_TABLE);
-      const query = profile ? table.update(values).eq("user_id", user.id) : table.insert({ ...values, user_id: user.id,
+      const changes = { ...values };
+      delete changes.birth_date;
+      const query = profile ? table.update(changes).eq("user_id", user.id) : table.insert({ ...values, user_id: user.id,
         referred_by_instagram: referrer || null, merch_raffle_prize: referralDraft.prize || null });
       const { data, error } = await query.select("*").single();
       if (version !== generation) return;
@@ -627,13 +634,15 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     $("#confirm-delete").disabled = true;
     text("#confirm-delete", "Deleting…");
     try {
-      const { error } = await client.functions.invoke("delete-matchmaking-account", { body: { confirmation: "DELETE" } });
+      const { data, error } = await client.functions.invoke("delete-matchmaking-account", { body: { confirmation: "DELETE" } });
       if (version !== generation) return;
       if (error) throw error;
       // A revoked session may already be gone after Auth deletes the account.
       await client.auth.signOut({ scope: "local" });
       await acceptSession(null);
-      notice("Your matchmaking account has been deleted.");
+      notice(data?.apple_revocation === "manual_required"
+        ? "Your matchmaking account has been deleted. To remove Apple’s remaining permission, open iPhone Settings → your name → Sign in with Apple → Zebra Book Club and stop using Sign in with Apple."
+        : "Your matchmaking account has been deleted.");
     } catch {
       if (version !== generation) return;
       text("#delete-error", "We couldn’t delete your account. Please try again, or contact us for help.");

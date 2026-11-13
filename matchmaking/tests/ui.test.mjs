@@ -102,6 +102,7 @@ test("a new member can finish all three steps with one book and no Instagram", a
   assert.equal($("#onboarding-view").hidden, false);
   assert.equal($('[name="intents"][value="friends"]').checked, true);
   assert.equal($('[name="display_name"]').value, "Reader");
+  assert.equal($('[name="birth_date"]').readOnly, false, "signup needs an editable birthday");
   assert.equal($('[name="instagram_handle"]').required, false);
   assert.match($("#instagram-help").textContent, /only be able to contact your matches by email/);
   for (const [key, value] of Object.entries({ birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States" })) set(key, value);
@@ -136,6 +137,7 @@ test("a new member can finish all three steps with one book and no Instagram", a
   assert.deepEqual(state.profile.intents, ["friends"]);
   assert.equal(state.profile.email_matches, false);
   assert.equal(state.profile.user_id, member.id);
+  assert.equal(state.profile.birth_date, "1994-06-15");
   assert.equal(state.profile.instagram_handle, null);
   assert.equal($("#instagram-dialog").open, false, "skipping Instagram at signup does not immediately prompt again");
   assert.equal($("#participation-description").textContent, "Active");
@@ -1208,4 +1210,40 @@ test("manual copying remains available if native share and clipboard are blocked
   window.prompt = (message, url) => { fallback = url; return null; };
   await event('[data-invite-friends]'); await event('#invite-form', 'submit');
   assert.equal(fallback, 'https://zebrabookclub.com/matchmaking/?ref=reader.books');
+});
+
+test("existing birthdays are read-only and never sent with profile edits", async t => {
+  const clock = new Date().toISOString();
+  const { $, set, event, state } = await setup(t, {
+    initialProfile: { ...profile, books_updated_at: clock, current_book_updated_at: clock },
+  });
+  await event("#edit-profile");
+  assert.equal($('[name="birth_date"]').readOnly, true);
+  assert.match($("#birthday-help").textContent, /fixed after signup/);
+  // Even a script changing the control must not overwrite the saved birthday.
+  set("birth_date", "2010-01-01");
+  set("display_name", "Updated reader");
+  for (let step = 0; step < 3; step++) await event("#profile-form", "submit");
+  assert.equal(state.calls.length, 1);
+  assert.equal(state.calls[0].action, "update");
+  assert.equal(Object.hasOwn(state.calls[0].values, "birth_date"), false);
+  assert.equal(state.profile.birth_date, profile.birth_date);
+  assert.equal(state.profile.display_name, "Updated reader");
+  assert.equal(state.profile.books_updated_at, clock);
+  assert.equal(state.profile.current_book_updated_at, clock);
+});
+
+test("website deletion shows remaining Apple permission instructions", async t => {
+  const { $, client, event, state } = await setup(t, { initialProfile: profile });
+  client.functions.invoke = async (name, options) => {
+    assert.equal(name, "delete-matchmaking-account");
+    assert.deepEqual(options.body, { confirmation: "DELETE" });
+    return { data: { deleted: true, apple_revocation: "manual_required" }, error: null };
+  };
+  await event("#delete-account");
+  $("#delete-confirmation").value = "DELETE";
+  await event("#delete-form", "submit");
+  assert.equal(state.session, null);
+  assert.match($("#notice").textContent, /account has been deleted/);
+  assert.match($("#notice").textContent, /Settings → your name → Sign in with Apple/);
 });

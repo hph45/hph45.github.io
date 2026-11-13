@@ -11,6 +11,9 @@ supabase/.branches/
 # Private member snapshots, matching notes, and unreleased match plans.
 /.matchmaking-private/
 
+# Unreleased treasure-hunt clues, answer keys, and research.
+/.treasure-hunt-private/
+
 # Generated public deployment artifact and local snapshot preview.
 /_site/
 /assets/community-map.json

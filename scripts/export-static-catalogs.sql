@@ -7,7 +7,7 @@ select jsonb_build_object(
     from public.matchmaking_cities),
   'featured', (select jsonb_agg(book order by votes desc, title, work_id) from (
     select b.work_id, b.title, b.author, count(distinct p.user_id) as votes
-    from public.matchmaking_profiles p
+    from public.matchmaking_nonreview_profiles p
     cross join lateral (values (p.favorite_book_id), (p.favorite_book_2_id), (p.favorite_book_3_id)) picks(work_id)
     join public.matchmaking_books b on b.work_id = picks.work_id
     group by b.work_id order by votes desc, b.title, b.work_id limit 20
