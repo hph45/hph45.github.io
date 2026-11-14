@@ -5,7 +5,7 @@
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 
 input[type=hidden] { display: none !important; }
-.map-country { fill: transparent; stroke: transparent; stroke-width: .8; vector-effect: non-scaling-stroke; pointer-events: all; }
+.map-country { fill: transparent; stroke: transparent; stroke-width: .8; vector-effect: non-scaling-stroke; pointer-events: all; outline: none; }
 .map-viewport:not(.has-pinned-country) .map-country:hover, .map-country:focus-visible, .map-country.is-country-selected { fill: rgba(53, 104, 75, .12); stroke: #6a8b75; outline: none; }
 .map-country:focus-visible { stroke: #315b41; stroke-width: 2; }
 .map-caption #map-selection { overflow-wrap: anywhere; }
@@ -98,10 +98,11 @@ input[readonly], fieldset:disabled input, fieldset:disabled textarea { backgroun
 .member-total span { display: block; font: 11px var(--sans); color: var(--muted); margin-top: 8px; }
 .map-viewport { position: relative; margin: 18px auto 10px; }
 #world-map { display: block; width: 100%; height: auto; max-height: 430px; }
-#world-map { overflow: hidden; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+#world-map { overflow: hidden; touch-action: pan-y; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
 #world-map.is-zoomed { cursor: grab; }
 #world-map.is-dragging { cursor: grabbing; }
-#world-map:focus-visible { outline-offset: 4px; }
+#world-map:focus { outline: none; }
+#world-map:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
 .map-marker { vector-effect: non-scaling-stroke; }
 .map-toolbar { position: absolute; top: 0; right: 0; display: flex; align-items: center; }
 .map-controls { display: flex; flex-shrink: 0; border: 1px solid var(--line); }

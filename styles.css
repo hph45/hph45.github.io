@@ -205,6 +205,11 @@ h1 {
 .hero-countdown-clock { --countdown-size: clamp(48px, 16vw, 180px); }
 
 .hero-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 24px;
   margin: 28px 0 0;
   font-size: 1.1rem;
   line-height: 1.5;
@@ -213,6 +218,24 @@ h1 {
 .hero-cta .info-link {
   display: inline-block;
   padding: 10px 0 4px;
+}
+
+.app-store-link {
+  display: inline-block;
+  flex: 0 0 auto;
+  line-height: 0;
+  border-radius: 6px;
+}
+
+.app-store-link img {
+  display: block;
+  width: auto;
+  height: 44px;
+}
+
+.app-store-link:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 5px;
 }
 
 .hero-scroll {
@@ -908,6 +931,13 @@ h2 {
   color: inherit;
 }
 
+.site-footer .app-store-credit {
+  max-width: 76ch;
+  margin: 18px auto 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
 @keyframes slideDown {
   from {
     opacity: 0;
@@ -1031,6 +1061,8 @@ h2 {
 
   .hero-cta {
     margin-top: 18px;
+    flex-direction: column;
+    gap: 20px;
   }
 
   h2 {
