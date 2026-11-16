@@ -2,10 +2,11 @@
 // This changes the countdown only; releasing introductions is a separate action.
 export const FIRST_MATCH_AT = Date.parse("2026-11-02T00:00:00Z");
 export const NEXT_MATCH_AT = Date.parse("2026-11-17T00:00:00Z");
+export const FINAL_MATCH_AT = Date.parse("2026-12-01T00:00:00Z");
 const UNITS = ["days", "hours", "minutes", "seconds"];
 
 export function countdownParts(now = Date.now()) {
-  const deadline = now < FIRST_MATCH_AT ? FIRST_MATCH_AT : NEXT_MATCH_AT;
+  const deadline = now < FIRST_MATCH_AT ? FIRST_MATCH_AT : now < NEXT_MATCH_AT ? NEXT_MATCH_AT : FINAL_MATCH_AT;
   const total = Math.max(0, Math.ceil((deadline - now) / 1000));
   return [Math.floor(total / 86400), Math.floor(total / 3600) % 24, Math.floor(total / 60) % 60, total % 60];
 }
@@ -46,7 +47,7 @@ export function startMatchCountdown({ document, window, now = Date.now }) {
     if (destroyed || !clocks.length || document.hidden) return;
     const time = now(), parts = countdownParts(time);
     const phase = time < FIRST_MATCH_AT ? "first" : "next";
-    const complete = time >= NEXT_MATCH_AT;
+    const complete = time >= FINAL_MATCH_AT;
     for (const { root, clock, label, firstLabel, values } of clocks) {
       const heading = phase === "first" ? firstLabel : "Next match in:";
       if (label && label.textContent !== heading) label.textContent = heading;
