@@ -8,7 +8,7 @@
   <link rel="icon" type="image/jpeg" href="/zebra%20white.jpeg">
   <title>Admin | Zebra Book Club</title>
   <link rel="stylesheet" href="/matchmaking/styles.css?v=20261114.1">
-  <link rel="stylesheet" href="./styles.css?v=20261102.1">
+  <link rel="stylesheet" href="./styles.css?v=20261119.1">
 </head>
 <body>
   <header class="site-header">
@@ -43,8 +43,17 @@
         <div><dt>Countries</dt><dd id="summary-countries">—</dd></div>
         <div><dt>Cities</dt><dd id="summary-cities">—</dd></div>
       </dl>
+      <section class="round-section" aria-labelledby="rounds-title">
+        <div class="round-heading"><h2 id="rounds-title">Accounts by round</h2><p class="small-copy">Completed profiles at first release</p></div>
+        <p id="rounds-unavailable" class="chart-note" hidden>Round statistics aren’t available yet.</p>
+        <p id="rounds-empty" class="chart-note" hidden>No rounds have been released yet.</p>
+        <ol id="round-account-chart" class="round-chart" aria-label="Completed accounts by round" aria-describedby="round-account-note"></ol>
+        <p id="round-account-note" class="visually-hidden">Accounts created by each round’s first release, including paused profiles. Deleted accounts are excluded.</p>
+      </section>
       <section class="review-section" aria-labelledby="reviews-title">
-        <div class="review-heading"><h2 id="reviews-title">Match reviews</h2><p id="review-summary" class="small-copy"></p></div>
+        <div class="review-heading"><h2 id="reviews-title">Match reviews</h2><p id="review-summary" class="small-copy" role="status"></p></div>
+        <div id="review-round-tabs" class="review-round-tabs" role="tablist" aria-label="Review round" hidden></div>
+        <div id="review-results">
         <p id="reviews-unavailable" class="chart-note" hidden>Review statistics aren’t available yet.</p>
         <div id="review-charts" class="review-grid">
           <section class="demographic-panel review-panel" aria-labelledby="compatibility-title">
@@ -58,7 +67,8 @@
             <ol id="book-rating-chart" class="bar-chart" aria-label="Book recommendation ratings, count and share"></ol>
           </section>
         </div>
-        <p id="review-note" class="chart-note">All time · One review per reader per match. Updated ratings replace earlier ones.</p>
+        <p id="review-note" class="chart-note"></p>
+        </div>
       </section>
       <div class="demographics-grid">
         <section class="demographic-panel" aria-labelledby="ages-title">
@@ -151,6 +161,6 @@
   </dialog>
   <footer class="admin-footer"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a></footer>
   <noscript><p class="notice">Please enable JavaScript, then return to <a href="/matchmaking/">matchmaking</a> to sign in.</p><meta http-equiv="refresh" content="0;url=/matchmaking/"></noscript>
-  <script type="module" src="./app.js?v=20261102.6"></script>
+  <script type="module" src="./app.js?v=20261119.1"></script>
 </body>
 </html>

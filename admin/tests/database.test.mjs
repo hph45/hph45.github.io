@@ -12,6 +12,7 @@ test("admin statistics enforce server-owned access and accurate, aggregate-only 
   const db = new PGlite();
   t.after(() => db.close());
   await db.exec(`
+    set time zone 'UTC';
     create role anon; create role authenticated; create role service_role bypassrls;
     create schema auth; create table auth.users (id uuid primary key, email text);
     create function auth.uid() returns uuid language sql stable as $$
@@ -142,7 +143,8 @@ test("admin statistics enforce server-owned access and accurate, aggregate-only 
 
   await t.test("no personal records or wider table access are exposed, including to the admin browser", async () => {
     const stats = await asUser(owner, rpc);
-    assert.deepEqual(Object.keys(stats).sort(), ["generated_at", "total_members", "active_members", "median_age", "city_count", "country_count", "age_groups", "genders", "connection_types", "cities", "countries", "reviews"].sort());
+    assert.deepEqual(Object.keys(stats).sort(), ["generated_at", "total_members", "active_members", "median_age", "city_count", "country_count", "age_groups", "genders", "connection_types", "cities", "countries", "reviews", "rounds"].sort());
+    assert.deepEqual(stats.rounds, []);
     for (const city of stats.cities) assert.deepEqual(Object.keys(city).sort(), ["id", "name", "region", "country", "latitude", "longitude", "member_count"].sort());
     const json = JSON.stringify(stats);
     const demographics = { ...stats, countries: stats.countries.map(({ top_book, ...country }) => country) };
@@ -351,6 +353,56 @@ test("admin statistics enforce server-owned access and accurate, aggregate-only 
     assert.equal(security.prosecdef, true); assert.deepEqual(security.proconfig, ['search_path=""']);
   });
 
+  await t.test("rounds use first-release account cutoffs and the match week, including late reviews and empty future rounds", async () => {
+    await db.exec("begin");
+    try {
+      const original = (await asUser(owner, rpc)).reviews;
+      await db.exec("update public.matchmaking_profiles set created_at='2000-02-01'");
+      for (const [index, created] of [[0, "1999-12-01"], [1, "2000-01-01"], [2, "2000-01-01T00:00:00.001Z"], [3, "2000-01-02"], [4, "2000-01-03"], [10, "1999-01-01"], [12, "1999-01-01"]]) {
+        await db.query("update public.matchmaking_profiles set created_at=$2 where user_id=$1", [ids[index], created]);
+      }
+      for (const id of [ids[10], ids[12]]) await db.query("insert into public.matchmaking_review_accounts(user_id,cohort_id) values($1,$2)", [id, "10000000-0000-4000-8000-000000000001"]);
+      async function pair(week, release, participants = [owner, ids[2]]) {
+        const id = (await db.query("insert into public.matchmaking_matches(week_start,intent,reason,recommended_book_id,recommendation_reason) values($1,'friends','Shared shelves','OL5W','A shared recommendation') returning id", [week])).rows[0].id;
+        for (const user of participants) await db.query("insert into public.matchmaking_match_members(match_id,week_start,user_id) values($1,$2,$3)", [id, week, user]);
+        if (release) await db.query("update public.matchmaking_matches set released_at=$2 where id=$1", [id, release]);
+        return id;
+      }
+      const second = await pair("2026-11-16", "2000-01-02");
+      await pair("2026-11-16", "2000-01-03"); // A supplement is not a third round or a new cutoff.
+      await pair("2026-11-30", "2000-01-04");
+      await pair("2026-12-14", "2000-01-05");
+      await pair("2026-12-21", null);
+      await pair("2026-12-28", "2999-01-01");
+      const incomplete = await pair("2027-01-04", "2000-01-06");
+      await db.query("delete from public.matchmaking_match_members where match_id=$1 and user_id=$2", [incomplete, ids[2]]);
+      const fixture = await pair("2026-10-26", "1999-01-01", [ids[10], ids[12]]);
+      for (const [match, user, compatibility, book] of [[second, owner, 4, 5], [second, ids[2], 2, null], [fixture, ids[10], 1, 1]]) {
+        await db.query("insert into public.matchmaking_match_reviews(match_id,user_id,compatibility_rating,book_rating,recommended_book_id) values($1,$2,$3,$4,$5)", [match, user, compatibility, book, book ? "OL5W" : null]);
+      }
+      const stats = await asUser(owner, rpc);
+      assert.deepEqual(stats.rounds.map(row => [row.round_number, row.week_start, row.account_count]), [[1, "2026-11-02", 2], [2, "2026-11-16", 4], [3, "2026-11-30", 5], [4, "2026-12-14", 5]], "includes paused accounts and exact cutoff, excludes later signups and fixtures");
+      assert.equal(Date.parse(stats.rounds[1].first_released_at), Date.parse("2000-01-02T00:00:00Z"));
+      assert.deepEqual(stats.rounds[0].reviews, original, "reviews entered today still belong to their match's round");
+      assert.equal(stats.rounds[1].reviews.total_reviews, 2);
+      assert.equal(stats.rounds[1].reviews.compatibility.average, 3);
+      assert.deepEqual(stats.rounds[1].reviews.compatibility.distribution.map(row => row.review_count), [0, 1, 0, 1, 0]);
+      assert.equal(stats.rounds[1].reviews.book.total, 1);
+      assert.equal(stats.rounds[1].reviews.book.average, 5);
+      assert.equal(stats.reviews.total_reviews, original.total_reviews + 2);
+      assert.equal(stats.reviews.reviewers, original.reviewers, "overview distinct readers are not the sum of round readers");
+      for (const round of stats.rounds.slice(2)) {
+        assert.equal(round.reviews.total_reviews, 0);
+        assert.equal(round.reviews.compatibility.average, null);
+        assert.equal(round.reviews.book.average, null);
+        assert.deepEqual(round.reviews.book.distribution.map(row => row.review_count), [0, 0, 0, 0, 0]);
+      }
+      assert.doesNotMatch(JSON.stringify(stats.rounds), /user_id|match_id|email|recommended_book_id|Private|OL5W/);
+      await db.query("delete from public.matchmaking_profiles where user_id=$1", [ids[1]]);
+      assert.equal((await asUser(owner, rpc)).rounds[0].account_count, 1, "historical counts explicitly exclude deleted profiles");
+    } finally { await db.exec("rollback"); }
+  });
+
   await t.test("revocation takes effect on the very next request", async () => {
     await db.exec("delete from public.matchmaking_admin_access");
     await assert.rejects(asUser(owner, rpc), /ADMIN_ONLY/);
@@ -370,5 +422,6 @@ test("admin statistics enforce server-owned access and accurate, aggregate-only 
     assert.equal(stats.reviews.total_reviews, 0);
     assert.equal(stats.reviews.compatibility.average, null);
     assert.equal(stats.reviews.book.average, null);
+    assert.deepEqual(stats.rounds, []);
   });
 });

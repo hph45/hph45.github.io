@@ -7,9 +7,15 @@ import { createAdminApp } from "../src/ui.js";
 const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
 const ratings = counts => ({ total: counts.reduce((a, b) => a + b, 0), average: counts.some(Boolean) ? counts.reduce((sum, n, i) => sum + n * (i + 1), 0) / counts.reduce((a, b) => a + b, 0) : null, distribution: counts.map((review_count, i) => ({ rating: i + 1, review_count })) });
 const sample = {
-  generated_at: "2026-10-22T12:00:00Z", total_members: 20, active_members: 17, median_age: 31.5,
+  generated_at: "2026-11-19T12:00:00Z", total_members: 20, active_members: 17, median_age: 31.5,
   city_count: 14, country_count: 2,
   reviews: { total_reviews: 8, reviewers: 6, reviewed_matches: 5, compatibility: ratings([0, 1, 1, 2, 4]), book: ratings([0, 0, 1, 1, 2]) },
+  rounds: [
+    { round_number: 1, week_start: "2026-11-02", first_released_at: "2026-11-01T23:58:00Z", account_count: 12,
+      reviews: { total_reviews: 6, reviewers: 4, reviewed_matches: 3, compatibility: ratings([0, 1, 0, 1, 4]), book: ratings([0, 0, 0, 1, 2]) } },
+    { round_number: 2, week_start: "2026-11-16", first_released_at: "2026-11-17T00:25:39Z", account_count: 18,
+      reviews: { total_reviews: 2, reviewers: 2, reviewed_matches: 2, compatibility: ratings([0, 0, 1, 1, 0]), book: ratings([0, 0, 1, 0, 0]) } },
+  ],
   age_groups: [{ label: "18–24", member_count: 5 }, { label: "25–34", member_count: 15 }],
   genders: [{ key: "woman", label: "Woman", member_count: 12 }, { key: "not_provided", label: "Not provided", member_count: 8 }],
   connection_types: [{ key: "romance", label: "Romance", member_count: 12 }, { key: "friends", label: "Friends", member_count: 15 }, { key: "business_partners", label: "Business partners", member_count: 8 }],
@@ -253,6 +259,75 @@ test("empty and unavailable review statistics are distinct, and invalid distribu
   assert.equal(invalid.$("#compatibility-chart").children.length, 0);
 });
 
+test("the account chart and review tabs cover each round and switch both summaries without requests", async t => {
+  const { $, state, event, window } = await setup(t);
+  assert.equal($("#round-account-chart").children.length, 2);
+  assert.match($("#round-account-chart li").textContent, /12Round 1Week of .*2026/);
+  assert.equal($("#round-account-chart li .round-bar").style.height, "36px");
+  assert.equal($("#round-account-chart li:nth-child(2) .round-bar").style.height, "54px");
+  assert.deepEqual([...$("#review-round-tabs").children].map(tab => tab.textContent), ["Overview", "Round 1", "Round 2"]);
+  assert.equal($("#review-tab-all").getAttribute("aria-selected"), "true");
+  const calls = state.calls.length;
+  await event("#review-tab-2026-11-02");
+  assert.equal($("#review-summary").textContent, "6 reviews · 4 readers · 3 matches");
+  assert.equal($("#compatibility-average").textContent, "4.3");
+  assert.equal($("#book-rating-average").textContent, "4.7");
+  assert.equal($("#book-rating-count").textContent, "3 ratings");
+  assert.equal($("#review-results").getAttribute("aria-labelledby"), "review-tab-2026-11-02");
+  assert.match($("#review-note").textContent, /Round 1 · Week of .*2026/);
+  await event("#review-tab-2026-11-16");
+  assert.equal($("#review-summary").textContent, "2 reviews · 2 readers · 2 matches");
+  assert.equal($("#compatibility-average").textContent, "3.5");
+  assert.equal($("#book-rating-average").textContent, "3.0");
+  assert.equal($("#book-rating-count").textContent, "1 rating");
+  assert.equal($("#book-rating-chart li:nth-child(3) .bar-fill").style.width, "100%");
+  await event("#review-tab-all");
+  assert.equal($("#review-summary").textContent, "8 reviews · 6 readers · 5 matches");
+  assert.equal($("#book-rating-count").textContent, "4 ratings");
+  assert.equal(state.calls.length, calls);
+  assert.equal(window.localStorage.length, 0); assert.equal(window.sessionStorage.length, 0);
+});
+
+test("new rounds appear automatically, allow keyboard navigation, and keep empty ratings explicit", async t => {
+  const { $, window, state, event } = await setup(t);
+  for (const [round_number, week_start] of [[3, "2026-11-30"], [4, "2026-12-14"]]) state.response.data.rounds.push({
+    round_number, week_start, first_released_at: `${week_start}T12:00:00Z`, account_count: 20,
+    reviews: { total_reviews: 0, reviewers: 0, reviewed_matches: 0, compatibility: ratings([0, 0, 0, 0, 0]), book: ratings([0, 0, 0, 0, 0]) },
+  });
+  await event("#refresh");
+  assert.equal($("#round-account-chart").children.length, 4);
+  assert.equal($("#review-round-tabs").children.length, 5);
+  for (const [from, key, to] of [["all", "End", "2026-12-14"], ["2026-12-14", "ArrowLeft", "2026-11-30"], ["2026-11-30", "Home", "all"], ["all", "ArrowLeft", "2026-12-14"], ["2026-12-14", "ArrowRight", "all"]]) {
+    $(`#review-tab-${from}`).dispatchEvent(new window.KeyboardEvent("keydown", { key, bubbles: true }));
+    assert.equal(window.document.activeElement, $(`#review-tab-${to}`));
+    assert.equal($(`#review-tab-${to}`).getAttribute("aria-selected"), "true");
+    assert.equal([...$("#review-round-tabs").children].filter(tab => tab.tabIndex === 0).length, 1);
+  }
+  await event("#review-tab-2026-11-30");
+  assert.equal($("#review-summary").textContent, "0 reviews · 0 readers · 0 matches");
+  assert.equal($("#compatibility-average").textContent, "—");
+  assert.equal($("#book-rating-count").textContent, "No ratings yet");
+  assert.ok([...window.document.querySelectorAll("#review-charts .bar-fill")].every(bar => bar.style.width === "0%"));
+});
+
+test("missing, empty, and malformed round data cannot present invented account counts", async t => {
+  const legacy = structuredClone(sample); delete legacy.rounds;
+  const missing = await setup(t, { response: { data: legacy } });
+  assert.equal(missing.$("#rounds-unavailable").hidden, false);
+  assert.equal(missing.$("#review-round-tabs").hidden, true);
+  assert.equal(missing.$("#review-summary").textContent, "8 reviews · 6 readers · 5 matches");
+  const empty = await setup(t, { response: { data: { ...sample, rounds: [] } } });
+  assert.equal(empty.$("#rounds-empty").hidden, false);
+  assert.equal(empty.$("#round-account-chart").children.length, 0);
+  for (const mutate of [data => { data.rounds[0].account_count = -1; }, data => { data.rounds[1].week_start = "2026-02-30"; }, data => { data.rounds[1].reviews.book.distribution[0].review_count = 9; }]) {
+    const data = structuredClone(sample); mutate(data);
+    const invalid = await setup(t, { response: { data } });
+    assert.equal(invalid.$("#error-view").hidden, false);
+    assert.equal(invalid.$("#round-account-chart").children.length, 0);
+    assert.equal(invalid.$("#review-round-tabs").children.length, 0);
+  }
+});
+
 test("review aggregates are erased on sign-out, account switch, navigation, and destruction", async t => {
   for (const action of ["sign-out", "switch", "navigation", "destroy"]) {
     const { $, app, state, auth, window } = await setup(t);
@@ -267,6 +342,9 @@ test("review aggregates are erased on sign-out, account switch, navigation, and 
     assert.equal($("#book-rating-chart").children.length, 0);
     assert.equal($("#compatibility-average").textContent, "—");
     assert.equal($("#book-rating-count").textContent, "");
+    assert.equal($("#round-account-chart").children.length, 0);
+    assert.equal($("#review-round-tabs").children.length, 0);
+    assert.equal($("#review-note").textContent, "");
   }
 });
 

@@ -5,6 +5,7 @@ import { loadReviewCatalog } from "../../matchmaking/src/review-catalog.js";
 import { attachMapZoom } from "../../matchmaking/src/map-zoom.js";
 import { createMemberDirectory } from "./members.js";
 import { createPoetryLibrary } from "./poetry.js";
+import { createRoundStatistics } from "./rounds.js";
 
 const PAGE_SIZE = 12;
 const count = value => Math.max(0, Math.trunc(Number(value) || 0));
@@ -20,6 +21,7 @@ export function createAdminApp({ client, document, window, fetch = window.fetch.
   const zoom = attachMapZoom(document);
   const directory = createMemberDirectory({ client, document, window, onDenied: redirect, isDenied: denied });
   const poetry = createPoetryLibrary({ client, document, onDenied: redirect, isDenied: denied });
+  const roundStatistics = createRoundStatistics({ document, renderChart });
   const tabs = [...document.querySelectorAll("[data-admin-tab]")];
   const pending = new Set(), removers = [];
   let stats = null, mode = "countries", page = 0, userId = null;
@@ -43,11 +45,12 @@ export function createAdminApp({ client, document, window, fetch = window.fetch.
     clearCountryMap(document);
     directory.clear();
     poetry.clear();
+    roundStatistics.clear();
     selectTab("matchmaking");
     $("#admin-view").hidden = true;
-    for (const id of ["age-chart", "gender-chart", "connection-chart", "location-rows", "map-markers", "compatibility-chart", "book-rating-chart"]) $(`#${id}`).replaceChildren();
-    for (const id of ["population-note", "updated-at", "member-count", "member-count-label", "map-selection", "location-status", "review-summary", "compatibility-count", "book-rating-count"]) $(`#${id}`).textContent = "";
-    for (const id of ["summary-total", "summary-age", "summary-countries", "summary-cities", "compatibility-average", "book-rating-average"]) $(`#${id}`).textContent = "—";
+    for (const id of ["age-chart", "gender-chart", "connection-chart", "location-rows", "map-markers"]) $(`#${id}`).replaceChildren();
+    for (const id of ["population-note", "updated-at", "member-count", "member-count-label", "map-selection", "location-status"]) $(`#${id}`).textContent = "";
+    for (const id of ["summary-total", "summary-age", "summary-countries", "summary-cities"]) $(`#${id}`).textContent = "—";
     $("#previous-locations").disabled = $("#next-locations").disabled = true;
     zoom.reset();
   }
@@ -102,32 +105,6 @@ export function createAdminApp({ client, document, window, fetch = window.fetch.
     $(selector).replaceChildren(fragment);
   }
 
-  function renderReviews(reviews) {
-    // An older backend must never appear to have zero reviews.
-    $("#reviews-unavailable").hidden = Boolean(reviews);
-    $("#review-charts").hidden = $("#review-note").hidden = !reviews;
-    if (!reviews) return;
-    if (![reviews.total_reviews, reviews.reviewers, reviews.reviewed_matches].every(value => Number.isInteger(value) && value >= 0)
-      || reviews.reviewers > reviews.total_reviews || reviews.reviewed_matches > reviews.total_reviews
-      || reviews.compatibility?.total !== reviews.total_reviews || reviews.book?.total > reviews.total_reviews) {
-      throw new Error("Invalid review totals");
-    }
-    const label = (value, singular, plural = `${singular}s`) => `${number(value)} ${value === 1 ? singular : plural}`;
-    $("#review-summary").textContent = `${label(reviews.total_reviews, "review")} · ${label(reviews.reviewers, "reader")} · ${label(reviews.reviewed_matches, "match", "matches")}`;
-    for (const [key, prefix] of [["compatibility", "compatibility"], ["book", "book-rating"]]) {
-      const summary = reviews[key];
-      if (!summary || !Number.isInteger(summary.total) || summary.total < 0 || !Array.isArray(summary.distribution)
-        || summary.distribution.length !== 5 || summary.distribution.some((row, index) => row.rating !== index + 1 || !Number.isInteger(row.review_count) || row.review_count < 0)
-        || summary.distribution.reduce((sum, row) => sum + row.review_count, 0) !== summary.total
-        || (summary.total ? !Number.isFinite(summary.average) || summary.average < 1 || summary.average > 5 : summary.average !== null)) {
-        throw new Error("Invalid review statistics response");
-      }
-      $(`#${prefix}-average`).textContent = summary.total ? summary.average.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : "—";
-      $(`#${prefix}-count`).textContent = summary.total ? label(summary.total, "rating") : "No ratings yet";
-      renderChart(`#${prefix}-chart`, summary.distribution.map(row => ({ ...row, label: `${row.rating} ${row.rating === 1 ? "star" : "stars"}` })), summary.total, "review_count");
-    }
-  }
-
   function renderLocations() {
     if (!stats) return;
     const query = searchable($("#location-search").value.trim());
@@ -176,7 +153,7 @@ export function createAdminApp({ client, document, window, fetch = window.fetch.
     renderChart("#age-chart", data.age_groups);
     renderChart("#gender-chart", data.genders);
     renderChart("#connection-chart", data.connection_types);
-    renderReviews(data.reviews);
+    roundStatistics.render(data);
     renderCommunityMap(document, data, { countrySummaries: cityCountrySummaries(data.countries) });
     renderCountryMap(document, data.countries, catalog);
     zoom.reset();
@@ -257,6 +234,7 @@ export function createAdminApp({ client, document, window, fetch = window.fetch.
       zoom.destroy();
       directory.destroy();
       poetry.destroy();
+      roundStatistics.destroy();
     },
   };
 }
