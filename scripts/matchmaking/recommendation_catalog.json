@@ -1,0 +1,886 @@
+{
+  "scope": "Conservative standalone titles and established series entry points. Exact title and author matching only; no sequels or omnibus substitutions. A catalog entry is not evidence someone has read it.",
+  "books": [
+    {
+      "title": "1984",
+      "author": "George Orwell"
+    },
+    {
+      "title": "Animal Farm",
+      "author": "George Orwell"
+    },
+    {
+      "title": "Pride and Prejudice",
+      "author": "Jane Austen"
+    },
+    {
+      "title": "Emma",
+      "author": "Jane Austen"
+    },
+    {
+      "title": "Persuasion",
+      "author": "Jane Austen"
+    },
+    {
+      "title": "Mansfield Park",
+      "author": "Jane Austen"
+    },
+    {
+      "title": "Northanger Abbey",
+      "author": "Jane Austen"
+    },
+    {
+      "title": "Sense and Sensibility",
+      "author": "Jane Austen"
+    },
+    {
+      "title": "Jane Eyre",
+      "author": "Charlotte Brontë"
+    },
+    {
+      "title": "Wuthering Heights",
+      "author": "Emily Brontë"
+    },
+    {
+      "title": "Great Expectations",
+      "author": "Charles Dickens"
+    },
+    {
+      "title": "A Tale of Two Cities",
+      "author": "Charles Dickens"
+    },
+    {
+      "title": "David Copperfield",
+      "author": "Charles Dickens"
+    },
+    {
+      "title": "Frankenstein",
+      "author": "Mary Shelley"
+    },
+    {
+      "title": "Dracula",
+      "author": "Bram Stoker"
+    },
+    {
+      "title": "The Picture of Dorian Gray",
+      "author": "Oscar Wilde"
+    },
+    {
+      "title": "The Count of Monte Cristo",
+      "author": "Alexandre Dumas"
+    },
+    {
+      "title": "The Great Gatsby",
+      "author": "F. Scott Fitzgerald"
+    },
+    {
+      "title": "East of Eden",
+      "author": "John Steinbeck"
+    },
+    {
+      "title": "The Grapes of Wrath",
+      "author": "John Steinbeck"
+    },
+    {
+      "title": "Of Mice and Men",
+      "author": "John Steinbeck"
+    },
+    {
+      "title": "The Pearl",
+      "author": "John Steinbeck"
+    },
+    {
+      "title": "The Winter of Our Discontent",
+      "author": "John Steinbeck"
+    },
+    {
+      "title": "The Awakening",
+      "author": "Kate Chopin"
+    },
+    {
+      "title": "The House of Mirth",
+      "author": "Edith Wharton"
+    },
+    {
+      "title": "The Secret History",
+      "author": "Donna Tartt"
+    },
+    {
+      "title": "The Goldfinch",
+      "author": "Donna Tartt"
+    },
+    {
+      "title": "Stoner",
+      "author": "John Williams"
+    },
+    {
+      "title": "Butcher's Crossing",
+      "author": "John Williams"
+    },
+    {
+      "title": "All the Light We Cannot See",
+      "author": "Anthony Doerr"
+    },
+    {
+      "title": "And the Mountains Echoed",
+      "author": "Khaled Hosseini"
+    },
+    {
+      "title": "The Kite Runner",
+      "author": "Khaled Hosseini"
+    },
+    {
+      "title": "A Thousand Splendid Suns",
+      "author": "Khaled Hosseini"
+    },
+    {
+      "title": "The Song of Achilles",
+      "author": "Madeline Miller"
+    },
+    {
+      "title": "Circe",
+      "author": "Madeline Miller"
+    },
+    {
+      "title": "Piranesi",
+      "author": "Susanna Clarke"
+    },
+    {
+      "title": "Jonathan Strange & Mr Norrell",
+      "author": "Susanna Clarke"
+    },
+    {
+      "title": "The Night Circus",
+      "author": "Erin Morgenstern"
+    },
+    {
+      "title": "The Starless Sea",
+      "author": "Erin Morgenstern"
+    },
+    {
+      "title": "The Last Unicorn",
+      "author": "Peter S. Beagle"
+    },
+    {
+      "title": "Stardust",
+      "author": "Neil Gaiman"
+    },
+    {
+      "title": "Neverwhere",
+      "author": "Neil Gaiman"
+    },
+    {
+      "title": "The Ocean at the End of the Lane",
+      "author": "Neil Gaiman"
+    },
+    {
+      "title": "The Hobbit",
+      "author": "J.R.R. Tolkien",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "The Fellowship of the Ring",
+      "author": "J.R.R. Tolkien",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "The Lion, the Witch and the Wardrobe",
+      "author": "C. S. Lewis",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "A Wizard of Earthsea",
+      "author": "Ursula K. Le Guin",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "The Left Hand of Darkness",
+      "author": "Ursula K. Le Guin"
+    },
+    {
+      "title": "The Dispossessed",
+      "author": "Ursula K. Le Guin"
+    },
+    {
+      "title": "Dune",
+      "author": "Frank Herbert",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "The Martian",
+      "author": "Andy Weir"
+    },
+    {
+      "title": "Project Hail Mary",
+      "author": "Andy Weir"
+    },
+    {
+      "title": "Artemis",
+      "author": "Andy Weir"
+    },
+    {
+      "title": "Annihilation",
+      "author": "Jeff VanderMeer",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "Oryx and Crake",
+      "author": "Margaret Atwood",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "The Handmaid's Tale",
+      "author": "Margaret Atwood",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "Station Eleven",
+      "author": "Emily St. John Mandel"
+    },
+    {
+      "title": "Sea of Tranquility",
+      "author": "Emily St. John Mandel"
+    },
+    {
+      "title": "Never Let Me Go",
+      "author": "Kazuo Ishiguro"
+    },
+    {
+      "title": "The Remains of the Day",
+      "author": "Kazuo Ishiguro"
+    },
+    {
+      "title": "Klara and the Sun",
+      "author": "Kazuo Ishiguro"
+    },
+    {
+      "title": "Flowers for Algernon",
+      "author": "Daniel Keyes"
+    },
+    {
+      "title": "Fahrenheit 451",
+      "author": "Ray Bradbury"
+    },
+    {
+      "title": "Brave New World",
+      "author": "Aldous Huxley"
+    },
+    {
+      "title": "The Hitchhiker's Guide to the Galaxy",
+      "author": "Douglas Adams",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "Dirk Gently’s Holistic Detective Agency",
+      "author": "Douglas Adams",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "Assassin's Apprentice",
+      "author": "Robin Hobb",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "The Name of the Wind",
+      "author": "Patrick Rothfuss",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "The Way of Kings",
+      "author": "Brandon Sanderson",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "The Final Empire",
+      "author": "Brandon Sanderson",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "Mistborn",
+      "author": "Brandon Sanderson",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "Elantris",
+      "author": "Brandon Sanderson"
+    },
+    {
+      "title": "Warbreaker",
+      "author": "Brandon Sanderson"
+    },
+    {
+      "title": "The Emperor's Soul",
+      "author": "Brandon Sanderson"
+    },
+    {
+      "title": "Tress of the Emerald Sea",
+      "author": "Brandon Sanderson"
+    },
+    {
+      "title": "Yumi and the Nightmare Painter",
+      "author": "Brandon Sanderson"
+    },
+    {
+      "title": "Skyward",
+      "author": "Brandon Sanderson",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "The Hunger Games",
+      "author": "Suzanne Collins",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "Red Rising",
+      "author": "Pierce Brown",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "A Game of Thrones",
+      "author": "George R. R. Martin",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "The Lightning Thief",
+      "author": "Rick Riordan",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "Six of Crows",
+      "author": "Leigh Bardugo",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "Shadow and Bone",
+      "author": "Leigh Bardugo",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "Ninth House",
+      "author": "Leigh Bardugo",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "The Cruel Prince",
+      "author": "Holly Black",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "The Darkest Part of the Forest",
+      "author": "Holly Black"
+    },
+    {
+      "title": "The Hundred Thousand Kingdoms",
+      "author": "N. K. Jemisin",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "The Fifth Season",
+      "author": "N. K. Jemisin",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "A Darker Shade of Magic",
+      "author": "V. E. Schwab",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "Vicious",
+      "author": "V. E. Schwab",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "The Invisible Life of Addie LaRue",
+      "author": "V. E. Schwab"
+    },
+    {
+      "title": "The House in the Cerulean Sea",
+      "author": "T. J. Klune",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "Under the Whispering Door",
+      "author": "T. J. Klune"
+    },
+    {
+      "title": "A Court of Thorns and Roses",
+      "author": "Sarah J. Maas",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "Throne of Glass",
+      "author": "Sarah J. Maas",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "Fourth Wing",
+      "author": "Rebecca Yarros",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "The Priory of the Orange Tree",
+      "author": "Samantha Shannon"
+    },
+    {
+      "title": "The Poppy War",
+      "author": "R. F. Kuang",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "Babel",
+      "author": "R. F. Kuang"
+    },
+    {
+      "title": "Yellowface",
+      "author": "R. F. Kuang"
+    },
+    {
+      "title": "Beach Read",
+      "author": "Emily Henry"
+    },
+    {
+      "title": "Book Lovers",
+      "author": "Emily Henry"
+    },
+    {
+      "title": "Happy Place",
+      "author": "Emily Henry"
+    },
+    {
+      "title": "People We Meet on Vacation",
+      "author": "Emily Henry"
+    },
+    {
+      "title": "Funny Story",
+      "author": "Emily Henry"
+    },
+    {
+      "title": "Normal People",
+      "author": "Sally Rooney"
+    },
+    {
+      "title": "Conversations With Friends",
+      "author": "Sally Rooney"
+    },
+    {
+      "title": "Writers & Lovers",
+      "author": "Lily King"
+    },
+    {
+      "title": "Rules of Civility",
+      "author": "Amor Towles"
+    },
+    {
+      "title": "A Gentleman in Moscow",
+      "author": "Amor Towles"
+    },
+    {
+      "title": "The Seven Husbands of Evelyn Hugo",
+      "author": "Taylor Jenkins Reid"
+    },
+    {
+      "title": "Daisy Jones & The Six",
+      "author": "Taylor Jenkins Reid"
+    },
+    {
+      "title": "Carrie Soto Is Back",
+      "author": "Taylor Jenkins Reid"
+    },
+    {
+      "title": "Malibu Rising",
+      "author": "Taylor Jenkins Reid"
+    },
+    {
+      "title": "The Great Alone",
+      "author": "Kristin Hannah"
+    },
+    {
+      "title": "The Nightingale",
+      "author": "Kristin Hannah"
+    },
+    {
+      "title": "The Women",
+      "author": "Kristin Hannah"
+    },
+    {
+      "title": "The Time Traveler's Wife",
+      "author": "Audrey Niffenegger"
+    },
+    {
+      "title": "The Storied Life of A. J. Fikry",
+      "author": "Gabrielle Zevin"
+    },
+    {
+      "title": "Tomorrow, and Tomorrow, and Tomorrow",
+      "author": "Gabrielle Zevin"
+    },
+    {
+      "title": "Elsewhere",
+      "author": "Gabrielle Zevin"
+    },
+    {
+      "title": "The Perks of Being a Wallflower",
+      "author": "Stephen Chbosky"
+    },
+    {
+      "title": "Looking for Alaska",
+      "author": "John Green"
+    },
+    {
+      "title": "Paper Towns",
+      "author": "John Green"
+    },
+    {
+      "title": "The Fault in Our Stars",
+      "author": "John Green"
+    },
+    {
+      "title": "The Book Thief",
+      "author": "Markus Zusak"
+    },
+    {
+      "title": "I Am the Messenger",
+      "author": "Markus Zusak"
+    },
+    {
+      "title": "The Outsiders",
+      "author": "S. E. Hinton"
+    },
+    {
+      "title": "The Mysterious Affair at Styles",
+      "author": "Agatha Christie"
+    },
+    {
+      "title": "And Then There Were None",
+      "author": "Agatha Christie"
+    },
+    {
+      "title": "The Murder of Roger Ackroyd",
+      "author": "Agatha Christie"
+    },
+    {
+      "title": "Rebecca",
+      "author": "Daphne du Maurier"
+    },
+    {
+      "title": "My Cousin Rachel",
+      "author": "Daphne du Maurier"
+    },
+    {
+      "title": "Pretty Girls",
+      "author": "Karin Slaughter"
+    },
+    {
+      "title": "Then She Was Gone",
+      "author": "Lisa Jewell"
+    },
+    {
+      "title": "The Girl from Widow Hills",
+      "author": "Megan Miranda"
+    },
+    {
+      "title": "Gone Girl",
+      "author": "Gillian Flynn"
+    },
+    {
+      "title": "Sharp Objects",
+      "author": "Gillian Flynn"
+    },
+    {
+      "title": "The Shining",
+      "author": "Stephen King",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "Carrie",
+      "author": "Stephen King"
+    },
+    {
+      "title": "Misery",
+      "author": "Stephen King"
+    },
+    {
+      "title": "Revival",
+      "author": "Stephen King"
+    },
+    {
+      "title": "The Green Mile",
+      "author": "Stephen King"
+    },
+    {
+      "title": "The Stand",
+      "author": "Stephen King"
+    },
+    {
+      "title": "One Last Stop",
+      "author": "Casey McQuiston"
+    },
+    {
+      "title": "Red, White & Royal Blue",
+      "author": "Casey McQuiston"
+    },
+    {
+      "title": "The People in the Trees",
+      "author": "Hanya Yanagihara"
+    },
+    {
+      "title": "A Little Life",
+      "author": "Hanya Yanagihara"
+    },
+    {
+      "title": "Shuggie Bain",
+      "author": "Douglas Stuart"
+    },
+    {
+      "title": "Tar Baby",
+      "author": "Toni Morrison"
+    },
+    {
+      "title": "Beloved",
+      "author": "Toni Morrison"
+    },
+    {
+      "title": "The Bluest Eye",
+      "author": "Toni Morrison"
+    },
+    {
+      "title": "The God of Small Things",
+      "author": "Arundhati Roy"
+    },
+    {
+      "title": "The Namesake",
+      "author": "Jhumpa Lahiri"
+    },
+    {
+      "title": "The Palace of Illusions",
+      "author": "Chitra Banerjee Divakaruni"
+    },
+    {
+      "title": "The Alchemist",
+      "author": "Paulo Coelho"
+    },
+    {
+      "title": "Siddhartha",
+      "author": "Hermann Hesse"
+    },
+    {
+      "title": "Demian",
+      "author": "Hermann Hesse"
+    },
+    {
+      "title": "The Little Prince",
+      "author": "Antoine de Saint-Exupéry"
+    },
+    {
+      "title": "Black Beauty",
+      "author": "Anna Sewell"
+    },
+    {
+      "title": "Anne of Green Gables",
+      "author": "L. M. Montgomery",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "Little Women",
+      "author": "Louisa May Alcott",
+      "avoid_if_any_read_same_author": true
+    },
+    {
+      "title": "The Secret Garden",
+      "author": "Frances Hodgson Burnett"
+    },
+    {
+      "title": "The Wind in the Willows",
+      "author": "Kenneth Grahame"
+    },
+    {
+      "title": "Flatland",
+      "author": "Edwin Abbott Abbott"
+    },
+    {
+      "title": "The Myth of Sisyphus and Other Essays",
+      "author": "Albert Camus"
+    },
+    {
+      "title": "The Stranger",
+      "author": "Albert Camus"
+    },
+    {
+      "title": "The Plague",
+      "author": "Albert Camus"
+    },
+    {
+      "title": "Man's Search for Meaning",
+      "author": "Viktor E. Frankl"
+    },
+    {
+      "title": "Meditations",
+      "author": "Marcus Aurelius"
+    },
+    {
+      "title": "Sapiens",
+      "author": "Yuval Noah Harari"
+    },
+    {
+      "title": "Educated",
+      "author": "Tara Westover"
+    },
+    {
+      "title": "Born a Crime",
+      "author": "Trevor Noah"
+    },
+    {
+      "title": "The Glass Castle",
+      "author": "Jeannette Walls"
+    },
+    {
+      "title": "When Breath Becomes Air",
+      "author": "Paul Kalanithi"
+    },
+    {
+      "title": "The Immortal Life of Henrietta Lacks",
+      "author": "Rebecca Skloot"
+    },
+    {
+      "title": "Quiet",
+      "author": "Susan Cain"
+    },
+    {
+      "title": "Thinking, Fast and Slow",
+      "author": "Daniel Kahneman"
+    },
+    {
+      "title": "Atomic Habits",
+      "author": "James Clear"
+    },
+    {
+      "title": "The Psychology of Money",
+      "author": "Morgan Housel"
+    },
+    {
+      "title": "A Short History of Nearly Everything",
+      "author": "Bill Bryson"
+    },
+    {
+      "title": "A Brief History of Time",
+      "author": "Stephen Hawking"
+    },
+    {
+      "title": "Into the Wild",
+      "author": "Jon Krakauer"
+    },
+    {
+      "title": "Braiding Sweetgrass",
+      "author": "Robin Wall Kimmerer"
+    },
+    {
+      "title": "The Anthropocene Reviewed",
+      "author": "John Green"
+    },
+    {
+      "title": "The Comfort Book",
+      "author": "Matt Haig"
+    },
+    {
+      "title": "The Humans",
+      "author": "Matt Haig"
+    },
+    {
+      "title": "The Midnight Library",
+      "author": "Matt Haig"
+    },
+    {
+      "title": "Sum",
+      "author": "David Eagleman"
+    },
+    {
+      "title": "The Body Keeps the Score",
+      "author": "Bessel van der Kolk"
+    },
+    {
+      "title": "Just Kids",
+      "author": "Patti Smith"
+    },
+    {
+      "title": "Know My Name",
+      "author": "Chanel Miller"
+    },
+    {
+      "title": "Crying in H Mart",
+      "author": "Michelle Zauner"
+    },
+    {
+      "title": "Solito",
+      "author": "Javier Zamora"
+    },
+    {
+      "title": "Demon Copperhead",
+      "author": "Barbara Kingsolver"
+    },
+    {
+      "title": "The Poisonwood Bible",
+      "author": "Barbara Kingsolver"
+    },
+    {
+      "title": "Unsheltered",
+      "author": "Barbara Kingsolver"
+    },
+    {
+      "title": "The Bell Jar",
+      "author": "Sylvia Plath"
+    },
+    {
+      "title": "Dream Work",
+      "author": "Mary Oliver"
+    },
+    {
+      "title": "Devotions",
+      "author": "Mary Oliver"
+    },
+    {
+      "title": "Blue horses",
+      "author": "Mary Oliver"
+    },
+    {
+      "title": "Night sky with exit wounds",
+      "author": "Ocean Vuong"
+    },
+    {
+      "title": "Metamorphosis",
+      "author": "Franz Kafka"
+    },
+    {
+      "title": "Letters to Milena",
+      "author": "Franz Kafka"
+    },
+    {
+      "title": "Brothers Karamazov",
+      "author": "Fyodor Dostoyevsky"
+    },
+    {
+      "title": "The Screwtape Letters",
+      "author": "C. S. Lewis"
+    },
+    {
+      "title": "Mere Christianity",
+      "author": "C. S. Lewis"
+    },
+    {
+      "title": "The Great Divorce",
+      "author": "C. S. Lewis"
+    },
+    {
+      "title": "Dandelion Wine",
+      "author": "Ray Bradbury"
+    },
+    {
+      "title": "Something Wicked This Way Comes",
+      "author": "Ray Bradbury"
+    },
+    {
+      "title": "The Man Who Mistook His Wife for a Hat",
+      "author": "Oliver Sacks"
+    }
+  ],
+  "series_guard": "For marked series entries, conservatively avoid recommending the entry when either member has any recorded book or prior recommendation by the same normalized author. This avoids obvious series repeats without claiming the entry was read."
+}

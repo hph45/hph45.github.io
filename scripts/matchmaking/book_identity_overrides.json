@@ -1,0 +1,392 @@
+{
+  "scope": "Specific reviewed duplicate records only. Do not apply general fuzzy title or author merging.",
+  "overrides": [
+    {
+      "source_id": "OL14875876W",
+      "target_id": "OL59048W",
+      "source_title": "Remains of the Day",
+      "target_title": "The Remains of the Day",
+      "author": "Kazuo Ishiguro",
+      "evidence_url": "https://openlibrary.org/works/OL59048W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "OL21800008W",
+      "target_id": "OL16809983W",
+      "source_title": "Naturals",
+      "target_title": "The Naturals",
+      "author": "Jennifer Lynn Barnes",
+      "evidence_url": "https://openlibrary.org/works/OL16809983W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "OL22164917W",
+      "target_id": "OL71014W",
+      "source_title": "Great Divorce",
+      "target_title": "The Great Divorce",
+      "author": "C. S. Lewis",
+      "evidence_url": "https://openlibrary.org/works/OL71014W",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "OL25316562W",
+      "target_id": "OL24380174W",
+      "source_title": "Phantom of the Opera",
+      "target_title": "The Phantom of the Opera",
+      "author": "Gaston Leroux",
+      "evidence_url": "https://openlibrary.org/works/OL24380174W",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "OL25785668W",
+      "target_id": "OL41942676W",
+      "source_title": "Unselected Journals of Emma M. Lion",
+      "target_title": "The Unselected Journals of Emma M. Lion",
+      "author": "Beth Brower",
+      "evidence_url": "https://openlibrary.org/works/OL41942676W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "OL26446888W",
+      "target_id": "OL26784440W",
+      "source_title": "The Odyssey",
+      "target_title": "Odyssey",
+      "author": "Ὅμηρος",
+      "evidence_url": "https://openlibrary.org/works/OL26784440W",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "OL27819078W",
+      "target_id": "OL4720160W",
+      "source_title": "Time Traveler's Wife",
+      "target_title": "The Time Traveler's Wife",
+      "author": "Audrey Niffenegger",
+      "evidence_url": "https://openlibrary.org/works/OL4720160W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "OL28354931W",
+      "target_id": "OL20411060W",
+      "source_title": "Forty Rules of Love",
+      "target_title": "The Forty Rules of Love",
+      "author": "Elif Şafak",
+      "evidence_url": "https://openlibrary.org/works/OL20411060W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "OL2908747W",
+      "target_id": "OL2908764W",
+      "source_title": "Prince of Tides",
+      "target_title": "The Prince of Tides",
+      "author": "Pat Conroy",
+      "evidence_url": "https://openlibrary.org/works/OL2908764W",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "OL30566068W",
+      "target_id": "OL71072W",
+      "source_title": "Screwtape Letters",
+      "target_title": "The Screwtape Letters",
+      "author": "C. S. Lewis",
+      "evidence_url": "https://openlibrary.org/works/OL71072W",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "OL31169989W",
+      "target_id": "OL28829118W",
+      "source_title": "The 7 ½ Deaths of Evelyn Hardcastle",
+      "target_title": "7 1/2 Deaths of Evelyn Hardcastle",
+      "author": "Stuart Turton",
+      "evidence_url": "https://openlibrary.org/works/OL28829118W",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "OL31701067W",
+      "target_id": "OL468431W",
+      "source_title": "Great Gatsby",
+      "target_title": "The Great Gatsby",
+      "author": "F. Scott Fitzgerald",
+      "evidence_url": "https://openlibrary.org/works/OL468431W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "OL34289806W",
+      "target_id": "OL1253285W",
+      "source_title": "Scarlet Pimpernel",
+      "target_title": "The Scarlet Pimpernel",
+      "author": "Emma Orczy",
+      "evidence_url": "https://openlibrary.org/works/OL1253285W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "OL35690910W",
+      "target_id": "OL8369445W",
+      "source_title": "Lies of Locke Lamora",
+      "target_title": "The Lies of Locke Lamora",
+      "author": "Scott Lynch",
+      "evidence_url": "https://openlibrary.org/works/OL8369445W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "OL36999384W",
+      "target_id": "OL39795340W",
+      "source_title": "The Master and Margarita",
+      "target_title": "Master and Margarita",
+      "author": "Михаил Афанасьевич Булгаков",
+      "evidence_url": "https://openlibrary.org/works/OL39795340W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "OL37513138W",
+      "target_id": "OL53908W",
+      "source_title": "The Adventures of Huckleberry Finn",
+      "target_title": "Adventures of Huckleberry Finn",
+      "author": "Mark Twain",
+      "evidence_url": "https://openlibrary.org/works/OL53908W",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "OL40150711W",
+      "target_id": "OL77775W",
+      "source_title": "Blue Castle",
+      "target_title": "The blue castle",
+      "author": "Lucy Maud Montgomery",
+      "evidence_url": "https://openlibrary.org/works/OL77775W",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "OL42403521W",
+      "target_id": "OL5782000W",
+      "source_title": "Thousand Splendid Suns",
+      "target_title": "A Thousand Splendid Suns",
+      "author": "Khaled Hosseini",
+      "evidence_url": "https://openlibrary.org/works/OL5782000W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "OL42452329W",
+      "target_id": "OL16509148W",
+      "source_title": "Song of Achilles",
+      "target_title": "The Song of Achilles",
+      "author": "Madeline Miller",
+      "evidence_url": "https://openlibrary.org/works/OL16509148W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "OL42536512W",
+      "target_id": "OL37827517W",
+      "source_title": "God of the Woods",
+      "target_title": "The God of the Woods",
+      "author": "Liz Moore",
+      "evidence_url": "https://openlibrary.org/works/OL37827517W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "OL44984294W",
+      "target_id": "OL22563730W",
+      "source_title": "The People We meet On Vacation",
+      "target_title": "People We Meet On Vacation",
+      "author": "Emily Henry",
+      "evidence_url": "https://openlibrary.org/works/OL22563730W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "OL6027236W",
+      "target_id": "OL28838225W",
+      "source_title": "The Maze Runner",
+      "target_title": "Maze Runner",
+      "author": "James Dashner",
+      "evidence_url": "https://openlibrary.org/works/OL28838225W",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "ZB0229e0ef30120351ea5c638073f5f07b",
+      "target_id": "OL675783W",
+      "source_title": "Handmaid's Tale",
+      "target_title": "The Handmaid's Tale",
+      "author": "Margaret Atwood",
+      "evidence_url": "https://openlibrary.org/works/OL675783W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "ZB13973fb139656b1f7dfc27db26536a6c",
+      "target_id": "OL23205W",
+      "source_title": "Grapes of Wrath",
+      "target_title": "The Grapes of Wrath",
+      "author": "John Steinbeck",
+      "evidence_url": "https://openlibrary.org/works/OL23205W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "ZB19a5fe95d7e9ca1df5a9587ea83df212",
+      "target_id": "OL34698237W",
+      "source_title": "The Little Prince",
+      "target_title": "Little Prince",
+      "author": "Antoine de Saint Exupery",
+      "evidence_url": "https://openlibrary.org/works/OL34698237W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "ZB1d65f67fc48987983f82779c4d3c1047",
+      "target_id": "OL20197660W",
+      "source_title": "The Ninth House",
+      "target_title": "Ninth House",
+      "author": "Leigh Bardugo",
+      "evidence_url": "https://openlibrary.org/works/OL20197660W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "ZB230cb01beb47020d11bae12f1af38375",
+      "target_id": "ZB2f89d46595a6c1a877f43698deeba288",
+      "source_title": "Foxhole Court",
+      "target_title": "The Foxhole Court",
+      "author": "Nora Sakavic",
+      "evidence_url": "https://openlibrary.org/works/OL21780511W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "ZB42077341a24c952ad4ef532f71351ba6",
+      "target_id": "OL20636244W",
+      "source_title": "The Giver Quartet",
+      "target_title": "Giver Quartet",
+      "author": "Lois Lowry",
+      "evidence_url": "https://openlibrary.org/works/OL20636244W",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "ZB5c158fdbe39a1d245ee8dd9642f7537d",
+      "target_id": "OL76837W",
+      "source_title": "DaVinci Code",
+      "target_title": "The Da Vinci Code",
+      "author": "Dan Brown",
+      "evidence_url": "https://openlibrary.org/works/OL76837W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "ZB633318c0bea8002eeb8f82ffdd44923c",
+      "target_id": "ZBb944683d6348c8ce4458846c1891cffe",
+      "source_title": "Catcher in the rye",
+      "target_title": "The Catcher in the Rye",
+      "author": "JD Salinger",
+      "evidence_url": "https://openlibrary.org/works/OL3335245W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "ZB6bdbad494bbbb93a9ad25f7608ac5a78",
+      "target_id": "OL36043513W",
+      "source_title": "The Right Move",
+      "target_title": "Right Move",
+      "author": "Liz Tomforde",
+      "evidence_url": "https://openlibrary.org/works/OL36043513W",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "ZB81a67e75ccac06241f877ed08a1e691b",
+      "target_id": "OL34061150W",
+      "source_title": "Spirit Bares its Teeth",
+      "target_title": "The Spirit Bares Its Teeth",
+      "author": "Andrew Joseph White",
+      "evidence_url": "https://openlibrary.org/works/OL34061150W",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "ZBbb467a9ae77c5aa3ce4a2fb2c88273f4",
+      "target_id": "OL498556W",
+      "source_title": "The Metamorphosis",
+      "target_title": "Metamorphosis",
+      "author": "Franz Kafka",
+      "evidence_url": "https://openlibrary.org/works/OL498556W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "ZBbe15f100b705c7b951d520891d30c8d6",
+      "target_id": "OL27448W",
+      "source_title": "Lord of The Rings",
+      "target_title": "The Lord of the Rings",
+      "author": "J.R.R. Tolkien",
+      "evidence_url": "https://openlibrary.org/works/OL27448W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "ZBbf6f7c53a96a8ce180ce4cef91fc3f2f",
+      "target_id": "OL2163649W",
+      "source_title": "Hitchhikers guide to the galaxy",
+      "target_title": "The Hitchhiker's Guide to the Galaxy",
+      "author": "Douglas adams",
+      "evidence_url": "https://openlibrary.org/works/OL2163649W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "ZBc3bdfe3a7c49da7eb568d40c63524258",
+      "target_id": "ZB486865bea517edb024f5bdb83df2ceaf",
+      "source_title": "Book of doors",
+      "target_title": "The Book of Doors",
+      "author": "Gareth Brown",
+      "evidence_url": "https://openlibrary.org/works/OL37568021W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "ZBd2d5e85eb0c4637d87a8a2f53ba63b6c",
+      "target_id": "ZB048218bc60449df198ef10744942dc19",
+      "source_title": "Nickel Boys",
+      "target_title": "The Nickel Boys",
+      "author": "Colson Whitehead",
+      "evidence_url": "https://openlibrary.org/works/OL20072032W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "ZBd85278e91e95da28986251923dc5b36f",
+      "target_id": "OL70988W",
+      "source_title": "Chronicles of Narnia",
+      "target_title": "The Chronicles of Narnia",
+      "author": "C. S. Lewis",
+      "evidence_url": "https://openlibrary.org/works/OL70988W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "ZBd96e5546fbe7a2bc231dd2f6074e89ba",
+      "target_id": "OL19096402W",
+      "source_title": "Silent Patient",
+      "target_title": "The Silent Patient",
+      "author": "Alex Michaelides",
+      "evidence_url": "https://openlibrary.org/works/OL19096402W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "ZBe09c8701a9fce12c792ce85662686e8b",
+      "target_id": "OL5735363W",
+      "source_title": "Hunger Games",
+      "target_title": "The Hunger Games",
+      "author": "Suzanne Collins",
+      "evidence_url": "https://openlibrary.org/works/OL5735363W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "ZBe682f7912a806049f0da37842fe5a23d",
+      "target_id": "OL19359456W",
+      "source_title": "Midnight Line",
+      "target_title": "The Midnight Line",
+      "author": "Lee Child",
+      "evidence_url": "https://openlibrary.org/works/OL19359456W",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "ZBe9e73c6e0e7a7ad0cb4b3ff97a6e4c7b",
+      "target_id": "OL453809W",
+      "source_title": "The night watch",
+      "target_title": "Night Watch",
+      "author": "Terry Pratchett",
+      "evidence_url": "https://openlibrary.org/works/OL453809W",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    },
+    {
+      "source_id": "ZBf4f852d2eea3227e67c86b945bc12d0d",
+      "target_id": "OL34023748W",
+      "source_title": "The Jasad Heir",
+      "target_title": "Jasad Heir",
+      "author": "Sara Hashem",
+      "evidence_url": "https://openlibrary.org/works/OL34023748W.json",
+      "basis": "Same normalized author and title after removing an optional leading article; explicitly reviewed catalog duplicate."
+    }
+  ]
+}

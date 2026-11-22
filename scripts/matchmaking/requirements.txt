@@ -1,0 +1,8 @@
+numpy==1.26.4
+scipy==1.13.1
+sentence-transformers==3.4.1
+transformers==4.46.3
+torch==2.6.0
+ortools==9.11.4210
+requests==2.32.3
+networkx==3.2.1

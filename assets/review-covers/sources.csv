@@ -1,5 +1,9 @@
 key,episode,author,title,file,source,source_id,source_page,matched_title,matched_author,match_score,bytes
-current,,Albert Camus,The Myth of Sisyphus,current.jpg,Open Library,12726570,https://openlibrary.org/works/OL1230690W,The Myth of Sisyphus and Other Essays,Albert Camus,105.9,13625
+current,,Leo Tolstoy,War and Peace,current.jpg,Penguin Random House,ISBN 9780140447934,https://images.penguinrandomhouse.com/cover/9780140447934,War and Peace,Leo Tolstoy,100.0,30561
+review-72,72,Peter Heller,The Dog Stars,review-72.jpg,Penguin Random House,ISBN 9780307950475,https://images.penguinrandomhouse.com/cover/9780307950475,The Dog Stars,Peter Heller,100.0,30688
+review-71,71,William Faulkner,"Absalom, Absalom!",review-71.jpg,Penguin Random House,ISBN 9780679732181,https://images.penguinrandomhouse.com/cover/9780679732181,"Absalom, Absalom!",William Faulkner,100.0,34809
+review-70,70,Christopher Ruocchio,Howling Dark,review-70.jpg,Penguin Random House,ISBN 9780756419271,https://images.penguinrandomhouse.com/cover/9780756419271,Howling Dark,Christopher Ruocchio,100.0,53738
+review-69,69,Albert Camus,The Myth of Sisyphus,review-69.jpg,Open Library,12726570,https://openlibrary.org/works/OL1230690W,The Myth of Sisyphus and Other Essays,Albert Camus,105.9,13625
 review-68,68,Christopher Ruocchio,Empire of Silence,review-68.jpg,Penguin Random House,ISBN 9780756419264,https://images.penguinrandomhouse.com/cover/9780756419264,Empire of Silence,Christopher Ruocchio,100.0,39012
 review-67,67,Matt Dinniman,A Parade of Horribles,review-67.jpg,Penguin Random House,ISBN 9798217190065,https://images.penguinrandomhouse.com/cover/9798217190065,A Parade of Horribles,Matt Dinniman,100.0,64841
 review-66,66,Jon Krakauer,Into the Wild,review-66.jpg,Penguin Random House,ISBN 9780385486804,https://images.penguinrandomhouse.com/cover/9780385486804,Into the Wild,Jon Krakauer,100.0,36122
