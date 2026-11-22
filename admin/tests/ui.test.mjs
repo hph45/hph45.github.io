@@ -64,7 +64,7 @@ test("the private member directory displays the saved distance radius", async t 
   response.data.profiles[0].location_preference = "radius";
   response.data.profiles[0].match_radius_miles = 75;
   const { $ } = await setup(t, { profileResponse: response });
-  assert.match($("#member-list").textContent, /Within 75 miles of my city/);
+  assert.match($("#member-list").textContent, /Within 75 miles \(120.7 km\) of my city/);
   assert.doesNotMatch($("#member-list").textContent, /Best matches, any distance/);
 });
 

@@ -20,7 +20,7 @@ function weak(m){return m.quality_tier==='weak_first_introduction'||m.evidence_r
 function witnesses(m){return D.coverage.extra_intro_witnesses?.[m.id]||D.coverage.second_intro_witnesses[m.id]||[]}
 function person(id){
  const p=people[id],n=el('section');n.append(el('h3',p.name+', '+p.age));
- paragraph(n,'Location',[p.city,p.region,p.country].filter(Boolean).join(', '));paragraph(n,'Selected',(p.intents||[]).join(', '));paragraph(n,'Saved location preference',p.location_preference);
+ paragraph(n,'Location',[p.city,p.region,p.country].filter(Boolean).join(', '));paragraph(n,'Selected',(p.intents||[]).join(', '));paragraph(n,'Saved location preference',p.location_preference==='radius'?(p.match_radius_miles===300?'300+ miles (483+ km), no distance cap':`Within ${p.match_radius_miles} miles (${(p.match_radius_miles*1.609344).toFixed(1)} km)`):p.location_preference==='anywhere'?'Best matches, wherever they are':p.location_preference);
  const assignments=D.coverage.assignments[id]||[];
  if(assignments.length)paragraph(n,'Introductions in this draft',assignments.length+' total · '+Object.entries(D.coverage.recipient_by_type[id]||{}).map(([k,v])=>k+': '+v).join(', '));
  paragraph(n,'Favorite books',(p.favorites||[]).map(b=>b.title+' — '+b.author).join('\n'));
