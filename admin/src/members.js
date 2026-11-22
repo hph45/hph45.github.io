@@ -1,4 +1,4 @@
-import { INTENTS, GENDERS, ageRangeLabel, normalizeLinkedInURL, normalizeInstagramHandle, instagramProfileURL, locationLabel } from "../../matchmaking/src/profile.js";
+import { INTENTS, GENDERS, ageRangeLabel, normalizeLinkedInURL, normalizeInstagramHandle, instagramProfileURL, locationLabel, locationPreferenceLabel } from "../../matchmaking/src/profile.js";
 
 export function createMemberDirectory({ client, document, window, onDenied, isDenied }) {
   const $ = selector => document.querySelector(selector);
@@ -91,7 +91,7 @@ export function createMemberDirectory({ client, document, window, onDenied, isDe
     response.append(answers("Preferences", [
       ["Profile", profile.is_active ? "Active" : "Paused"],
       ["Instagram", normalizeInstagramHandle(profile.instagram_handle) ? `@${normalizeInstagramHandle(profile.instagram_handle)}` : "Not provided · Email only", instagramProfileURL(profile.instagram_handle)],
-      ["Where would you like to connect?", profile.location_preference === "same_city" ? "In my city or metro area" : "Open to anywhere"],
+      ["Where would you like to connect?", locationPreferenceLabel(profile)],
       ["Email me when a match is ready", profile.email_matches ? "Yes" : "No"],
     ]));
     if (profile.intents.includes("romance")) response.append(answers("Romance", [

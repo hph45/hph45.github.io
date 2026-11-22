@@ -110,6 +110,7 @@ export function makeProfile(values, { isActive = true } = {}) {
     current_book_id: bookID("current_book"),
     current_book: text("current_book"), current_author: text("current_author"),
     location_preference: text("location_preference"),
+    match_radius_miles: text("location_preference") === "radius" && text("match_radius_miles") ? Number(text("match_radius_miles")) : null,
     gender: romance ? text("gender") || null : null,
     interested_in: romance && Array.isArray(values.interested_in) ? [...new Set(values.interested_in)] : [],
     age_min: romance && text("age_min") ? Number(values.age_min) : null,
@@ -167,7 +168,10 @@ export function validateProfile(profile, { consent, today = new Date() } = {}) {
     length("current_book", 1, 300, 1, "The book’s title");
     length("current_author", profile.current_book_id === "manual" ? 0 : 1, 300, 1, "The author’s name");
   }
-  if (!["same_city", "anywhere"].includes(profile.location_preference)) error("location_preference", 2, "Choose where you’d like to connect.");
+  if (!["same_city", "radius", "anywhere"].includes(profile.location_preference)) error("location_preference", 2, "Choose where you’d like to connect.");
+  if (profile.location_preference === "radius" && (!Number.isInteger(profile.match_radius_miles) || profile.match_radius_miles < 1 || profile.match_radius_miles > 12500)) {
+    error("match_radius_miles", 2, "Choose a whole-number distance from 1 to 12,500 miles.");
+  }
   if (intents.includes("romance")) {
     if (!Object.hasOwn(GENDERS, profile.gender ?? "")) error("gender", 2, "Choose how you describe your gender.");
     if (!Array.isArray(profile.interested_in) || !profile.interested_in.length || profile.interested_in.some((value) => !Object.hasOwn(GENDERS, value))) {
@@ -196,6 +200,12 @@ export function locationLabel(profile) {
   return [profile.city, profile.region, displayCountry(profile.country)].filter(Boolean).join(", ");
 }
 
+export function locationPreferenceLabel(profile) {
+  if (profile.location_preference === "same_city") return "My city or metro area";
+  if (profile.location_preference === "radius") return `Within ${profile.match_radius_miles.toLocaleString("en-US")} ${profile.match_radius_miles === 1 ? "mile" : "miles"} of my city`;
+  return "Best matches, any distance";
+}
+
 export function bookEditTime(profile) {
   const lastEdit = Date.parse(profile?.books_updated_at);
   return Number.isFinite(lastEdit) ? lastEdit + 24 * 60 * 60 * 1000 : 0;
@@ -215,7 +225,7 @@ export function favoriteBooks(profile) {
 
 export function preferenceDetails(profile) {
   const intents = profileIntents(profile);
-  const details = [["Where", profile.location_preference === "same_city" ? "My city or metro area" : "Open to anywhere"]];
+  const details = [["Where", locationPreferenceLabel(profile)]];
   if (intents.includes("romance")) {
     details.push(["Who you’d like to meet", profile.interested_in.map((gender) => GENDERS[gender]).join(", ")]);
     details.push(["Age range", ageRangeLabel(profile.age_min, profile.age_max)]);

@@ -139,7 +139,11 @@
         </fieldset>
         <fieldset data-step="2" hidden disabled>
           <legend class="visually-hidden">Your connection preferences</legend>
-          <label>Where would you like to connect?<select name="location_preference" required><option value="same_city">In my city or metro area</option><option value="anywhere">I’m open to anywhere</option></select></label>
+          <label>Where would you like to connect?<select name="location_preference" required><option value="anywhere">Best matches, any distance</option><option value="radius">Within a distance I choose</option><option value="same_city">In my city or metro area</option></select></label>
+          <div id="match-radius-fields" hidden>
+            <label>Maximum distance in miles<input name="match_radius_miles" type="number" min="1" max="12500" step="1" value="50" inputmode="numeric" aria-describedby="match-radius-help" disabled></label>
+            <p id="match-radius-help" class="field-help">Choose 1–12,500 miles, measured in a straight line from your selected city. A smaller radius may mean fewer matches. Both people’s distance preferences apply.</p>
+          </div>
           <fieldset data-preferences="romance" hidden disabled>
             <legend class="preference-heading">Romance</legend>
             <label>Your gender<select name="gender" id="gender" required><option value="">Choose an option</option><option value="woman">Woman</option><option value="man">Man</option><option value="other">Other</option></select></label>

@@ -131,6 +131,10 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   }
 
   function updatePreferenceFields() {
+    const radius = field("location_preference").value === "radius";
+    $("#match-radius-fields").hidden = !radius;
+    field("match_radius_miles").disabled = !radius;
+    field("match_radius_miles").required = radius;
     const intents = $$('#profile-form [name="intents"]:checked').map(input => input.value);
     $$("[data-preferences]").forEach((group) => {
       group.hidden = !intents.includes(group.dataset.preferences);
@@ -537,6 +541,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     rememberIntents(selectedIntents.includes(intent) ? selectedIntents.filter(value => value !== intent) : [...selectedIntents, intent]);
   }));
   $$('#profile-form [name="intents"]').forEach(input => action(input, "change", updatePreferenceFields));
+  action(field("location_preference"), "change", updatePreferenceFields);
   action($("#previous-step"), "click", () => showStep(Math.max(0, currentStep - 1)));
   action($("#edit-profile"), "click", openForm);
   action($("#cancel-edit"), "click", () => { resetForm(); renderDashboard(true); });
