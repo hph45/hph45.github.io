@@ -106,6 +106,7 @@ test("members can save, reopen, correct and remove a distance radius", async t =
   await event('[name="location_preference"]', "change");
   assert.equal($("#match-radius-fields").hidden, false);
   assert.equal($('[name="match_radius_miles"]').disabled, false);
+  assert.equal($('[name="match_radius_miles"]').value, "50");
   set("match_radius_miles", "0");
   await event("#profile-form", "submit");
   assert.equal(state.calls.length, 0);

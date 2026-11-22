@@ -59,6 +59,15 @@ async function setup(t, { signedIn = true, response = success(), profileResponse
   return { app, window, state, $, event, auth };
 }
 
+test("the private member directory displays the saved distance radius", async t => {
+  const response = membersSuccess();
+  response.data.profiles[0].location_preference = "radius";
+  response.data.profiles[0].match_radius_miles = 75;
+  const { $ } = await setup(t, { profileResponse: response });
+  assert.match($("#member-list").textContent, /Within 75 miles of my city/);
+  assert.doesNotMatch($("#member-list").textContent, /Best matches, any distance/);
+});
+
 test("signed-out visitors redirect without making a statistics request", async t => {
   const { $, state, window } = await setup(t, { signedIn: false });
   assert.equal(window.location.pathname, "/matchmaking/");

@@ -212,6 +212,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       } else if (values[input.name] !== undefined) input.value = values[input.name] ?? (input.type === "range" ? input.defaultValue : "");
     }
     field("country").value = displayCountry(field("country").value);
+    if (values.location_preference !== "radius" && values.match_radius_miles == null) field("match_radius_miles").value = "50";
     field("birth_date").readOnly = Boolean(profile);
     text("#birthday-help", profile
       ? "Your birthday is fixed after signup. Only your age is shown to a match. Contact us if it is incorrect."
