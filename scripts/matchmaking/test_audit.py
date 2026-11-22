@@ -104,6 +104,22 @@ class Artifact:
 
 
 class AuditTests(unittest.TestCase):
+    def test_radius_is_independently_checked_even_when_location_is_ignored(self):
+        a=person('a',1,location_preference='radius',match_radius_miles=70)
+        b=person('b',2,longitude=1.,location_preference='anywhere')
+        policy={'ignore_location':True,'friendship_age_gap_other':8}
+        self.assertTrue(independent_hard_eligible(a,b,'friends',policy,set(),set()))
+        for x,y in (({**a,'match_radius_miles':69},b),(b,{**a,'match_radius_miles':69}),
+                    (a,{**b,'longitude':None}),(a,{**b,'location_preference':'radius','match_radius_miles':10})):
+            self.assertFalse(independent_hard_eligible(x,y,'friends',policy,set(),set()))
+
+    def test_audit_rejects_an_out_of_radius_pair_even_if_plan_claims_coverage(self):
+        artifact=self.make()
+        a,b=artifact.snapshot['profiles'][:2]
+        a.update(location_preference='radius',match_radius_miles=1)
+        b.update(longitude=1.)
+        self.assertRejected(artifact,'distance_radius_preferences_respected')
+
     def make(self, kind='friends'):
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)

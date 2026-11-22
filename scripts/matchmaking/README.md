@@ -27,7 +27,12 @@ frozen in each run's `policy.json`; they do not alter saved member preferences.
    without a consented contact route may appear only in that private requested
    pair, with a mandatory contact-review hold; saved sharing settings stay intact.
 3. In `ignore_location` mode, city, distance and geographic country-pair rules
-   do not filter or score pairs. Record every cross-location introduction where
+   do not filter or score pairs, except explicit `radius` preferences: these
+   always require both members to be within their saved `match_radius_miles`.
+   Missing coordinates or invalid radii fail closed. Distances are straight-line
+   city-center distances (6,371 km Earth radius; 1 mile = 1.609344 km).
+   `anywhere` adds no distance cap; pairs using anywhere/radius are ranked without
+   distance bonuses or penalties. Record every cross-location introduction where
    someone saved a local-only preference. Show that exception prominently in
    the private review; never claim that member chose openness to anywhere.
 4. Canonicalize exact title-and-author duplicates and reviewed leading-article

@@ -11,6 +11,7 @@ select jsonb_build_object(
     'latitude', c.latitude, 'longitude', c.longitude,
     'intents', p.intents, 'is_active', p.is_active,
     'location_preference', p.location_preference,
+    'match_radius_miles', p.match_radius_miles,
     'gender', p.gender, 'interested_in', p.interested_in,
     'age_min', p.age_min, 'age_max', p.age_max,
     'instagram_handle', p.instagram_handle,

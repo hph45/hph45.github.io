@@ -48,6 +48,18 @@ def km(a,b):
 
 def pair_key(a,b): return '|'.join(sorted((a,b)))
 
+def radius_rejection(a,b):
+    """Explicit member radii always apply, including coverage/location overrides."""
+    limits=[p.get('match_radius_miles') for p in (a,b) if p['location_preference']=='radius']
+    if not limits:return None
+    if any(type(n) is not int or not 1<=n<=12500 for n in limits):return 'invalid_distance_radius'
+    for p in (a,b):
+        for key,bound in (('latitude',90),('longitude',180)):
+            value=p.get(key)
+            if not isinstance(value,(int,float)) or not math.isfinite(value) or abs(value)>bound:return 'unknown_distance'
+    if km(a,b)/1.609344>min(limits):return 'distance_radius_preference'
+    return None
+
 def validate_requested_pairs(people,policy):
     """An owner request applies only to two exact, current profiles in a draft."""
     requested={};reserved=set()
@@ -161,6 +173,8 @@ def eligible(a,b,kind,policy,previous_pairs,blocked_pairs):
     if pair_key(a['user_id'],b['user_id']) in blocked_pairs: return 'blocked'
     if pair_key(a['user_id'],b['user_id']) in previous_pairs: return 'previous_introduction'
     if kind not in a['intents'] or kind not in b['intents']: return 'type_not_selected_by_both'
+    radius_reason=radius_rejection(a,b)
+    if radius_reason:return radius_reason
     country_pair=tuple(sorted((a['country'],b['country'])))
     country_pairs=policy.get('_country_pairs')
     if not policy.get('ignore_location') and country_pair in (country_pairs if country_pairs is not None else {tuple(sorted(x)) for x in policy.get('blocked_country_pairs',[])}):return 'owner_country_pair_restriction'
@@ -713,9 +727,10 @@ class Matcher:
                         reason='insufficient_reciprocal_business_evidence'
                         self.gates[(u,kind)][reason]+=1;self.gates[(v,kind)][reason]+=1;counts[reason]+=1;continue
                     business=min(1,(len(ab)+len(ba))/4)
-                parts=score_components(kind,fit,activity,location_fit(distance),business)
-                score=round(sum(parts.values()),6);threshold=threshold_for(kind,distance,self.policy)
-                standard_threshold=self.policy.get('standard_candidate_thresholds',self.policy['candidate_thresholds'])[kind]+(.10 if distance>1000 else .05 if distance>250 else 0)
+                distance_free=all(p['location_preference'] in ('anywhere','radius') for p in (a,b))
+                parts=books_age_components(kind,fit,activity,age_gap,self.policy,business) if distance_free else score_components(kind,fit,activity,location_fit(distance),business)
+                score=round(sum(parts.values()),6);threshold=threshold_for(kind,0 if distance_free else distance,self.policy)
+                standard_threshold=self.policy.get('standard_candidate_thresholds',self.policy['candidate_thresholds'])[kind]+(0 if distance_free else .10 if distance>1000 else .05 if distance>250 else 0)
                 standard=score>=standard_threshold and fit>=self.policy.get('standard_minimum_book_support',self.policy['minimum_book_support']) and not age_exception
                 explicit_overlap=bool(book['exact_overlap'] or book['author_overlap'] or shared_genres or shared_activities)
                 reading_qualified=fit>=self.policy['minimum_book_support'] and score>=threshold and (not self.policy.get('coverage_first') or standard or explicit_overlap)

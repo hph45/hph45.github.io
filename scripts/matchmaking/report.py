@@ -179,7 +179,7 @@ def finite_json(value):
 def main(directory):
     directory=Path(directory);snap=json.loads((directory/'snapshot.json').read_text());plan=json.loads((directory/'plan.json').read_text())
     policy=json.loads((directory/'policy.json').read_text());audit=json.loads((directory/'plan-audit.json').read_text())
-    fields=('name','age','city','region','country','intents','location_preference','age_min','age_max','favorites','romance_ideal_match','friendship_interests','business_about','business_skills','business_seeking')
+    fields=('name','age','city','region','country','intents','location_preference','match_radius_miles','age_min','age_max','favorites','romance_ideal_match','friendship_interests','business_about','business_skills','business_seeking')
     people={p['user_id']:{k:p.get(k) for k in fields} for p in snap['profiles']}
     coverage=coverage_data(snap,plan)
     write(directory/'coverage.json',coverage)

@@ -97,6 +97,36 @@ async function setup(t, options = {}) {
   return { ...mock, app, window, $, set, event };
 }
 
+test("members can save, reopen, correct and remove a distance radius", async t => {
+  const { $, set, event, state } = await setup(t, { initialProfile: profile });
+  await event("#edit-profile");
+  for (let i = 0; i < 2; i++) await event("#profile-form", "submit");
+  assert.equal($("#match-radius-fields").hidden, true);
+  set("location_preference", "radius");
+  await event('[name="location_preference"]', "change");
+  assert.equal($("#match-radius-fields").hidden, false);
+  assert.equal($('[name="match_radius_miles"]').disabled, false);
+  set("match_radius_miles", "0");
+  await event("#profile-form", "submit");
+  assert.equal(state.calls.length, 0);
+  assert.match($("#form-error").textContent, /distance/);
+  set("match_radius_miles", "75");
+  await event("#profile-form", "submit");
+  assert.equal(state.profile.match_radius_miles, 75);
+  assert.match($("#profile-preferences").textContent, /Within 75 miles of my city/);
+  await event("#edit-profile");
+  assert.equal($('[name="match_radius_miles"]').value, "75");
+  for (let i = 0; i < 2; i++) await event("#profile-form", "submit");
+  set("location_preference", "anywhere");
+  await event('[name="location_preference"]', "change");
+  assert.equal($("#match-radius-fields").hidden, true);
+  assert.equal($('[name="match_radius_miles"]').disabled, true);
+  await event("#profile-form", "submit");
+  assert.equal(state.profile.location_preference, "anywhere");
+  assert.equal(state.profile.match_radius_miles, null);
+  assert.match($("#profile-preferences").textContent, /Best matches, any distance/);
+});
+
 test("a new member can finish all three steps with one book and no Instagram", async t => {
   const { $, set, event, state } = await setup(t, { intent: "friends" });
   assert.equal($("#onboarding-view").hidden, false);

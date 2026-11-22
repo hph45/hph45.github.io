@@ -12,6 +12,24 @@ const basics = {
   location_preference: "same_city", friendship_interests: "Coffee and bookshops",
 };
 
+test("radius preferences validate whole miles and clear the limit for other distance modes", () => {
+  for (const miles of [1, 50, 12500]) {
+    const profile = makeProfile({ ...basics, location_preference: "radius", match_radius_miles: String(miles) });
+    assert.equal(profile.match_radius_miles, miles);
+    assert.deepEqual(validateProfile(profile, { consent: true, today }), []);
+    assert.match(preferenceDetails(profile)[0][1], /Within .*mile/);
+  }
+  for (const miles of [null, "", "oops", "Infinity", 0, -1, 2.5, 12501]) {
+    const profile = makeProfile({ ...basics, location_preference: "radius", match_radius_miles: miles });
+    assert.ok(validateProfile(profile, { consent: true, today }).some(e => e.field === "match_radius_miles"), String(miles));
+  }
+  for (const mode of ["anywhere", "same_city"]) {
+    const profile = makeProfile({ ...basics, location_preference: mode, match_radius_miles: 50 });
+    assert.equal(profile.match_radius_miles, null);
+    assert.deepEqual(validateProfile(profile, { consent: true, today }), []);
+  }
+});
+
 test("Instagram accepts usernames and profile links while keeping links on the Instagram domain", () => {
   for (const value of ["reader.books", " @Reader.Books ", "instagram.com/Reader.Books", "https://www.instagram.com/Reader.Books/?igsh=tracking#profile", "http://instagram.com/reader%2Ebooks/"]) {
     assert.equal(normalizeInstagramHandle(value), "reader.books", value);

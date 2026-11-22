@@ -66,6 +66,19 @@ def independent_identities(snapshot,policy):
                 excluded.add(p['user_id']);decisions[p['user_id']]=retained['user_id']
     return excluded,decisions
 
+def independent_radius_eligible(a,b):
+    radii=[p.get('match_radius_miles') for p in (a,b) if p['location_preference']=='radius']
+    if not radii:return True
+    if any(type(r) is not int or r<1 or r>12500 for r in radii):return False
+    for p in (a,b):
+        for key,bound in (('latitude',90),('longitude',180)):
+            value=p.get(key)
+            if not isinstance(value,(int,float)) or not math.isfinite(value) or abs(value)>bound:return False
+    lat_a,lat_b=math.radians(a['latitude']),math.radians(b['latitude'])
+    h=math.sin((lat_a-lat_b)/2)**2+math.cos(lat_a)*math.cos(lat_b)*math.sin(math.radians(a['longitude']-b['longitude'])/2)**2
+    distance=(12742/1.609344)*math.atan2(math.sqrt(max(0,min(1,h))),math.sqrt(max(0,1-h)))
+    return all(distance<=r for r in radii)
+
 def independent_hard_eligible(a,b,kind,policy,previous,blocks,metros=None,requested=None):
     """No matcher eligibility/scoring calls; used to verify full coverage independently."""
     pair=frozenset((a['user_id'],b['user_id']))
@@ -82,6 +95,7 @@ def independent_hard_eligible(a,b,kind,policy,previous,blocks,metros=None,reques
         reserved=requested['reserved'].get(p['user_id'])
         if reserved is not None and reserved!=(other['user_id'],kind):return False
     if kind not in a['intents'] or kind not in b['intents']:return False
+    if not independent_radius_eligible(a,b):return False
     if not policy.get('ignore_location'):
         if sorted((a['country'],b['country'])) in [sorted(x) for x in policy.get('blocked_country_pairs',[])]:return False
         same_city=a['city_id']==b['city_id']
@@ -255,7 +269,8 @@ def audit(directory,filename='plan.json'):
         check(m.get('priority_user_ids',[])==(sorted(pair&priority) if kind=='romance' else []),'unique_prior_round_romance_priority_members',mid)
         check(location_free or sorted([a['country'],b['country']]) not in [sorted(x) for x in policy['blocked_country_pairs']],'country_pair_policy',mid)
         city_ok=a['city_id']==b['city_id'] or sorted([a['city_id'],b['city_id']]) in policy.get('verified_metro_city_pairs',[])
-        check(location_free or city_ok or all(p['location_preference']=='anywhere' for p in (a,b)),'local_preferences_respected',mid)
+        check(location_free or city_ok or all(p['location_preference']!='same_city' for p in (a,b)),'local_preferences_respected',mid)
+        check(independent_radius_eligible(a,b),'distance_radius_preferences_respected',mid)
         expected_location_exceptions=sorted(p['user_id'] for p in (a,b) if location_free and not city_ok and p['location_preference']=='same_city')
         check(m.get('location_preference_exception_user_ids',[])==expected_location_exceptions,'location_preference_exceptions_disclosed',mid)
         evidence=metro_evidence.get(tuple(sorted([a['city_id'],b['city_id']])),{})
@@ -296,7 +311,8 @@ def audit(directory,filename='plan.json'):
         lat1,lat2=map(math.radians,[a['latitude'],b['latitude']]);lon_delta=math.radians(a['longitude']-b['longitude'])
         distance=6371*math.acos(max(-1,min(1,math.sin(lat1)*math.sin(lat2)+math.cos(lat1)*math.cos(lat2)*math.cos(lon_delta))))
         check(abs(distance-m['distance_km'])<.02,'independently_recomputed_distance',mid)
-        surcharge=0 if location_free or weak_mode else (.10 if distance>1000 else .05 if distance>250 else 0)
+        distance_free_scoring=location_free or weak_mode or all(p['location_preference'] in ('anywhere','radius') for p in (a,b))
+        surcharge=0 if distance_free_scoring else (.10 if distance>1000 else .05 if distance>250 else 0)
         expected_threshold=policy['candidate_thresholds'][kind]+surcharge
         # Feature extraction is unit-tested separately; weights are recalculated here.
         from engine import tags,SKILLS
@@ -340,7 +356,7 @@ def audit(directory,filename='plan.json'):
         check(m.get('quality_tier','standard')==('weak_first_introduction' if weak else 'first_introduction_reading' if basis else 'standard' if standard else 'broader_first_introduction'),'quality_tier_truthful',mid)
         check(m['evidence_route']==('coverage_first_weak_evidence' if weak else 'reading_starting_point' if basis else 'reading' if reading_qualified else 'shared_activities' if weak_mode else 'local_shared_activities'),'evidence_route_truthful',mid)
         location=next(v for upper,v in ((25,1.),(50,.95),(150,.85),(250,.70),(1000,.45),(3000,.25),(math.inf,.10)) if distance<=upper)
-        if location_free or weak_mode:
+        if distance_free_scoring:
             activity_ratio=len(shared)/min(map(len,activities)) if all(activities) else None
             expected_components=independent_location_free_components(kind,expected_fit,abs(a['age']-b['age']),policy,activity_ratio,business_strength)
             check(set(m['score_components'])==set(expected_components) and all(abs(m['score_components'][k]-v)<5e-6 for k,v in expected_components.items()),'location_free_score_components_independently_recomputed',mid)

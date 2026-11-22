@@ -19,6 +19,28 @@ POLICY={'friendship_age_gap_under_25':5,'friendship_age_gap_other':8,'blocked_co
         'candidate_thresholds':{'romance':.56,'friends':.55,'business_partners':.55}}
 
 class EligibilityTests(unittest.TestCase):
+    def test_member_radii_are_reciprocal_and_cannot_be_overridden_by_coverage(self):
+        a=person('a',latitude=0.,longitude=0.,location_preference='radius',match_radius_miles=70)
+        b=person('b',city_id=2,latitude=0.,longitude=1.) # about 69.09 miles
+        for policy in (POLICY,{**POLICY,'ignore_location':True,'allow_weak_first_introduction':True}):
+            for kind in ('friends','romance'):
+                self.assertIsNone(eligible(a,b,kind,policy,set(),set()))
+                for x,y in ((a,b),(b,a)):
+                    limited={**a,'match_radius_miles':69}
+                    self.assertEqual(eligible(limited if x is a else x,limited if y is a else y,kind,policy,set(),set()),'distance_radius_preference')
+                self.assertEqual(eligible(a,{**b,'location_preference':'radius','match_radius_miles':10},kind,policy,set(),set()),'distance_radius_preference')
+        self.assertIsNone(eligible({**a,'location_preference':'anywhere'}, {**b,'longitude':179.},'friends',POLICY,set(),set()))
+
+    def test_radius_requires_known_coordinates_and_valid_limits_and_crosses_date_line(self):
+        a=person('a',latitude=0.,longitude=179.9,location_preference='radius',match_radius_miles=14)
+        b=person('b',latitude=0.,longitude=-179.9)
+        self.assertIsNone(eligible(a,b,'friends',POLICY,set(),set()))
+        for radius in (None,0,-1,1.5,12501,True,'50'):
+            self.assertEqual(eligible({**a,'match_radius_miles':radius},b,'friends',POLICY,set(),set()),'invalid_distance_radius')
+        for coordinate in (None,float('nan'),float('inf'),181.):
+            self.assertEqual(eligible(a,{**b,'longitude':coordinate},'friends',POLICY,set(),set()),'unknown_distance')
+        self.assertIsNone(eligible({**a,'match_radius_miles':1},{**b,'longitude':179.9},'friends',POLICY,set(),set()))
+
     def test_explicit_location_override_preserves_romantic_preferences(self):
         a,b=person('a',location_preference='same_city'),person('b',city_id=2)
         policy={**POLICY,'ignore_location':True}
