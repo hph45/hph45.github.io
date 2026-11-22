@@ -169,8 +169,8 @@ export function validateProfile(profile, { consent, today = new Date() } = {}) {
     length("current_author", profile.current_book_id === "manual" ? 0 : 1, 300, 1, "The author’s name");
   }
   if (!["same_city", "radius", "anywhere"].includes(profile.location_preference)) error("location_preference", 2, "Choose where you’d like to connect.");
-  if (profile.location_preference === "radius" && (!Number.isInteger(profile.match_radius_miles) || profile.match_radius_miles < 1 || profile.match_radius_miles > 12500)) {
-    error("match_radius_miles", 2, "Choose a whole-number distance from 1 to 12,500 miles.");
+  if (profile.location_preference === "radius" && (!Number.isInteger(profile.match_radius_miles) || profile.match_radius_miles < 1 || profile.match_radius_miles > 300)) {
+    error("match_radius_miles", 2, "Choose a distance from 1 to 300+ miles.");
   }
   if (intents.includes("romance")) {
     if (!Object.hasOwn(GENDERS, profile.gender ?? "")) error("gender", 2, "Choose how you describe your gender.");
@@ -202,8 +202,16 @@ export function locationLabel(profile) {
 
 export function locationPreferenceLabel(profile) {
   if (profile.location_preference === "same_city") return "My city or metro area";
-  if (profile.location_preference === "radius") return `Within ${profile.match_radius_miles.toLocaleString("en-US")} ${profile.match_radius_miles === 1 ? "mile" : "miles"} of my city`;
-  return "Best matches, any distance";
+  if (profile.location_preference === "radius") return profile.match_radius_miles === 300
+    ? `${matchRadiusLabel(300)} · Any distance`
+    : `Within ${matchRadiusLabel(profile.match_radius_miles)} of my city`;
+  return "Best matches, wherever they are";
+}
+
+export function matchRadiusLabel(miles) {
+  if (miles === 300) return "300+ miles (483+ km)";
+  const km = (miles * 1.609344).toLocaleString("en-US", { maximumFractionDigits: 1 });
+  return `${miles} ${miles === 1 ? "mile" : "miles"} (${km} km)`;
 }
 
 export function bookEditTime(profile) {

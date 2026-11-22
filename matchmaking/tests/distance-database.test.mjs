@@ -58,8 +58,8 @@ test("shared distance preferences persist privately and constrain new releases",
     assert.deepEqual(saved.books_updated_at, before.books_updated_at);
     assert.deepEqual(saved.current_book_updated_at, before.current_book_updated_at);
     assert.equal((await anywhere(A)).rows[0].match_radius_miles, null);
-    for (const value of [null, 0, -1, 12501, 2.5]) await assert.rejects(radius(A, value));
-    for (const value of [1, 12500]) assert.equal((await radius(A, value)).rows[0].match_radius_miles, value);
+    for (const value of [null, 0, -1, 301, 2.5]) await assert.rejects(radius(A, value));
+    for (const value of [1, 299, 300]) assert.equal((await radius(A, value)).rows[0].match_radius_miles, value);
     await radius(A, 70);
   });
   await t.test("both members' limits apply, including across the date line and within the same city", async () => {
@@ -109,5 +109,11 @@ test("shared distance preferences persist privately and constrain new releases",
     assert.ok((await db.query("select released_at from public.matchmaking_matches where id=$1", [MATCH])).rows[0].released_at);
     await anywhere(A);
     assert.equal(await pair(A, C), true);
+    await radius(A, 299);
+    assert.equal(await pair(A, C), false);
+    await radius(A, 300);
+    assert.equal(await pair(A, C), true, "300+ imposes no cap");
+    await radius(C, 10);
+    assert.equal(await pair(A, C), false, "300+ still respects the other person's radius");
   });
 });

@@ -402,3 +402,13 @@ a.country-popup-book:hover .country-popup-title, a.country-popup-book:focus-visi
 @media(max-width:480px){#invite-dialog{padding:28px 18px 22px}#invite-dialog h2{font-size:31px}.raffle-options{gap:7px}.raffle-option>span{font-size:15px;padding:10px 8px}.raffle-options small{font-size:10px}.invite-primary{font-size:16px;padding-inline:12px}#invite-description{font-size:16px}}
 
 @media(max-width:480px){.raffle-gallery-layout{gap:8px}.raffle-gallery-layout .product-view-controls button{font-size:11px;padding-inline:4px}.raffle-option>span{font-size:14px;padding:10px 6px}}
+
+.match-distance { margin-bottom: 24px; }
+.match-distance output { display: block; margin-top: 8px; font-size: 24px; font-variant-numeric: tabular-nums; }
+.match-distance input[type=range] { display: block; width: 100%; height: 44px; min-height: 44px; padding: 0; margin: 4px 0; border: 0; background: transparent; appearance: none; -webkit-appearance: none; cursor: pointer; }
+.match-distance input[type=range]::-webkit-slider-runnable-track { height: 2px; background: var(--ink); }
+.match-distance input[type=range]::-moz-range-track { height: 2px; background: var(--ink); }
+.match-distance input[type=range]::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 26px; height: 26px; margin-top: -12px; border: 2px solid var(--ink); border-radius: 50%; background: var(--paper); }
+.match-distance input[type=range]::-moz-range-thumb { width: 22px; height: 22px; border: 2px solid var(--ink); border-radius: 50%; background: var(--paper); }
+.match-radius-scale { display: flex; justify-content: space-between; margin-bottom: 14px; color: var(--muted); font: 12px var(--sans); }
+.match-distance .checkbox-label { margin-bottom: 0; }

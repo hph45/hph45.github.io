@@ -1,5 +1,5 @@
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, PROFILE_TABLE, getAuthRedirect } from "./config.js";
-import { INTENTS, profileIntents, ageOn, birthdayBounds, makeProfile, validateProfile, locationLabel, preferenceDetails, bookEditTime, currentReadEditTime, favoriteBooks, normalizeLinkedInURL, normalizeInstagramHandle, instagramProfileURL } from "./profile.js";
+import { INTENTS, profileIntents, ageOn, birthdayBounds, makeProfile, validateProfile, locationLabel, preferenceDetails, bookEditTime, currentReadEditTime, favoriteBooks, normalizeLinkedInURL, normalizeInstagramHandle, instagramProfileURL, matchRadiusLabel } from "./profile.js";
 import { attachAutocomplete } from "./autocomplete.js";
 import { createStaticCatalogSearch } from "./static-catalogs.js";
 import { attachAgeRange } from "./age-range.js";
@@ -130,11 +130,31 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     }
   }
 
+  function updateDistanceFields() {
+    const anywhere = $("#match-anywhere").checked;
+    const slider = $("#match-radius-slider");
+    const miles = Number(slider.value);
+    $("#match-radius-fields").hidden = anywhere;
+    slider.disabled = anywhere;
+    field("location_preference").value = anywhere ? "anywhere" : "radius";
+    field("match_radius_miles").value = anywhere ? "" : String(miles);
+    $("#match-radius-legacy").hidden = true;
+    text("#match-radius-value", matchRadiusLabel(miles));
+    slider.setAttribute("aria-valuetext", `${matchRadiusLabel(miles)}${miles === 300 ? ", no distance limit" : ""}`);
+  }
+
+  function restoreDistanceFields(values = {}) {
+    $("#match-radius-slider").value = String(values.match_radius_miles ?? 50);
+    $("#match-anywhere").checked = values.location_preference === "anywhere";
+    updateDistanceFields();
+    if (values.location_preference === "same_city") {
+      field("location_preference").value = "same_city";
+      field("match_radius_miles").value = "";
+      $("#match-radius-legacy").hidden = false;
+    }
+  }
+
   function updatePreferenceFields() {
-    const radius = field("location_preference").value === "radius";
-    $("#match-radius-fields").hidden = !radius;
-    field("match_radius_miles").disabled = !radius;
-    field("match_radius_miles").required = radius;
     const intents = $$('#profile-form [name="intents"]:checked').map(input => input.value);
     $$("[data-preferences]").forEach((group) => {
       group.hidden = !intents.includes(group.dataset.preferences);
@@ -212,7 +232,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       } else if (values[input.name] !== undefined) input.value = values[input.name] ?? (input.type === "range" ? input.defaultValue : "");
     }
     field("country").value = displayCountry(field("country").value);
-    if (values.location_preference !== "radius" && values.match_radius_miles == null) field("match_radius_miles").value = "50";
+    restoreDistanceFields(values);
     field("birth_date").readOnly = Boolean(profile);
     text("#birthday-help", profile
       ? "Your birthday is fixed after signup. Only your age is shown to a match. Contact us if it is incorrect."
@@ -234,6 +254,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     // Hidden inputs reflect .value into their default value, unlike text inputs.
     // Clear catalog IDs explicitly so a later account never inherits old picks.
     form.querySelectorAll('input[type="hidden"]').forEach(input => { input.value = ""; });
+    restoreDistanceFields();
   }
 
   function clearInstagramPrompt() {
@@ -542,7 +563,8 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     rememberIntents(selectedIntents.includes(intent) ? selectedIntents.filter(value => value !== intent) : [...selectedIntents, intent]);
   }));
   $$('#profile-form [name="intents"]').forEach(input => action(input, "change", updatePreferenceFields));
-  action(field("location_preference"), "change", updatePreferenceFields);
+  action($("#match-radius-slider"), "input", updateDistanceFields);
+  action($("#match-anywhere"), "change", updateDistanceFields);
   action($("#previous-step"), "click", () => showStep(Math.max(0, currentStep - 1)));
   action($("#edit-profile"), "click", openForm);
   action($("#cancel-edit"), "click", () => { resetForm(); renderDashboard(true); });

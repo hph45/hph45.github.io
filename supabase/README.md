@@ -308,3 +308,27 @@ Apply the migration before publishing the rebuilt matchmaking bundle and HTML.
 `/merch/` and the six optimized images are included in the Pages allowlist; the
 local merch studio, original render boards, and supplier files remain outside
 the published artifact.
+
+## Match distance preferences — prepared November 21, 2026
+
+The website and native app share `location_preference` (`anywhere`, `radius`, or
+the existing `same_city`) and `match_radius_miles` (1–300 only in radius mode).
+The single slider shows miles and kilometers. Values 1–299 are maximum radii;
+300 represents **300+ miles (483+ km)** with no cap. The separate **Just match
+me with the best matches wherever they are** checkbox hides the slider, stores
+`anywhere`, and clears the radius. Distances use selected city centers, not GPS
+or street addresses. Both people's limits must pass for a new introduction.
+
+Apply `20261121000100_matchmaking_distance_radius.sql` **before publishing the
+updated website or app**. The identical migration in `../ZebraBookClub` is for
+the same Supabase project: apply it once. It adds owner-only writes, admin-only
+directory display, and a release guard. Existing preferences and released
+introductions are retained. This change has been tested locally; no migration
+was applied as part of this work.
+
+Use the updated `scripts/matchmaking/snapshot.sql`, engine, and independent audit
+for subsequent rounds. Explicit radii are enforced even with `ignore_location`
+or coverage overrides; either person's smaller radius wins. `anywhere` adds no
+distance limit and pairs using anywhere/radius receive no distance score bonus
+or penalty. Missing coordinates for a radius pair require resolution before
+matching. Private snapshots and reports remain outside published assets.

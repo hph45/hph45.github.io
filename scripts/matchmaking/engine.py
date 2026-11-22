@@ -52,7 +52,9 @@ def radius_rejection(a,b):
     """Explicit member radii always apply, including coverage/location overrides."""
     limits=[p.get('match_radius_miles') for p in (a,b) if p['location_preference']=='radius']
     if not limits:return None
-    if any(type(n) is not int or not 1<=n<=12500 for n in limits):return 'invalid_distance_radius'
+    if any(type(n) is not int or not 1<=n<=300 for n in limits):return 'invalid_distance_radius'
+    limits=[n for n in limits if n<300] # 300+ is the slider's no-cap endpoint.
+    if not limits:return None
     for p in (a,b):
         for key,bound in (('latitude',90),('longitude',180)):
             value=p.get(key)

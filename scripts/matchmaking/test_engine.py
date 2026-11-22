@@ -35,11 +35,13 @@ class EligibilityTests(unittest.TestCase):
         a=person('a',latitude=0.,longitude=179.9,location_preference='radius',match_radius_miles=14)
         b=person('b',latitude=0.,longitude=-179.9)
         self.assertIsNone(eligible(a,b,'friends',POLICY,set(),set()))
-        for radius in (None,0,-1,1.5,12501,True,'50'):
+        for radius in (None,0,-1,1.5,301,True,'50'):
             self.assertEqual(eligible({**a,'match_radius_miles':radius},b,'friends',POLICY,set(),set()),'invalid_distance_radius')
         for coordinate in (None,float('nan'),float('inf'),181.):
             self.assertEqual(eligible(a,{**b,'longitude':coordinate},'friends',POLICY,set(),set()),'unknown_distance')
         self.assertIsNone(eligible({**a,'match_radius_miles':1},{**b,'longitude':179.9},'friends',POLICY,set(),set()))
+        self.assertIsNone(eligible({**a,'match_radius_miles':300},{**b,'longitude':0.},'friends',POLICY,set(),set()))
+        self.assertEqual(eligible({**a,'match_radius_miles':300},{**b,'longitude':0.,'location_preference':'radius','match_radius_miles':299},'friends',POLICY,set(),set()),'distance_radius_preference')
 
     def test_explicit_location_override_preserves_romantic_preferences(self):
         a,b=person('a',location_preference='same_city'),person('b',city_id=2)

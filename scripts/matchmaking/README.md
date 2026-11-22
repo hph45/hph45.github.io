@@ -29,6 +29,9 @@ frozen in each run's `policy.json`; they do not alter saved member preferences.
 3. In `ignore_location` mode, city, distance and geographic country-pair rules
    do not filter or score pairs, except explicit `radius` preferences: these
    always require both members to be within their saved `match_radius_miles`.
+   Values 1–299 are distance caps; 300 is the slider's **300+** endpoint with no
+   cap. The separate **best matches wherever they are** option stores `anywhere`
+   and a null radius. Both no-cap choices still honor the other member's cap.
    Missing coordinates or invalid radii fail closed. Distances are straight-line
    city-center distances (6,371 km Earth radius; 1 mile = 1.609344 km).
    `anywhere` adds no distance cap; pairs using anywhere/radius are ranked without

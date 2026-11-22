@@ -69,7 +69,9 @@ def independent_identities(snapshot,policy):
 def independent_radius_eligible(a,b):
     radii=[p.get('match_radius_miles') for p in (a,b) if p['location_preference']=='radius']
     if not radii:return True
-    if any(type(r) is not int or r<1 or r>12500 for r in radii):return False
+    if any(type(r) is not int or r<1 or r>300 for r in radii):return False
+    radii=[r for r in radii if r!=300]
+    if not radii:return True
     for p in (a,b):
         for key,bound in (('latitude',90),('longitude',180)):
             value=p.get(key)

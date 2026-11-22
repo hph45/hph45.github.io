@@ -7,13 +7,13 @@ alter table public.matchmaking_profiles
   add constraint matchmaking_profiles_location_preference_check
     check (location_preference in ('same_city', 'radius', 'anywhere')),
   add constraint matchmaking_profiles_radius_check check (
-    (location_preference = 'radius' and match_radius_miles is not null and match_radius_miles between 1 and 12500)
+    (location_preference = 'radius' and match_radius_miles is not null and match_radius_miles between 1 and 300)
     or (location_preference <> 'radius' and match_radius_miles is null)
   );
 grant insert (match_radius_miles), update (match_radius_miles)
   on public.matchmaking_profiles to authenticated;
 comment on column public.matchmaking_profiles.match_radius_miles is
-  'Private maximum straight-line distance in miles between selected city centers. Required only for radius mode. Both members limits apply to new introductions; existing introductions are retained.';
+  'Private city-center distance preference: 1–299 is a maximum radius in miles; 300 represents the slider endpoint 300+ with no distance cap. Required only for radius mode; anywhere stores null. Both members limits apply to new introductions; existing introductions are retained.';
 
 -- Older clients can still switch to anywhere or same_city without knowing the
 -- new column. Clear a previous radius instead of rejecting that update.
@@ -39,8 +39,8 @@ create or replace view public.matchmaking_nonreview_profiles with (security_invo
 create function public.matchmaking_pair_within_radius(p_a uuid, p_b uuid)
 returns boolean language sql stable set search_path = '' as $$
   select coalesce((
-    select (a.location_preference <> 'radius' or distance.miles <= a.match_radius_miles)
-       and (b.location_preference <> 'radius' or distance.miles <= b.match_radius_miles)
+    select (a.location_preference <> 'radius' or a.match_radius_miles = 300 or distance.miles <= a.match_radius_miles)
+       and (b.location_preference <> 'radius' or b.match_radius_miles = 300 or distance.miles <= b.match_radius_miles)
     from public.matchmaking_profiles a
     join public.matchmaking_profiles b on b.user_id = p_b
     join public.matchmaking_cities ca on ca.id = a.city_id

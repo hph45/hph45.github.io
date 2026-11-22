@@ -97,35 +97,60 @@ async function setup(t, options = {}) {
   return { ...mock, app, window, $, set, event };
 }
 
-test("members can save, reopen, correct and remove a distance radius", async t => {
-  const { $, set, event, state } = await setup(t, { initialProfile: profile });
+test("the radius slider converts miles, preserves its value, and disappears for anywhere", async t => {
+  const { $, event, state } = await setup(t, { initialProfile: { ...profile, location_preference: "radius", match_radius_miles: 50 } });
   await event("#edit-profile");
   for (let i = 0; i < 2; i++) await event("#profile-form", "submit");
-  assert.equal($("#match-radius-fields").hidden, true);
-  set("location_preference", "radius");
-  await event('[name="location_preference"]', "change");
+  const slider = $("#match-radius-slider");
+  assert.equal(slider.type, "range");
+  assert.equal(slider.min, "1"); assert.equal(slider.max, "300");
   assert.equal($("#match-radius-fields").hidden, false);
-  assert.equal($('[name="match_radius_miles"]').disabled, false);
-  assert.equal($('[name="match_radius_miles"]').value, "50");
-  set("match_radius_miles", "0");
-  await event("#profile-form", "submit");
-  assert.equal(state.calls.length, 0);
-  assert.match($("#form-error").textContent, /distance/);
-  set("match_radius_miles", "75");
+  assert.equal(slider.value, "50");
+  assert.equal($("#match-radius-value").textContent, "50 miles (80.5 km)");
+  for (const [value, label] of [[1, "1 mile (1.6 km)"], [300, "300+ miles (483+ km)"], [75, "75 miles (120.7 km)"]]) {
+    slider.value = String(value); await event("#match-radius-slider", "input");
+    assert.equal($("#match-radius-value").textContent, label);
+    assert.match(slider.getAttribute("aria-valuetext"), new RegExp(value));
+    assert.equal($('[name="match_radius_miles"]').value, String(value));
+  }
+  $("#match-anywhere").checked = true; await event("#match-anywhere", "change");
+  assert.equal($("#match-radius-fields").hidden, true);
+  assert.equal(slider.disabled, true);
+  $("#match-anywhere").checked = false; await event("#match-anywhere", "change");
+  assert.equal($("#match-radius-fields").hidden, false);
+  assert.equal(slider.value, "75", "Toggling anywhere keeps the draft radius");
   await event("#profile-form", "submit");
   assert.equal(state.profile.match_radius_miles, 75);
-  assert.match($("#profile-preferences").textContent, /Within 75 miles of my city/);
+  assert.match($("#profile-preferences").textContent, /Within 75 miles \(120.7 km\) of my city/);
   await event("#edit-profile");
-  assert.equal($('[name="match_radius_miles"]').value, "75");
+  assert.equal(slider.value, "75");
   for (let i = 0; i < 2; i++) await event("#profile-form", "submit");
-  set("location_preference", "anywhere");
-  await event('[name="location_preference"]', "change");
-  assert.equal($("#match-radius-fields").hidden, true);
-  assert.equal($('[name="match_radius_miles"]').disabled, true);
+  $("#match-anywhere").checked = true; await event("#match-anywhere", "change");
   await event("#profile-form", "submit");
   assert.equal(state.profile.location_preference, "anywhere");
   assert.equal(state.profile.match_radius_miles, null);
-  assert.match($("#profile-preferences").textContent, /Best matches, any distance/);
+  assert.match($("#profile-preferences").textContent, /Best matches, wherever they are/);
+  await event("#edit-profile");
+  assert.equal($("#match-anywhere").checked, true);
+  assert.equal($("#match-radius-fields").hidden, true);
+});
+
+test("legacy city preferences remain unchanged until the distance controls are used", async t => {
+  const { $, set, event, state } = await setup(t, { initialProfile: profile });
+  await event("#edit-profile");
+  assert.equal($("#match-radius-legacy").hidden, false);
+  set("display_name", "Updated reader");
+  for (let i = 0; i < 3; i++) await event("#profile-form", "submit");
+  assert.equal(state.profile.location_preference, "same_city");
+  assert.equal(state.profile.match_radius_miles, null);
+  await event("#edit-profile");
+  $("#match-radius-slider").value = "300"; await event("#match-radius-slider", "input");
+  for (let i = 0; i < 3; i++) await event("#profile-form", "submit");
+  assert.equal(state.profile.location_preference, "radius");
+  assert.equal(state.profile.match_radius_miles, 300);
+  await event("#edit-profile");
+  assert.equal($("#match-radius-slider").value, "300");
+  assert.equal($("#match-anywhere").checked, false, "300+ restores as a visible slider");
 });
 
 test("a new member can finish all three steps with one book and no Instagram", async t => {

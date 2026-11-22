@@ -109,6 +109,7 @@ class AuditTests(unittest.TestCase):
         b=person('b',2,longitude=1.,location_preference='anywhere')
         policy={'ignore_location':True,'friendship_age_gap_other':8}
         self.assertTrue(independent_hard_eligible(a,b,'friends',policy,set(),set()))
+        self.assertTrue(independent_hard_eligible({**a,'match_radius_miles':300},{**b,'longitude':179.},'friends',policy,set(),set()))
         for x,y in (({**a,'match_radius_miles':69},b),(b,{**a,'match_radius_miles':69}),
                     (a,{**b,'longitude':None}),(a,{**b,'location_preference':'radius','match_radius_miles':10})):
             self.assertFalse(independent_hard_eligible(x,y,'friends',policy,set(),set()))

@@ -36,7 +36,7 @@ test("optional Instagram preserves profiles, eligibility checks, and released-ma
     if (file === "20261024000200_matchmaking_instagram.sql") {
       await db.exec("insert into public.matchmaking_books(work_id,title,author) values ('OL1W','A book','An author'),('OL2W','A current read','Another author')");
       for (const id of [A, B, C, D]) await db.query("insert into auth.users(id,email) values ($1,'reader@example.invalid')", [id]);
-      const legacy = { ...basics }; delete legacy.instagram_handle;
+      const legacy = { ...basics }; delete legacy.instagram_handle; delete legacy.match_radius_miles;
       for (const id of [A, B, C]) await asUser(id, () => insert(id, legacy));
       before = await profiles(); beforeSelections = await selections(); beforeCommunity = await community();
     }
@@ -45,7 +45,7 @@ test("optional Instagram preserves profiles, eligibility checks, and released-ma
 
   await db.exec("insert into public.matchmaking_books(work_id,title,author) values ('OL900W','A shared next read','A recommendation author')");
   await t.test("migration leaves all answers, timestamps, favorites, current reads, and totals intact", async () => {
-    assert.deepEqual(await profiles(), before.map(row => ({ ...row, instagram_handle: null, share_email_with_matches: true, referred_by_instagram: null, merch_raffle_prize: null })));
+    assert.deepEqual(await profiles(), before.map(row => ({ ...row, instagram_handle: null, share_email_with_matches: true, referred_by_instagram: null, merch_raffle_prize: null, match_radius_miles: null })));
     assert.deepEqual(await selections(), beforeSelections);
     const { countries, ...previousCommunityFields } = await community();
     assert.deepEqual(previousCommunityFields, beforeCommunity);

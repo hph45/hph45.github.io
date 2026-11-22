@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { INTENTS, profileIntents, preferenceDetails, ageOn, birthdayBounds, makeProfile, validateProfile, normalizeLinkedInURL, normalizeInstagramHandle, instagramProfileURL, ageRangeLabel, currentReadEditTime } from "../src/profile.js";
+import { INTENTS, profileIntents, preferenceDetails, ageOn, birthdayBounds, makeProfile, validateProfile, normalizeLinkedInURL, normalizeInstagramHandle, instagramProfileURL, ageRangeLabel, currentReadEditTime, matchRadiusLabel } from "../src/profile.js";
 import { getAuthRedirect } from "../src/config.js";
 
 const today = new Date("2026-10-21T12:00:00Z");
@@ -13,13 +13,13 @@ const basics = {
 };
 
 test("radius preferences validate whole miles and clear the limit for other distance modes", () => {
-  for (const miles of [1, 50, 12500]) {
+  for (const miles of [1, 50, 299, 300]) {
     const profile = makeProfile({ ...basics, location_preference: "radius", match_radius_miles: String(miles) });
     assert.equal(profile.match_radius_miles, miles);
     assert.deepEqual(validateProfile(profile, { consent: true, today }), []);
-    assert.match(preferenceDetails(profile)[0][1], /Within .*mile/);
+    assert.match(preferenceDetails(profile)[0][1], /mile.*km/);
   }
-  for (const miles of [null, "", "oops", "Infinity", 0, -1, 2.5, 12501]) {
+  for (const miles of [null, "", "oops", "Infinity", 0, -1, 2.5, 301]) {
     const profile = makeProfile({ ...basics, location_preference: "radius", match_radius_miles: miles });
     assert.ok(validateProfile(profile, { consent: true, today }).some(e => e.field === "match_radius_miles"), String(miles));
   }
@@ -28,6 +28,9 @@ test("radius preferences validate whole miles and clear the limit for other dist
     assert.equal(profile.match_radius_miles, null);
     assert.deepEqual(validateProfile(profile, { consent: true, today }), []);
   }
+  assert.equal(matchRadiusLabel(1), "1 mile (1.6 km)");
+  assert.equal(matchRadiusLabel(50), "50 miles (80.5 km)");
+  assert.equal(matchRadiusLabel(300), "300+ miles (483+ km)");
 });
 
 test("Instagram accepts usernames and profile links while keeping links on the Instagram domain", () => {

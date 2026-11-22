@@ -7,7 +7,7 @@
   <title>Matchmaking | Zebra Book Club</title>
   <meta name="description" content="Meet through the books you love. Find romance, friends, or business partners with Zebra Book Club.">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <link rel="stylesheet" href="./styles.css?v=20261114.1">
+  <link rel="stylesheet" href="./styles.css?v=20261121.2">
   <link rel="stylesheet" href="/assets/match-countdown.css?v=20261024.1">
   <link rel="stylesheet" href="/assets/product-gallery.css?v=20261103.1">
 </head>
@@ -139,10 +139,18 @@
         </fieldset>
         <fieldset data-step="2" hidden disabled>
           <legend class="visually-hidden">Your connection preferences</legend>
-          <label>Where would you like to connect?<select name="location_preference" required><option value="anywhere">Best matches, any distance</option><option value="radius">Within a distance I choose</option><option value="same_city">In my city or metro area</option></select></label>
-          <div id="match-radius-fields" hidden>
-            <label>Maximum distance in miles<input name="match_radius_miles" type="number" min="1" max="12500" step="1" value="50" inputmode="numeric" aria-describedby="match-radius-help" disabled></label>
-            <p id="match-radius-help" class="field-help">Choose 1–12,500 miles, measured in a straight line from your selected city. A smaller radius may mean fewer matches. Both people’s distance preferences apply.</p>
+          <div class="match-distance">
+            <div id="match-radius-fields">
+              <label for="match-radius-slider">Matchmaking radius</label>
+              <output id="match-radius-value" for="match-radius-slider">50 miles (80.5 km)</output>
+              <input id="match-radius-slider" type="range" min="1" max="300" step="1" value="50" aria-describedby="match-radius-help match-radius-legacy">
+              <div class="match-radius-scale" aria-hidden="true"><span>1 mile</span><span>300+ miles</span></div>
+              <p id="match-radius-help" class="field-help">Distance is measured from your selected city. 300+ means no distance limit. Both people’s preferences apply.</p>
+              <p id="match-radius-legacy" class="field-help" hidden>Your saved preference is your city or metro area. Move the slider to choose a radius.</p>
+            </div>
+            <label class="checkbox-label"><input id="match-anywhere" type="checkbox" aria-controls="match-radius-fields"><span>Just match me with the best matches wherever they are</span></label>
+            <input name="location_preference" type="hidden" value="radius">
+            <input name="match_radius_miles" type="hidden" value="50">
           </div>
           <fieldset data-preferences="romance" hidden disabled>
             <legend class="preference-heading">Romance</legend>
@@ -323,7 +331,7 @@
   <dialog id="delete-dialog" aria-labelledby="delete-title"><form id="delete-form"><p class="eyebrow">Close this chapter</p><h2 id="delete-title">Delete your account?</h2><p>This permanently removes your shared Zebra Book Club profile, preferences, library, ratings, and match memberships. Your Apple or Google account is unchanged.</p><label>Type DELETE to confirm<input id="delete-confirmation" autocomplete="off" required pattern="DELETE"></label><p id="delete-error" class="form-error" role="alert" hidden></p><div class="form-actions"><button id="cancel-delete" class="text-button" type="button">Keep my account</button><button id="confirm-delete" class="button" type="submit">Delete account</button></div></form></dialog>
   <footer class="site-footer"><span>© 2026 Zebra Book Club</span><nav class="legal-links" aria-label="Legal"><a href="/privacy/" target="_blank" rel="noopener">Privacy</a><a href="/terms/" target="_blank" rel="noopener">Terms</a></nav><span class="data-credits">Books: <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">Open Library</a> · Cities: <a href="https://www.geonames.org" target="_blank" rel="noopener noreferrer">GeoNames</a> · Map: <a href="https://naturalearthdata.com" target="_blank" rel="noopener noreferrer">Natural Earth</a></span></footer>
   <noscript><p class="notice">Please enable JavaScript to sign in and create your matchmaking profile.</p></noscript>
-  <script type="module" src="./app.js?v=20261121.1"></script>
+  <script type="module" src="./app.js?v=20261121.2"></script>
   <script type="module" src="/assets/match-countdown.js?v=20261116.1"></script>
 </body>
 </html>
