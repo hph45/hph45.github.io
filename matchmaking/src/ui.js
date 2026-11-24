@@ -440,6 +440,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     $("#profile-more").open = false;
     text("#profile-more-label", "View more");
     user = session?.user || null;
+    $("#welcome-view").toggleAttribute("data-signed-out", !user);
     profile = null;
     clearCountryMap(document);
     instagramPromptDismissed = false;

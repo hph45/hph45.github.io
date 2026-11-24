@@ -4,10 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/jpeg" href="/zebra%20white.jpeg">
-  <title>Matchmaking | Zebra Book Club</title>
-  <meta name="description" content="Meet through the books you love. Find romance, friends, or business partners with Zebra Book Club.">
+  <title>Book-Based Matchmaking for Dating &amp; Friendship | Zebra Book Club</title>
+  <meta name="description" content="Choose your favorite books and meet readers for dating, friendship, or business connections. Free book-based matchmaking on the web and iOS, for adults 18+.">
+  <link rel="canonical" href="https://zebrabookclub.com/matchmaking/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Book-Based Matchmaking | Zebra Book Club">
+  <meta property="og:description" content="Choose your favorite books and meet readers for dating, friendship, or business connections. Free for adults 18+.">
+  <meta property="og:url" content="https://zebrabookclub.com/matchmaking/">
+  <meta property="og:image" content="https://zebrabookclub.com/logo.png">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <link rel="stylesheet" href="./styles.css?v=20261121.2">
+  <link rel="stylesheet" href="./styles.css?v=20261122.3">
   <link rel="stylesheet" href="/assets/match-countdown.css?v=20261024.1">
   <link rel="stylesheet" href="/assets/product-gallery.css?v=20261103.1">
 </head>
@@ -26,8 +32,8 @@
   </header>
 
   <aside class="match-launch-banner" data-match-countdown aria-labelledby="match-launch-title">
-    <div class="match-launch-copy"><h2 id="match-launch-title" data-countdown-label>First matches in:</h2></div>
-    <div class="match-countdown-clock" data-countdown-clock role="timer" aria-live="off" aria-label="First matches on November 2, 2026 at 00:00 UTC">--:--:--:--</div>
+    <div class="match-launch-copy"><h2 id="match-launch-title" data-countdown-label>Next match in:</h2></div>
+    <div class="match-countdown-clock" data-countdown-clock role="timer" aria-live="off" aria-label="Next planned matches on December 1, 2026 at 00:00 UTC">December 1, 2026 (UTC)</div>
   </aside>
 
   <main>
@@ -36,9 +42,9 @@
     <section id="welcome-view" aria-labelledby="welcome-title">
       <div class="welcome-grid">
         <div class="welcome-copy">
-          <p class="eyebrow">A meeting of minds</p>
+          <p class="eyebrow">Book-based matchmaking</p>
           <h1 id="welcome-title">Good books.<br><em>Better company.</em></h1>
-          <p class="lede">Some connections begin with a hello.<br>Ours begin with a favorite book.</p>
+          <p class="lede">Meet people through your favorite books.<br>For romance, friendship, and business connections.</p>
           <p class="choice-label" id="intent-label">What are you looking for? <span class="field-help">Choose all that apply.</span></p>
           <div class="intent-choices" role="group" aria-labelledby="intent-label">
             <button type="button" class="intent-choice" data-intent="romance" aria-pressed="false"><span aria-hidden="true">♡</span>Romance</button>
@@ -52,6 +58,10 @@
           <p id="sign-in-status" class="small-copy" role="status" hidden>Google sign-in is being set up. Please check back soon.</p>
           <p class="small-copy">For readers 18 and over. You choose what comes next.</p>
           <p class="small-copy legal-notice">By continuing with Google, you agree to our <a href="/terms/" target="_blank" rel="noopener">Terms of Service</a>. Read our <a href="/privacy/" target="_blank" rel="noopener">Privacy Policy</a> to learn how your information is used.</p>
+          <nav class="welcome-links" aria-label="About matchmaking">
+            <a href="/about/">How it works</a>
+            <a class="guest-community-link" href="/community-stats/">Our community</a>
+          </nav>
         </div>
         <div class="book-art" aria-hidden="true">
           <div class="book-spine">ZEBRA BOOK CLUB</div>
@@ -66,10 +76,11 @@
         </div>
       </div>
       <div class="how-it-works">
-        <div><span class="step-number">01</span><h2>Tell us your story.</h2><p>A little about you, and a book that stayed with you.</p></div>
-        <div><span class="step-number">02</span><h2>Find your kind of connection.</h2><p>Romance, friends, or someone to build something with.</p></div>
-        <div><span class="step-number">03</span><h2>Meet your next chapter.</h2><p>Weekly introductions are coming soon. Start with your profile.</p></div>
+        <div><span class="step-number">01</span><h2>Share your favorite books.</h2><p>Pick one to three books that stayed with you.</p></div>
+        <div><span class="step-number">02</span><h2>Choose your connections.</h2><p>Look for romance, friends, or business partners. Choose a distance preference, or meet readers wherever they are.</p></div>
+        <div><span class="step-number">03</span><h2>Meet your next chapter.</h2><p>Introductions arrive in rounds. Sign in to see yours when they’re released.</p></div>
       </div>
+      <noscript><p>Enable JavaScript to sign in and use matchmaking.</p></noscript>
     </section>
 
     <section id="loading-view" class="loading-view" aria-live="polite" hidden><p class="eyebrow">Zebra matchmaking</p><h1>Opening your chapter…</h1></section>
@@ -331,7 +342,7 @@
   <dialog id="delete-dialog" aria-labelledby="delete-title"><form id="delete-form"><p class="eyebrow">Close this chapter</p><h2 id="delete-title">Delete your account?</h2><p>This permanently removes your shared Zebra Book Club profile, preferences, library, ratings, and match memberships. Your Apple or Google account is unchanged.</p><label>Type DELETE to confirm<input id="delete-confirmation" autocomplete="off" required pattern="DELETE"></label><p id="delete-error" class="form-error" role="alert" hidden></p><div class="form-actions"><button id="cancel-delete" class="text-button" type="button">Keep my account</button><button id="confirm-delete" class="button" type="submit">Delete account</button></div></form></dialog>
   <footer class="site-footer"><span>© 2026 Zebra Book Club</span><nav class="legal-links" aria-label="Legal"><a href="/privacy/" target="_blank" rel="noopener">Privacy</a><a href="/terms/" target="_blank" rel="noopener">Terms</a></nav><span class="data-credits">Books: <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">Open Library</a> · Cities: <a href="https://www.geonames.org" target="_blank" rel="noopener noreferrer">GeoNames</a> · Map: <a href="https://naturalearthdata.com" target="_blank" rel="noopener noreferrer">Natural Earth</a></span></footer>
   <noscript><p class="notice">Please enable JavaScript to sign in and create your matchmaking profile.</p></noscript>
-  <script type="module" src="./app.js?v=20261121.2"></script>
+  <script type="module" src="./app.js?v=20261122.3"></script>
   <script type="module" src="/assets/match-countdown.js?v=20261116.1"></script>
 </body>
 </html>

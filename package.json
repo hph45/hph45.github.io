@@ -6,6 +6,7 @@
     "build:home": "esbuild home/src/app.js --bundle --format=esm --target=es2022 --minify --outfile=assets/community-map.js",
     "build:pages": "node scripts/build-pages.mjs",
     "refresh:map": "node scripts/refresh-public-map.mjs",
+    "refresh:stats": "node scripts/refresh-community-stats.mjs",
     "inspect:logging": "supabase db query --linked --file scripts/inspect-logging.sql --output json",
     "test:home": "node --test home/tests/*.test.mjs",
     "build:catalogs": "node scripts/build-static-catalogs.mjs",

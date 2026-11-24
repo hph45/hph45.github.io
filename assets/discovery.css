@@ -1,0 +1,16 @@
+.public-page .site-header, .public-page main, .public-page .site-footer { width: min(760px, calc(100% - 48px)); }
+.public-page .site-header { min-height: 84px; }
+.public-nav { display: flex; flex-wrap: wrap; gap: 12px 22px; font-size: 14px; }
+.public-nav [aria-current=page] { text-decoration-thickness: 2px; }
+.public-page h1 { font-size: clamp(32px, 5vw, 42px); letter-spacing: -.035em; margin-bottom: 18px; }
+.public-page h2 { font-size: 23px; margin-bottom: 12px; }
+.public-page .page-intro { padding: 52px 0 26px; border: 0; }
+.public-page .page-intro > p { margin: 0; max-width: 60ch; }
+.public-copy { max-width: 65ch; padding: 0 0 48px; font-size: 17px; }
+.public-copy section + section { margin-top: 26px; padding-top: 24px; border-top: 1px solid var(--line); }
+.public-page .site-footer { font-size: 13px; }
+@media (max-width: 650px) {
+  .public-page .site-header { flex-wrap: wrap; padding-block: 18px; gap: 12px; }
+  .public-nav { gap: 8px 20px; }
+  .public-page .page-intro { padding-top: 36px; }
+}

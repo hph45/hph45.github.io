@@ -5,7 +5,8 @@ import { fileURLToPath } from "node:url";
 // Publish only website assets. Never upload the repository root: it contains
 // local private matching files, database tooling, tests, and development state.
 export const PUBLIC_FILES = [
-  "index.html", "styles.css", "script.js", "legal.css", "logo.png", "CNAME",
+  "index.html", "styles.css", "script.js", "legal.css", "logo.png", "CNAME", "robots.txt", "sitemap.xml",
+  "about/index.html", "community-stats/index.html", "community-stats/styles.css", "press/index.html",
   "book_club_current.csv", "events.csv", "recommended_reviews.csv", "reviews.csv", "tbr.csv",
   "zebra white.jpeg", "zebra white and black.pdf", "zebra white and black (1).pdf",
   "matchmaking/index.html", "matchmaking/styles.css", "matchmaking/app.js", "matchmaking/world-outline.svg", "matchmaking/books.csv",

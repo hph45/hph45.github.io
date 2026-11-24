@@ -97,6 +97,23 @@ async function setup(t, options = {}) {
   return { ...mock, app, window, $, set, event };
 }
 
+test("Our community appears for guests and hides during onboarding and on the member dashboard", async t => {
+  for (const options of [{ signedIn: false }, { signedIn: true }, { signedIn: true, initialProfile: profile }]) {
+    const { $, event } = await setup(t, options);
+    const link = $(".guest-community-link");
+    const welcome = link.closest("#welcome-view");
+    assert.equal(link.getAttribute("href"), "/community-stats/");
+    assert.equal(welcome.hidden, options.signedIn);
+    assert.equal(welcome.hasAttribute("data-signed-out"), !options.signedIn);
+    if (options.signedIn) {
+      await event("#sign-out");
+      await new Promise(resolve => setTimeout(resolve, 10));
+      assert.equal(welcome.hidden, false);
+      assert.equal(welcome.hasAttribute("data-signed-out"), true);
+    }
+  }
+});
+
 test("the radius slider converts miles, preserves its value, and disappears for anywhere", async t => {
   const { $, event, state } = await setup(t, { initialProfile: { ...profile, location_preference: "radius", match_radius_miles: 50 } });
   await event("#edit-profile");

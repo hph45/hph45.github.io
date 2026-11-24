@@ -319,12 +319,13 @@ me with the best matches wherever they are** checkbox hides the slider, stores
 `anywhere`, and clears the radius. Distances use selected city centers, not GPS
 or street addresses. Both people's limits must pass for a new introduction.
 
-Apply `20261121000100_matchmaking_distance_radius.sql` **before publishing the
-updated website or app**. The identical migration in `../ZebraBookClub` is for
-the same Supabase project: apply it once. It adds owner-only writes, admin-only
+`20261121000100_matchmaking_distance_radius.sql` was applied to the shared
+database on November 21, 2026 after the live form reported a save error. The
+identical migration in `../ZebraBookClub` is for the same Supabase project; it
+does not need applying again for the app. It adds owner-only writes, admin-only
 directory display, and a release guard. Existing preferences and released
-introductions are retained. This change has been tested locally; no migration
-was applied as part of this work.
+introductions are retained. Authenticated radius, 300+, and anywhere saves were
+verified on an isolated review fixture inside a rolled-back transaction.
 
 Use the updated `scripts/matchmaking/snapshot.sql`, engine, and independent audit
 for subsequent rounds. Explicit radii are enforced even with `ignore_location`

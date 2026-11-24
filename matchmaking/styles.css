@@ -412,3 +412,8 @@ a.country-popup-book:hover .country-popup-title, a.country-popup-book:focus-visi
 .match-distance input[type=range]::-moz-range-thumb { width: 22px; height: 22px; border: 2px solid var(--ink); border-radius: 50%; background: var(--paper); }
 .match-radius-scale { display: flex; justify-content: space-between; margin-bottom: 14px; color: var(--muted); font: 12px var(--sans); }
 .match-distance .checkbox-label { margin-bottom: 0; }
+
+.welcome-links { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 20px; font-size: 15px; }
+@media (scripting: enabled) {
+  #welcome-view:not([data-signed-out]) .guest-community-link { visibility: hidden; }
+}

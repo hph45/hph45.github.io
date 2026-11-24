@@ -1,0 +1,11 @@
+# Public search access. These rules do not change GPTBot's existing default access.
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: *
+Allow: /
+
+Sitemap: https://zebrabookclub.com/sitemap.xml
