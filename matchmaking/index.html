@@ -116,7 +116,7 @@
             </div>
           </fieldset>
           <label>What should we call you?<input name="display_name" autocomplete="given-name" maxlength="60" required placeholder="Your first name"></label>
-          <label>Instagram <span class="optional">(optional)</span><input name="instagram_handle" maxlength="300" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="@yourhandle or your profile link" aria-describedby="instagram-help"><span id="instagram-help" class="field-help">Shared with your matches and included in personal invite links you choose to share. Without Instagram, you’ll only be able to contact your matches by email.</span></label>
+          <label>Instagram <span class="optional">(optional)</span><input name="instagram_handle" maxlength="300" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="@yourhandle or your profile link" aria-describedby="instagram-help"><span id="instagram-help" class="field-help">Shared with your matches and included in personal invite links you choose to share. Your matches can also email you if you choose to share your email.</span></label>
           <label id="referral-field">Who invited you? <span class="optional">(optional)</span><input name="referred_by_instagram" maxlength="300" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Your friend’s Instagram" aria-describedby="referral-help"><span id="referral-help" class="field-help">Credit their Instagram to give them an entry in our merch raffle when you finish your profile.</span></label>
           <label>Birthday<input name="birth_date" type="date" required aria-describedby="birthday-help"><span id="birthday-help" class="field-help">You must be 18 or older. Only your age is shown to a match. Your birthday cannot be changed after signup.</span></label>
           <input name="city_id" type="hidden">
@@ -134,6 +134,7 @@
               <label><input type="checkbox" name="book_sources" value="pre_loved">Pre-loved books</label>
               <label><input type="checkbox" name="book_sources" value="new">New books</label>
               <label><input type="checkbox" name="book_sources" value="ebook">E-books</label>
+              <label><input type="checkbox" name="book_sources" value="audiobook">Audiobooks</label>
             </div>
           </fieldset>
           <p class="field-help">Add one to three favorite books. Only the first is required. Choose a suggestion or type your book’s title. Add the author if you know it. You can change your picks once every 24 hours.</p>
@@ -158,6 +159,12 @@
             <p id="current-reading-help" class="field-help">What’s on your nightstand? You can change this once every 24 hours.</p>
           </fieldset>
           <p id="current-reading-lock-note" class="book-lock-note" role="status" hidden></p>
+          <fieldset>
+            <legend class="visually-hidden">Your recommendation for matches</legend>
+            <input name="reader_pick_id" type="hidden">
+            <label>What book would you recommend to your matches? <span class="optional">(optional)</span><input name="reader_pick" maxlength="300" placeholder="Search or enter a book title" aria-describedby="reader-pick-help"><span id="reader-pick-help" class="field-help">Your released matches can see this book.</span></label>
+            <label>Author <span class="optional">(optional)</span><input name="reader_pick_author" maxlength="300" placeholder="Author’s name, if known"></label>
+          </fieldset>
         </fieldset>
         <fieldset data-step="2" hidden disabled>
           <legend class="visually-hidden">Your connection preferences</legend>
@@ -203,7 +210,14 @@
           <div class="consent-fields">
             <p class="field-help">Read our <a href="/privacy/" target="_blank" rel="noopener">Privacy Policy</a> and <a href="/terms/" target="_blank" rel="noopener">Terms of Service</a> before creating your profile.</p>
             <label class="checkbox-label"><input name="profile_consent" type="checkbox" required><span>I’m happy to share my profile and any Instagram handle I provide with my matches, and include my city and book picks in anonymous community totals.</span></label>
-            <label class="checkbox-label"><input name="share_email_with_matches" type="checkbox" checked><span>If I don’t provide Instagram, share my Google account email with my released matches so they can contact me.<small id="contact-email-account"></small><small>On by default. You can turn this off at any time.</small></span></label>
+            <label>Email contact for my released matches
+              <select name="email_contact_mode" aria-describedby="contact-email-account">
+                <option value="both">Share my email, including alongside Instagram</option>
+                <option value="fallback" selected>Share my email only when Instagram isn’t shared</option>
+                <option value="private">Keep my email private</option>
+              </select>
+              <span class="field-help" id="contact-email-account"></span>
+            </label>
             <label class="checkbox-label"><input name="email_matches" type="checkbox"><span>Email me when a match is ready.<small>You can turn these emails off at any time.</small></span></label>
           </div>
         </fieldset>
@@ -262,7 +276,13 @@
       <section class="settings-section" aria-labelledby="settings-title">
         <h2 id="settings-title">Settings</h2>
         <div class="account-setting"><div><h3>Matchmaking</h3><p id="participation-description"></p></div><button id="pause-matching" class="button button-secondary" type="button">Pause matching</button></div>
-        <label class="checkbox-label email-setting"><input id="share-contact-email" type="checkbox" checked><span>Let my released matches contact me by email if I don’t provide Instagram.<small>Shares my Google account email with those matches. Optional; turn off at any time.</small></span></label>
+        <label>Email contact for my released matches
+          <select id="share-contact-email">
+            <option value="both">Share my email, including alongside Instagram</option>
+            <option value="fallback">Share my email only when Instagram isn’t shared</option>
+            <option value="private">Keep my email private</option>
+          </select>
+        </label>
         <label class="checkbox-label email-setting"><input id="email-preference" type="checkbox"><span>Email me when a match is ready.</span></label>
         <p class="small-copy">Signed in as <span id="account-email"></span></p>
       </section>
@@ -312,7 +332,7 @@
     <form id="instagram-form" novalidate>
       <p class="eyebrow">A way to say hello</p>
       <h2 id="instagram-title">Add Instagram (optional).</h2>
-      <p id="instagram-description">Without Instagram, you’ll only be able to contact your matches by email.</p>
+      <p id="instagram-description">Your matches can also email you if you choose to share your email.</p>
       <label>Instagram<input id="instagram-prompt-input" maxlength="300" required autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="@yourhandle or your profile link" aria-describedby="instagram-sharing"></label>
       <p id="instagram-sharing" class="small-copy">Shared with your released matches, never on the community map. Personal invite links you share also include your Instagram. You can update it in your profile. Without Instagram, your matches can contact you by email unless you turn email contact off in Settings.</p>
       <p id="instagram-error" class="form-error" role="alert" hidden></p>
@@ -353,7 +373,7 @@
   <dialog id="delete-dialog" aria-labelledby="delete-title"><form id="delete-form"><p class="eyebrow">Close this chapter</p><h2 id="delete-title">Delete your account?</h2><p>This permanently removes your shared Zebra Book Club profile, preferences, library, ratings, and match memberships. Your Apple or Google account is unchanged.</p><label>Type DELETE to confirm<input id="delete-confirmation" autocomplete="off" required pattern="DELETE"></label><p id="delete-error" class="form-error" role="alert" hidden></p><div class="form-actions"><button id="cancel-delete" class="text-button" type="button">Keep my account</button><button id="confirm-delete" class="button" type="submit">Delete account</button></div></form></dialog>
   <footer class="site-footer"><span>© 2026 Zebra Book Club</span><nav class="legal-links" aria-label="Legal"><a href="/privacy/" target="_blank" rel="noopener">Privacy</a><a href="/terms/" target="_blank" rel="noopener">Terms</a></nav><span class="data-credits">Books: <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">Open Library</a> · Cities: <a href="https://www.geonames.org" target="_blank" rel="noopener noreferrer">GeoNames</a> · Map: <a href="https://naturalearthdata.com" target="_blank" rel="noopener noreferrer">Natural Earth</a></span></footer>
   <noscript><p class="notice">Please enable JavaScript to sign in and create your matchmaking profile.</p></noscript>
-  <script type="module" src="./app.js?v=20261125.1"></script>
+  <script type="module" src="./app.js?v=20261125.2"></script>
   <script type="module" src="/assets/match-countdown.js?v=20261116.1"></script>
 </body>
 </html>

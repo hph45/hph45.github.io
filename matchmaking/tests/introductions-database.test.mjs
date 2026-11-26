@@ -73,7 +73,34 @@ test("introduction history, recommendations, contact preferences, and private re
     assert.equal((await page(B)).items[0].revealed_at, null, "no read receipts for the other person");
   });
 
-  await t.test("email defaults on, is hidden when Instagram exists, and respects persistent owner opt-outs", async () => {
+  await t.test("members can change reading preferences and share a personal recommendation with released matches", async () => {
+    const prefs = ["library", "bookstore", "pre_loved", "new", "ebook", "audiobook"];
+    const before = (await db.query("select * from public.matchmaking_profiles where user_id=$1", [B])).rows[0];
+    assert.deepEqual(before.book_sources, []);
+    assert.equal(before.reader_pick_id, null);
+    const saved = (await asUser(B, () => db.query(`update public.matchmaking_profiles set
+      book_sources=$2, reader_pick_id='manual', reader_pick='A personal pick', reader_pick_author='Writer'
+      where user_id=$1 returning *`, [B, prefs]))).rows[0];
+    assert.deepEqual(saved.book_sources, prefs);
+    assert.deepEqual(saved.books_updated_at, before.books_updated_at);
+    assert.deepEqual(saved.current_book_updated_at, before.current_book_updated_at);
+    assert.match(saved.reader_pick_id, /^ZB[0-9a-f]{32}$/);
+    const [item] = (await page(A)).items;
+    assert.equal(item.reader_pick, "A personal pick");
+    assert.equal(item.reader_pick_author, "Writer");
+    assert.equal(item.recommended_book.title, "Our next read");
+    assert.ok(!("book_sources" in item));
+    assert.equal((await page(C)).items.length, 0);
+    for (const invalid of [["library", "library"], ["unknown"], [null]]) {
+      await assert.rejects(asUser(B, () => db.query("update public.matchmaking_profiles set book_sources=$1 where user_id=$2", [invalid, B])), e => e.code === "23514");
+    }
+    await asUser(B, () => db.query("update public.matchmaking_profiles set book_sources='{}',reader_pick_id='OL1W',reader_pick='Wrong title' where user_id=$1", [B]));
+    assert.equal((await page(A)).items[0].reader_pick, "A favorite");
+    await asUser(B, () => db.query("update public.matchmaking_profiles set reader_pick_id=null where user_id=$1", [B]));
+    assert.equal((await page(A)).items[0].reader_pick, "");
+  });
+
+  await t.test("email sharing supports both contact methods while preserving fallback and opt-outs", async () => {
     const before = (await db.query("select books_updated_at,current_book_updated_at from public.matchmaking_profiles where user_id=$1", [B])).rows[0];
     await asUser(B, () => db.query("update public.matchmaking_profiles set share_email_with_matches=false where user_id=$1", [B]));
     await asUser(C, () => db.query("update public.matchmaking_profiles set share_email_with_matches=true where user_id=$1", [B]));
@@ -84,6 +111,13 @@ test("introduction history, recommendations, contact preferences, and private re
     await asUser(B, () => db.query("update public.matchmaking_profiles set instagram_handle='reader.books' where user_id=$1", [B]));
     assert.equal((await page(A)).items[0].contact_email, null);
     assert.equal((await page(A)).items[0].instagram_handle, "reader.books");
+    await asUser(B, () => db.query("update public.matchmaking_profiles set share_email_alongside_instagram=true where user_id=$1", [B]));
+    const both = (await page(A)).items[0];
+    assert.equal(both.instagram_handle, "reader.books"); assert.equal(both.contact_email, "reader1@example.invalid");
+    await asUser(B, () => db.query("update public.matchmaking_profiles set share_email_with_matches=false where user_id=$1", [B]));
+    assert.equal((await page(A)).items[0].contact_email, null);
+    await asUser(B, () => db.query("update public.matchmaking_profiles set share_email_with_matches=true where user_id=$1", [B]));
+    assert.equal((await page(A)).items[0].contact_email, null, "older clients cannot restore a withdrawn permission to share alongside Instagram");
     await asUser(B, () => db.query("update public.matchmaking_profiles set instagram_handle=null where user_id=$1", [B]));
     assert.equal((await page(A)).items[0].contact_email, "reader1@example.invalid");
     await asUser(B, () => db.query("update public.matchmaking_profiles set share_email_with_matches=false,instagram_handle=null where user_id=$1", [B]));

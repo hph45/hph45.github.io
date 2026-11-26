@@ -1,5 +1,5 @@
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, PROFILE_TABLE, getAuthRedirect } from "./config.js";
-import { INTENTS, profileIntents, ageOn, birthdayBounds, makeProfile, validateProfile, locationLabel, preferenceDetails, bookEditTime, currentReadEditTime, favoriteBooks, normalizeLinkedInURL, normalizeInstagramHandle, instagramProfileURL, matchRadiusLabel } from "./profile.js";
+import { INTENTS, profileIntents, ageOn, birthdayBounds, makeProfile, validateProfile, locationLabel, preferenceDetails, bookEditTime, currentReadEditTime, favoriteBooks, normalizeLinkedInURL, normalizeInstagramHandle, instagramProfileURL, matchRadiusLabel, emailContactMode, emailContactFields } from "./profile.js";
 import { attachAutocomplete } from "./autocomplete.js";
 import { createStaticCatalogSearch } from "./static-catalogs.js";
 import { attachAgeRange } from "./age-range.js";
@@ -228,11 +228,12 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
         input.checked = input.name === "intents" ? profileIntents(values).includes(input.value)
           : Array.isArray(values[input.name]) ? values[input.name].includes(input.value)
           : input.name === "profile_consent" ? Boolean(profile)
-          : input.name === "share_email_with_matches" ? values[input.name] !== false : values[input.name] === true;
+          : values[input.name] === true;
       } else if (values[input.name] !== undefined) input.value = values[input.name] ?? (input.type === "range" ? input.defaultValue : "");
     }
     field("country").value = displayCountry(field("country").value);
     restoreDistanceFields(values);
+    field("email_contact_mode").value = emailContactMode(values);
     field("birth_date").readOnly = Boolean(profile);
     text("#birthday-help", profile
       ? "Your birthday is fixed after signup. Only your age is shown to a match. Contact us if it is incorrect."
@@ -301,7 +302,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       }
     }
     if (profile) values.birth_date = profile.birth_date;
-    return makeProfile(values, { isActive: profile?.is_active ?? true });
+    return makeProfile({ ...values, ...emailContactFields(values.email_contact_mode) }, { isActive: profile?.is_active ?? true });
   }
 
   function detail(container, title, value) {
@@ -372,7 +373,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     text("#pause-matching", profile.is_active ? "Pause matching" : "Resume matching");
     text("#account-email", user.email || "your Google account");
     $("#email-preference").checked = profile.email_matches;
-    $("#share-contact-email").checked = profile.share_email_with_matches !== false;
+    $("#share-contact-email").value = emailContactMode(profile);
     friendMatchmaking.setAvailable(true);
     const preferences = $("#profile-preferences");
     preferences.replaceChildren();
@@ -490,7 +491,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     } finally { setMutationBusy(false); }
   }
 
-  action($("#share-contact-email"), "change", () => saveSettings({ share_email_with_matches: $("#share-contact-email").checked }));
+  action($("#share-contact-email"), "change", () => saveSettings(emailContactFields($("#share-contact-email").value)));
   $("#profile-more").addEventListener("toggle", () => {
     text("#profile-more-label", $("#profile-more").open ? "View less" : "View more");
   });
@@ -529,6 +530,14 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       const savedSources = profile?.book_sources ?? [];
       if (savedSources.length === values.book_sources.length && savedSources.every(source => values.book_sources.includes(source))) {
         delete changes.book_sources;
+      }
+      const pickFields = ["reader_pick_id", "reader_pick", "reader_pick_author"];
+      if (profile && pickFields.every(key => (values[key] ?? "") === (profile[key] ?? ""))) {
+        for (const key of pickFields) delete changes[key];
+      }
+      if (profile && emailContactMode(values) === emailContactMode(profile)) {
+        delete changes.share_email_with_matches;
+        delete changes.share_email_alongside_instagram;
       }
       const query = profile ? table.update(changes).eq("user_id", user.id) : table.insert({ ...values, user_id: user.id,
         referred_by_instagram: referrer || null, merch_raffle_prize: referralDraft.prize || null });
@@ -708,7 +717,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     onClear() { field("city_id").value = ""; field("region").value = ""; field("country").value = ""; },
   }));
   const bookFields = ["", "_2", "_3"].map(suffix => [`favorite_book${suffix}`, `favorite_author${suffix}`]);
-  bookFields.push(["current_book", "current_author"]);
+  bookFields.push(["current_book", "current_author"], ["reader_pick", "reader_pick_author"]);
   for (const [titleField, authorField] of bookFields) {
     field(titleField).addEventListener("focus", () => { void catalogSearch.preloadBooks().catch(() => {}); });
     field(authorField).addEventListener("input", () => { field(`${titleField}_id`).value = ""; });

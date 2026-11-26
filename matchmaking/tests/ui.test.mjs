@@ -177,7 +177,7 @@ test("a new member can finish all three steps with one book and no Instagram", a
   assert.equal($('[name="display_name"]').value, "Reader");
   assert.equal($('[name="birth_date"]').readOnly, false, "signup needs an editable birthday");
   assert.equal($('[name="instagram_handle"]').required, false);
-  assert.match($("#instagram-help").textContent, /only be able to contact your matches by email/);
+  assert.match($("#instagram-help").textContent, /if you choose to share your email/);
   for (const [key, value] of Object.entries({ birth_date: "1994-06-15", city_id: 5378538, city: "Oakland", country: "United States" })) set(key, value);
   await event("#profile-form", "submit");
   assert.equal($('[data-step="1"]').hidden, false);
@@ -186,6 +186,10 @@ test("a new member can finish all three steps with one book and no Instagram", a
   assert.equal($('[name="favorite_book_2"]').required, false);
   assert.equal($('[name="favorite_book_3"]').required, false);
   assert.equal($('[name="current_book"]').required, false);
+  assert.deepEqual([...$("#profile-form").querySelectorAll('[name="book_sources"]')].map(input => input.value),
+    ["library", "bookstore", "pre_loved", "new", "ebook", "audiobook"]);
+  set("book_sources", ["library", "audiobook"]);
+  set("reader_pick", "The Left Hand of Darkness");
   set("favorite_book_id", "OL1W"); set("favorite_book", "Parable of the Sower"); set("favorite_author", "Octavia Butler");
   await event("#profile-form", "submit");
   assert.equal($('[data-step="2"]').hidden, false);
@@ -205,6 +209,10 @@ test("a new member can finish all three steps with one book and no Instagram", a
   assert.equal(state.profile.favorite_book_2_id, null);
   assert.equal(state.profile.favorite_book_3_id, null);
   assert.equal(state.profile.current_book_id, null);
+  assert.deepEqual(state.profile.book_sources, ["library", "audiobook"]);
+  assert.equal(state.profile.reader_pick_id, "manual");
+  assert.match($("#profile-preferences").textContent, /Libraries, Audiobooks/);
+  assert.match($("#profile-preferences").textContent, /My pick for matchesThe Left Hand of Darkness/);
   assert.equal($("#profile-current-reading").hidden, true);
   assert.ok(!("book_reason" in state.profile));
   assert.deepEqual(state.profile.intents, ["friends"]);
@@ -237,7 +245,7 @@ test("signup still validates Instagram when supplied on the first step", async t
 test("existing members can choose Not now, edit other answers, and return to the prompt from their profile", async t => {
   const { $, set, event, state } = await setup(t, { initialProfile: { ...profile, instagram_handle: null } });
   assert.equal($("#instagram-dialog").open, true);
-  assert.match($("#instagram-description").textContent, /only be able to contact your matches by email/);
+  assert.match($("#instagram-description").textContent, /if you choose to share your email/);
   assert.equal($("#dashboard-view").hidden, false);
   await event("#instagram-later");
   assert.equal($("#instagram-dialog").open, false);
@@ -858,6 +866,36 @@ test("books stay locked for 24 hours while other profile details remain editable
   assert.equal(state.profile.favorite_book_id, "OL1W");
 });
 
+test("members can change and clear reading preferences while favorite books are locked", async t => {
+  const { $, set, event, state } = await setup(t, { initialProfile: { ...profile,
+    book_sources: ["library", "ebook"], reader_pick_id: "OL1W", reader_pick: "A favorite",
+    reader_pick_author: "An author", books_updated_at: new Date().toISOString() } });
+  await event("#edit-profile"); await event("#profile-form", "submit");
+  assert.equal($('[name="book_sources"][value="ebook"]').checked, true);
+  assert.equal($('[name="reader_pick"]').value, "A favorite");
+  assert.equal($("#favorite-book-fields").disabled, true);
+  assert.equal($('[name="reader_pick"]').closest("fieldset[disabled]"), null);
+  set("book_sources", ["pre_loved", "new", "audiobook"]);
+  set("reader_pick", "A new choice"); await event('[name="reader_pick"]', "input");
+  await event("#profile-form", "submit"); await event("#profile-form", "submit");
+  assert.deepEqual(state.profile.book_sources, ["pre_loved", "new", "audiobook"]);
+  assert.equal(state.profile.reader_pick, "A new choice");
+  await event("#edit-profile"); await event("#profile-form", "submit");
+  set("book_sources", []); set("reader_pick", ""); await event('[name="reader_pick"]', "input");
+  await event("#profile-form", "submit"); await event("#profile-form", "submit");
+  assert.deepEqual(state.profile.book_sources, []);
+  assert.equal(state.profile.reader_pick_id, null);
+  assert.doesNotMatch($("#profile-preferences").textContent, /My pick for matches|How I get my books/);
+  await event("#edit-profile");
+  state.profile.book_sources = ["bookstore"];
+  state.profile.reader_pick = "Saved on the app";
+  state.profile.share_email_with_matches = false;
+  for (let i = 0; i < 3; i++) await event("#profile-form", "submit");
+  assert.deepEqual(state.profile.book_sources, ["bookstore"]);
+  assert.equal(state.profile.reader_pick, "Saved on the app");
+  assert.equal(state.profile.share_email_with_matches, false);
+});
+
 test("opening the editor and navigating steps returns to the start of the form", async t => {
   const { window, event } = await setup(t, { initialProfile: profile });
   window.scrollTo(0, 900);
@@ -875,6 +913,7 @@ const introduction = {
   id: "first-match", week_start: "2026-10-26", intent: "friends", display_name: "A new reader", age: 29,
   city: "Oakland", region: "California", country: "United States", reason: "A shared love of books", friendship_interests: "Bookshop afternoons",
   favorite_book_id: "OL1W", favorite_book: "A book", favorite_author: "An author", instagram_handle: "new.reader",
+  reader_pick_id: "OL2W", reader_pick: "Their own pick", reader_pick_author: "Their author",
   recommended_book: { work_id: "OL3W", title: "Our next read", author: "Another author", reason: "Something to discover together" },
 };
 
@@ -886,6 +925,7 @@ test("an unrevealed card opens the shared read, saves once, and becomes a persis
   assert.equal($("#match-reveal-dialog").open, true);
   assert.equal($(".reveal-shared").textContent, "A shared favorite");
   assert.match($(".reveal-recommendation").textContent, /Read together nextRecommended by Zebra Book ClubOur next read/);
+  assert.match($("#reveal-content").textContent, /A new reader’s pick for youTheir own pick · Their author/);
   assert.match($(".match-reveal-card").textContent, /A new reader, 29Oakland, California, United StatesOur next read/);
   assert.ok(!$(".match-reveal-card").textContent.includes("Click to reveal"));
   assert.ok(!$(".match-reveal-card").textContent.includes("Friend"));
@@ -896,7 +936,7 @@ test("an unrevealed card opens the shared read, saves once, and becomes a persis
   assert.ok(!reloaded.$(".match-reveal-card").textContent.includes("Click to reveal"));
 });
 
-test("email fallback uses an authorized address and Instagram always takes priority", async t => {
+test("released matches show each authorized contact method and reject malformed email", async t => {
   const { $, event } = await setup(t, { initialProfile: profile, matches: [
     { ...introduction, id: "both", contact_email: "reader@example.invalid" },
     { ...introduction, id: "email", instagram_handle: null, contact_email: "reader+books@example.invalid" },
@@ -904,7 +944,7 @@ test("email fallback uses an authorized address and Instagram always takes prior
   ] });
   await event('.match-reveal-card[data-match-id="both"]');
   assert.equal($("#reveal-contact a").href, "https://www.instagram.com/new.reader/");
-  assert.ok(!$("#reveal-contact").textContent.includes("reader@example.invalid"));
+  assert.equal($('#reveal-contact a[href^="mailto:"]').getAttribute("href"), "mailto:reader@example.invalid");
   await event(".reveal-close");
   await event('.match-reveal-card[data-match-id="email"]');
   assert.equal($("#reveal-contact a").textContent, "Send them an email!");
@@ -1040,23 +1080,26 @@ test("uncatalogued shared recommendations use a normal safely encoded Amazon sea
   assert.equal($(".reveal-recommended-book img"), null);
 });
 
-test("email contact defaults on while explicit opt-outs survive edits and later logins", async t => {
+test("email contact keeps legacy fallback, explicit opt-outs, and consent to share alongside Instagram", async t => {
   const { $, event, state } = await setup(t, { initialProfile: profile });
-  assert.equal($("#share-contact-email").checked, true);
-  $("#share-contact-email").checked = false; await event("#share-contact-email", "change");
+  assert.equal($("#share-contact-email").value, "fallback");
+  $("#share-contact-email").value = "private"; await event("#share-contact-email", "change");
   assert.equal(state.profile.share_email_with_matches, false);
   assert.equal(state.profile.email_matches, false);
   await event("#edit-profile");
-  assert.equal($('[name="share_email_with_matches"]').checked, false);
-  assert.equal($('[name="share_email_with_matches"]').required, false);
+  assert.equal($('[name="email_contact_mode"]').value, "private");
+  assert.equal($('[name="email_contact_mode"]').required, false);
   for (let i = 0; i < 3; i++) await event("#profile-form", "submit");
   assert.equal(state.profile.share_email_with_matches, false);
-  assert.equal($("#share-contact-email").checked, false);
+  assert.equal($("#share-contact-email").value, "private");
   const reloaded = await setup(t, { initialProfile: state.profile });
-  assert.equal(reloaded.$("#share-contact-email").checked, false);
+  assert.equal(reloaded.$("#share-contact-email").value, "private");
   state.failNext = true;
-  $("#share-contact-email").checked = true; await event("#share-contact-email", "change");
-  assert.equal($("#share-contact-email").checked, false, "a failed save restores the saved choice");
+  $("#share-contact-email").value = "both"; await event("#share-contact-email", "change");
+  assert.equal($("#share-contact-email").value, "private", "a failed save restores the saved choice");
+  $("#share-contact-email").value = "both"; await event("#share-contact-email", "change");
+  assert.equal(state.profile.share_email_alongside_instagram, true);
+  assert.equal(state.profile.share_email_with_matches, true);
 });
 
 test("members can submit a romance suggestion using two normalized Instagram handles", async t => {

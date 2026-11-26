@@ -153,6 +153,10 @@ export function createMatches({ client, document, window, action, getCatalog, ge
       books.append(figure);
     }
     content.append(shelf);
+    if (match.reader_pick) {
+      content.append(section("reveal-interests", `${match.display_name}’s pick for you`,
+        [match.reader_pick, match.reader_pick_author].filter(Boolean).join(" · ")));
+    }
     if (match.current_book) {
       const row = element("section", "reveal-current"), info = element("div");
       info.append(element("h3", "", "Currently reading"), element("p", "", `${match.current_book} · ${match.current_author}`));
@@ -174,11 +178,17 @@ export function createMatches({ client, document, window, action, getCatalog, ge
     // No user-supplied mailto parameters, headers, or alternate protocols.
     const validEmail = email.length <= 254 && /^[^\s@?&#%:]+@[^\s@?&#%:]+\.[^\s@?&#%:]+$/.test(email);
     contact.append(element("span", "reveal-contact-label", `Connect with ${match.display_name}`));
-    if (instagram || validEmail) {
-      const contactLink = link("", instagram || `mailto:${encodeURIComponent(email).replace(/%40/g, "@")}`, "reveal-contact-button");
-      contactLink.append(icon(instagram ? "instagram" : "email"), element("span", "", instagram ? "Say hello on Instagram" : "Send them an email!"), icon("arrow"));
+    const contactMethods = [
+      [instagram, "instagram", "Say hello on Instagram"],
+      [validEmail ? `mailto:${encodeURIComponent(email).replace(/%40/g, "@")}` : null, "email", "Send them an email!"],
+    ];
+    for (const [url, symbol, label] of contactMethods) {
+      if (!url) continue;
+      const contactLink = link("", url, "reveal-contact-button");
+      contactLink.append(icon(symbol), element("span", "", label), icon("arrow"));
       contact.append(contactLink);
-    } else {
+    }
+    if (!instagram && !validEmail) {
       contact.append(element("p", "reveal-contact-status", "They haven’t shared contact details yet. Check back here once they do."));
     }
   }

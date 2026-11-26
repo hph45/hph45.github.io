@@ -18,11 +18,24 @@ const BOOK_SOURCES = {
   pre_loved: "Pre-loved books",
   new: "New books",
   ebook: "E-books",
+  audiobook: "Audiobooks",
 };
 
 function bookSources(profile) {
   const selected = profile.book_sources;
   return Array.isArray(selected) ? Object.keys(BOOK_SOURCES).filter(source => selected.includes(source)) : [];
+}
+
+export function emailContactMode(profile) {
+  if (profile.share_email_with_matches === false) return "private";
+  return profile.share_email_alongside_instagram === true ? "both" : "fallback";
+}
+
+export function emailContactFields(mode) {
+  return {
+    share_email_with_matches: mode === "both" || mode === "fallback",
+    share_email_alongside_instagram: mode === "both",
+  };
 }
 
 // The array is authoritative, including an empty selection. Accept the old
@@ -114,7 +127,10 @@ export function makeProfile(values, { isActive = true } = {}) {
     birth_date: text("birth_date"),
     city_id: Number(values.city_id) || null,
     city: text("city"), region: text("region"), country: text("country"), intents,
-    book_sources: bookSources(values),
+    ...(Object.hasOwn(values, "book_sources") ? { book_sources: bookSources(values) } : {}),
+    ...(Object.hasOwn(values, "reader_pick") ? {
+      reader_pick_id: bookID("reader_pick"), reader_pick: text("reader_pick"), reader_pick_author: text("reader_pick_author"),
+    } : {}),
     favorite_book_id: bookID("favorite_book"),
     favorite_book: text("favorite_book"), favorite_author: text("favorite_author"),
     favorite_book_2_id: bookID("favorite_book_2"),
@@ -137,6 +153,7 @@ export function makeProfile(values, { isActive = true } = {}) {
     business_seeking: business ? text("business_seeking") : "",
     business_linkedin_url: business ? normalizeLinkedInURL(text("business_linkedin_url")) ?? text("business_linkedin_url") : "",
     ...(Object.hasOwn(values, "share_email_with_matches") ? { share_email_with_matches: values.share_email_with_matches === true } : {}),
+    ...(Object.hasOwn(values, "share_email_alongside_instagram") ? { share_email_alongside_instagram: values.share_email_alongside_instagram === true } : {}),
     is_active: Boolean(isActive), email_matches: values.email_matches === true,
   };
 }
@@ -177,10 +194,15 @@ export function validateProfile(profile, { consent, today = new Date() } = {}) {
     length(`favorite_author${suffix}`, id === "manual" ? 0 : 1, 300, 1, "The author’s name");
   }
   if (profile.favorite_book_3_id && !profile.favorite_book_2_id) error("favorite_book_2", 1, "Add your second favorite before your third.");
-  if (profile.current_book || profile.current_book_id || profile.current_author) {
-    if (!validBookID(profile.current_book_id)) error("current_book", 1, "Enter your current read, choose a suggestion, or leave it blank.");
-    length("current_book", 1, 300, 1, "The book’s title");
-    length("current_author", profile.current_book_id === "manual" ? 0 : 1, 300, 1, "The author’s name");
+  for (const [title, author, prompt] of [
+    ["current_book", "current_author", "Enter your current read, choose a suggestion, or leave it blank."],
+    ["reader_pick", "reader_pick_author", "Enter the book you recommend, choose a suggestion, or leave it blank."],
+  ]) {
+    const id = profile[`${title}_id`];
+    if (!profile[title] && !id && !profile[author]) continue;
+    if (!validBookID(id)) error(title, 1, prompt);
+    length(title, 1, 300, 1, "The book’s title");
+    length(author, id === "manual" ? 0 : 1, 300, 1, "The author’s name");
   }
   if (!["same_city", "radius", "anywhere"].includes(profile.location_preference)) error("location_preference", 2, "Choose where you’d like to connect.");
   if (profile.location_preference === "radius" && (!Number.isInteger(profile.match_radius_miles) || profile.match_radius_miles < 1 || profile.match_radius_miles > 300)) {
@@ -250,6 +272,7 @@ export function preferenceDetails(profile) {
   const details = [["Where", locationPreferenceLabel(profile)]];
   const sources = bookSources(profile);
   if (sources.length) details.push(["How I get my books", sources.map(source => BOOK_SOURCES[source]).join(", ")]);
+  if (profile.reader_pick) details.push(["My pick for matches", [profile.reader_pick, profile.reader_pick_author].filter(Boolean).join(" · ")]);
   if (intents.includes("romance")) {
     details.push(["Who you’d like to meet", profile.interested_in.map((gender) => GENDERS[gender]).join(", ")]);
     details.push(["Age range", ageRangeLabel(profile.age_min, profile.age_max)]);
