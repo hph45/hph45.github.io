@@ -25,6 +25,8 @@ function person(id){
  if(assignments.length)paragraph(n,'Introductions in this draft',assignments.length+' total · '+Object.entries(D.coverage.recipient_by_type[id]||{}).map(([k,v])=>k+': '+v).join(', '));
  paragraph(n,'Favorite books',(p.favorites||[]).map(b=>b.title+' — '+b.author).join('\n'));
  if((p.intents||[]).includes('romance')){paragraph(n,'Romantic age range',p.age_min+'–'+p.age_max);paragraph(n,'Romance answer',p.romance_ideal_match)}
+ if((p.intents||[]).includes('friends'))paragraph(n,'Friend age range',(p.friendship_age_min??18)+'–'+(p.friendship_age_max??120));
+ if((p.intents||[]).includes('business_partners'))paragraph(n,'Business partner age range',(p.business_age_min??18)+'–'+(p.business_age_max??120));
  paragraph(n,'Friendship answer',p.friendship_interests);paragraph(n,'Business idea',p.business_about);paragraph(n,'Skills offered',p.business_skills);paragraph(n,'Business needs',p.business_seeking);return n;
 }
 function match(m){
@@ -179,7 +181,9 @@ def finite_json(value):
 def main(directory):
     directory=Path(directory);snap=json.loads((directory/'snapshot.json').read_text());plan=json.loads((directory/'plan.json').read_text())
     policy=json.loads((directory/'policy.json').read_text());audit=json.loads((directory/'plan-audit.json').read_text())
-    fields=('name','age','city','region','country','intents','location_preference','match_radius_miles','age_min','age_max','favorites','romance_ideal_match','friendship_interests','business_about','business_skills','business_seeking')
+    fields=('name','age','city','region','country','intents','location_preference','match_radius_miles','age_min','age_max',
+            'friendship_age_min','friendship_age_max','business_age_min','business_age_max','favorites',
+            'romance_ideal_match','friendship_interests','business_about','business_skills','business_seeking')
     people={p['user_id']:{k:p.get(k) for k in fields} for p in snap['profiles']}
     coverage=coverage_data(snap,plan)
     write(directory/'coverage.json',coverage)

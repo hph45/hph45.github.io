@@ -19,6 +19,20 @@ POLICY={'friendship_age_gap_under_25':5,'friendship_age_gap_other':8,'blocked_co
         'candidate_thresholds':{'romance':.56,'friends':.55,'business_partners':.55}}
 
 class EligibilityTests(unittest.TestCase):
+    def test_category_age_ranges_are_reciprocal_and_independent_in_coverage(self):
+        a = person('a', age=26, intents=['friends', 'business_partners', 'romance'])
+        b = person('b', age=30, intents=a['intents'])
+        for policy in (POLICY, {**POLICY, 'ignore_location': True, 'allow_weak_first_introduction': True}):
+            for kind, prefix, other_kind in [('friends', 'friendship', 'business_partners'), ('business_partners', 'business', 'friends')]:
+                limited = {**a, prefix + '_age_min': 27, prefix + '_age_max': 30}
+                self.assertIsNone(eligible(limited, b, kind, policy, set(), set()))
+                excluded = {**limited, prefix + '_age_max': 29}
+                for left, right in [(excluded, b), (b, excluded)]:
+                    self.assertEqual(eligible(left, right, kind, policy, set(), set()), 'reciprocal_age_preference')
+                    self.assertIsNone(eligible(left, right, other_kind, policy, set(), set()))
+                    self.assertIsNone(eligible(left, right, 'romance', policy, set(), set()))
+                self.assertEqual(eligible({**limited, prefix + '_age_max': None}, b, kind, policy, set(), set()), 'invalid_connection_age_range')
+
     def test_member_radii_are_reciprocal_and_cannot_be_overridden_by_coverage(self):
         a=person('a',latitude=0.,longitude=0.,location_preference='radius',match_radius_miles=70)
         b=person('b',city_id=2,latitude=0.,longitude=1.) # about 69.09 miles

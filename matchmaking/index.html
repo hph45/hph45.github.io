@@ -13,7 +13,7 @@
   <meta property="og:url" content="https://zebrabookclub.com/matchmaking/">
   <meta property="og:image" content="https://zebrabookclub.com/logo.png">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <link rel="stylesheet" href="./styles.css?v=20261122.3">
+  <link rel="stylesheet" href="./styles.css?v=20261125.4">
   <link rel="stylesheet" href="/assets/match-countdown.css?v=20261024.1">
   <link rel="stylesheet" href="/assets/product-gallery.css?v=20261103.1">
 </head>
@@ -194,16 +194,37 @@
               <div class="age-range-heading"><span id="age-range-label">Age range</span><output id="age-range-value" for="age-min age-max">18–80+</output></div>
               <div class="age-range-sliders">
                 <div class="age-range-track" aria-hidden="true"><div class="age-range-selection"></div></div>
-                <label class="visually-hidden" for="age-min">Minimum age</label><input id="age-min" name="age_min" type="range" min="18" max="80" step="1" value="18">
+                <label class="visually-hidden" for="age-min">Minimum age</label><input id="age-min" class="age-minimum" name="age_min" type="range" min="18" max="80" step="1" value="18">
                 <label class="visually-hidden" for="age-max">Maximum age</label><input id="age-max" name="age_max" type="range" min="18" max="80" step="1" value="80">
               </div>
               <div class="age-range-scale" aria-hidden="true"><span>18</span><span>80+</span></div>
             </div>
             <label>Tell us about your ideal match.<textarea name="romance_ideal_match" rows="4" maxlength="600" aria-describedby="ideal-match-help"></textarea><span id="ideal-match-help" class="field-help">Optional. This answer stays private.</span></label>
           </fieldset>
-          <fieldset data-preferences="friends" hidden disabled><legend class="preference-heading">Friends</legend><label>What would you enjoy doing together?<textarea name="friendship_interests" rows="4" minlength="5" maxlength="600" required placeholder="Bookshop afternoons, hiking, spirited debates over coffee…"></textarea></label></fieldset>
+          <fieldset data-preferences="friends" hidden disabled>
+            <legend class="preference-heading">Friends</legend>
+            <div class="age-range" role="group" aria-labelledby="friendship-age-range-label">
+              <div class="age-range-heading"><span id="friendship-age-range-label">Age range</span><output id="friendship-age-range-value" for="friendship-age-min friendship-age-max">18–80+</output></div>
+              <div class="age-range-sliders">
+                <div class="age-range-track" aria-hidden="true"><div class="age-range-selection"></div></div>
+                <label class="visually-hidden" for="friendship-age-min">Minimum age for friends</label><input id="friendship-age-min" class="age-minimum" name="friendship_age_min" type="range" min="18" max="80" step="1" value="18">
+                <label class="visually-hidden" for="friendship-age-max">Maximum age for friends</label><input id="friendship-age-max" name="friendship_age_max" type="range" min="18" max="80" step="1" value="80">
+              </div>
+              <div class="age-range-scale" aria-hidden="true"><span>18</span><span>80+</span></div>
+            </div>
+            <label>What would you enjoy doing together?<textarea name="friendship_interests" rows="4" minlength="5" maxlength="600" required placeholder="Bookshop afternoons, hiking, spirited debates over coffee…"></textarea></label>
+          </fieldset>
           <fieldset data-preferences="business_partners" hidden disabled>
             <legend class="preference-heading">Business partners</legend>
+            <div class="age-range" role="group" aria-labelledby="business-age-range-label">
+              <div class="age-range-heading"><span id="business-age-range-label">Age range</span><output id="business-age-range-value" for="business-age-min business-age-max">18–80+</output></div>
+              <div class="age-range-sliders">
+                <div class="age-range-track" aria-hidden="true"><div class="age-range-selection"></div></div>
+                <label class="visually-hidden" for="business-age-min">Minimum age for business partners</label><input id="business-age-min" class="age-minimum" name="business_age_min" type="range" min="18" max="80" step="1" value="18">
+                <label class="visually-hidden" for="business-age-max">Maximum age for business partners</label><input id="business-age-max" name="business_age_max" type="range" min="18" max="80" step="1" value="80">
+              </div>
+              <div class="age-range-scale" aria-hidden="true"><span>18</span><span>80+</span></div>
+            </div>
             <label>What are you working on, or hoping to build?<textarea name="business_about" rows="3" minlength="5" maxlength="600" required></textarea></label>
             <label>What skills or experience do you bring?<textarea name="business_skills" rows="3" minlength="5" maxlength="600" required></textarea></label>
             <label>What are you looking for in a partner?<textarea name="business_seeking" rows="3" minlength="5" maxlength="600" required></textarea></label>
@@ -375,7 +396,7 @@
   <dialog id="delete-dialog" aria-labelledby="delete-title"><form id="delete-form"><p class="eyebrow">Close this chapter</p><h2 id="delete-title">Delete your account?</h2><p>This permanently removes your shared Zebra Book Club profile, preferences, library, ratings, and match memberships. Your Apple or Google account is unchanged.</p><label>Type DELETE to confirm<input id="delete-confirmation" autocomplete="off" required pattern="DELETE"></label><p id="delete-error" class="form-error" role="alert" hidden></p><div class="form-actions"><button id="cancel-delete" class="text-button" type="button">Keep my account</button><button id="confirm-delete" class="button" type="submit">Delete account</button></div></form></dialog>
   <footer class="site-footer"><span>© 2026 Zebra Book Club</span><nav class="legal-links" aria-label="Legal"><a href="/privacy/" target="_blank" rel="noopener">Privacy</a><a href="/terms/" target="_blank" rel="noopener">Terms</a></nav><span class="data-credits">Books: <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">Open Library</a> · Cities: <a href="https://www.geonames.org" target="_blank" rel="noopener noreferrer">GeoNames</a> · Map: <a href="https://naturalearthdata.com" target="_blank" rel="noopener noreferrer">Natural Earth</a></span></footer>
   <noscript><p class="notice">Please enable JavaScript to sign in and create your matchmaking profile.</p></noscript>
-  <script type="module" src="./app.js?v=20261125.3"></script>
+  <script type="module" src="./app.js?v=20261125.4"></script>
   <script type="module" src="/assets/match-countdown.js?v=20261116.1"></script>
 </body>
 </html>

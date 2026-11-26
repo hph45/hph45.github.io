@@ -45,7 +45,7 @@ input[type=hidden] { display: none !important; }
 .age-range input[type=range]:focus-visible { outline: none; z-index: 3; }
 .age-range input[type=range]:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--ink); outline-offset: 4px; }
 .age-range input[type=range]:focus-visible::-moz-range-thumb { outline: 2px solid var(--ink); outline-offset: 4px; }
-.age-range-at-end input[name=age_min] { z-index: 4; }
+.age-range-at-end .age-minimum { z-index: 4; }
 .age-range-scale { display: flex; justify-content: space-between; padding-inline: 5px; color: var(--muted); font-size: 12px; }
 input[readonly], fieldset:disabled input, fieldset:disabled textarea { background: var(--wash); color: var(--muted); }
 .connection-choices { margin-bottom: 24px; }

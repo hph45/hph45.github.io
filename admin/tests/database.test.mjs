@@ -38,8 +38,8 @@ test("admin statistics enforce server-owned access and accurate, aggregate-only 
   for (const [i, id] of ids.entries()) {
     const email = i === 3 ? null : i === 1 ? "reader_1+club@example.invalid" : i === 2 ? "Reader.2+Club@Example.invalid" : `reader.${i}+club@example.invalid`;
     await db.query("insert into auth.users(id,email) values ($1,$2)", [id, email]);
-    // Seed tomorrow's 25th birthday at creation; birthdays cannot be edited later.
-    const birth = (await db.query("select (current_date - make_interval(years => $1) + make_interval(days => $2))::date::text as birth", [ages[i], i === 2 ? 1 : 0])).rows[0].birth;
+    // One reader turns 25 tomorrow. The other birthdays have passed in both UTC and the match planner's time zone.
+    const birth = (await db.query("select (current_date - make_interval(years => $1) + make_interval(days => $2))::date::text as birth", [ages[i], i === 2 ? 1 : -1])).rows[0].birth;
     const values = { user_id: id, ...makeProfile({
       display_name: `Private reader ${i}`, birth_date: birth, city_id: [5378538, 5128581, 2643743][i % 3],
       favorite_book_id: "OL1W", location_preference: "anywhere",

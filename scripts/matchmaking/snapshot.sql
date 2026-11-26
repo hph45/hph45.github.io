@@ -14,6 +14,8 @@ select jsonb_build_object(
     'match_radius_miles', p.match_radius_miles,
     'gender', p.gender, 'interested_in', p.interested_in,
     'age_min', p.age_min, 'age_max', p.age_max,
+    'friendship_age_min', p.friendship_age_min, 'friendship_age_max', p.friendship_age_max,
+    'business_age_min', p.business_age_min, 'business_age_max', p.business_age_max,
     'instagram_handle', p.instagram_handle,
     'has_contact', (nullif(btrim(p.instagram_handle),'') is not null or
       (p.share_email_with_matches and nullif(u.email,'') is not null)),

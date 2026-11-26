@@ -62,7 +62,7 @@ test("multiple connection types migrate safely and enforce completeness and matc
   await t.test("backfill preserves every existing answer, timestamp, and favorite selection", async () => {
     const after = (await db.query("select * from public.matchmaking_profiles order by user_id")).rows;
     for (const [i, row] of after.entries()) {
-      const { intents, instagram_handle, current_book_id, current_book, current_author, current_book_updated_at, share_email_with_matches, referred_by_instagram, merch_raffle_prize, match_radius_miles, book_sources, reader_pick_id, reader_pick, reader_pick_author, share_email_alongside_instagram, ...unchanged } = row;
+      const { intents, instagram_handle, current_book_id, current_book, current_author, current_book_updated_at, share_email_with_matches, referred_by_instagram, merch_raffle_prize, match_radius_miles, book_sources, reader_pick_id, reader_pick, reader_pick_author, share_email_alongside_instagram, friendship_age_min, friendship_age_max, business_age_min, business_age_max, ...unchanged } = row;
       assert.deepEqual(intents, [before[i].intent]);
       assert.equal(instagram_handle, null);
       assert.equal(share_email_with_matches, true);
@@ -70,6 +70,7 @@ test("multiple connection types migrate safely and enforce completeness and matc
       assert.deepEqual([referred_by_instagram, merch_raffle_prize], [null, null]);
       assert.deepEqual([current_book_id, current_book, current_author, current_book_updated_at], [null, "", "", null]);
       assert.deepEqual([book_sources, reader_pick_id, reader_pick, reader_pick_author, share_email_alongside_instagram], [[], null, "", "", false]);
+      assert.deepEqual([friendship_age_min, friendship_age_max, business_age_min, business_age_max], [18, 120, 18, 120]);
       assert.deepEqual(unchanged, before[i]);
     }
     assert.deepEqual((await db.query("select * from public.matchmaking_favorite_selections order by user_id")).rows, selectionsBefore);

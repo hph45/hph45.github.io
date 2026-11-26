@@ -81,6 +81,21 @@ def independent_radius_eligible(a,b):
     distance=(12742/1.609344)*math.atan2(math.sqrt(max(0,min(1,h))),math.sqrt(max(0,1-h)))
     return all(distance<=r for r in radii)
 
+AUDIT_AGE_FIELDS = {'romance': ('age_min', 'age_max'),
+                    'friends': ('friendship_age_min', 'friendship_age_max'),
+                    'business_partners': ('business_age_min', 'business_age_max')}
+
+def independent_age_eligible(a, b, kind):
+    low, high = AUDIT_AGE_FIELDS[kind]
+    for member, other in ((a, b), (b, a)):
+        if kind != 'romance' and low not in member and high not in member:
+            minimum, maximum = 18, 120
+        else:
+            minimum, maximum = member.get(low), member.get(high)
+        if type(minimum) is not int or type(maximum) is not int or not 18 <= minimum <= other['age'] <= maximum <= 120:
+            return False
+    return True
+
 def independent_hard_eligible(a,b,kind,policy,previous,blocks,metros=None,requested=None):
     """No matcher eligibility/scoring calls; used to verify full coverage independently."""
     pair=frozenset((a['user_id'],b['user_id']))
@@ -98,6 +113,7 @@ def independent_hard_eligible(a,b,kind,policy,previous,blocks,metros=None,reques
         if reserved is not None and reserved!=(other['user_id'],kind):return False
     if kind not in a['intents'] or kind not in b['intents']:return False
     if not independent_radius_eligible(a,b):return False
+    if not independent_age_eligible(a,b,kind):return False
     if not policy.get('ignore_location'):
         if sorted((a['country'],b['country'])) in [sorted(x) for x in policy.get('blocked_country_pairs',[])]:return False
         same_city=a['city_id']==b['city_id']
@@ -106,8 +122,6 @@ def independent_hard_eligible(a,b,kind,policy,previous,blocks,metros=None,reques
         if not(same_city or same_metro) and any(p['location_preference']=='same_city' for p in (a,b)):return False
     if kind=='romance':
         if a['gender'] not in b['interested_in'] or b['gender'] not in a['interested_in']:return False
-        if any(p.get(k) is None for p in (a,b) for k in ('age_min','age_max')):return False
-        if not(a['age_min']<=b['age']<=a['age_max'] and b['age_min']<=a['age']<=b['age_max']):return False
     elif kind=='friends' and not policy.get('allow_weak_first_introduction'):
         limit=policy['friendship_age_gap_under_25'] if min(a['age'],b['age'])<25 else policy['friendship_age_gap_other']
         if abs(a['age']-b['age'])>limit:return False
@@ -282,8 +296,7 @@ def audit(directory,filename='plan.json'):
             check(all(p['latitude']==g['latitude'] and p['longitude']==g['longitude'] for p,g in zip((a,b),mapped)),'metro_city_coordinates_current',mid)
         if kind=='romance':
             check(a['gender'] in b['interested_in'] and b['gender'] in a['interested_in'],'reciprocal_gender',mid)
-            check(all(p.get(k) is not None for p in (a,b) for k in ('age_min','age_max'))
-                  and a['age_min']<=b['age']<=a['age_max'] and b['age_min']<=a['age']<=b['age_max'],'reciprocal_age',mid)
+        check(independent_age_eligible(a,b,kind),'reciprocal_age',mid)
         age_exception=False
         if kind=='friends':
             limit=policy['friendship_age_gap_under_25'] if min(a['age'],b['age'])<25 else policy['friendship_age_gap_other']

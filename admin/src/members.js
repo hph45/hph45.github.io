@@ -100,8 +100,12 @@ export function createMemberDirectory({ client, document, window, onDenied, isDe
       ["Age range", ageRangeLabel(profile.age_min, profile.age_max)],
       ["Tell us about your ideal match.", profile.romance_ideal_match],
     ]));
-    if (profile.intents.includes("friends")) response.append(answers("Friends", [["What would you enjoy doing together?", profile.friendship_interests]]));
+    if (profile.intents.includes("friends")) response.append(answers("Friends", [
+      ["Age range", ageRangeLabel(profile.friendship_age_min ?? 18, profile.friendship_age_max ?? 120)],
+      ["What would you enjoy doing together?", profile.friendship_interests],
+    ]));
     if (profile.intents.includes("business_partners")) response.append(answers("Business partners", [
+      ["Age range", ageRangeLabel(profile.business_age_min ?? 18, profile.business_age_max ?? 120)],
       ["What are you working on, or hoping to build?", profile.business_about],
       ["What skills or experience do you bring?", profile.business_skills],
       ["What are you looking for in a partner?", profile.business_seeking],

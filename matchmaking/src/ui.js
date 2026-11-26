@@ -1,5 +1,5 @@
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, PROFILE_TABLE, getAuthRedirect } from "./config.js";
-import { INTENTS, profileIntents, ageOn, birthdayBounds, makeProfile, validateProfile, locationLabel, preferenceDetails, bookEditTime, currentReadEditTime, favoriteBooks, normalizeLinkedInURL, normalizeInstagramHandle, instagramProfileURL, matchRadiusLabel, emailContactMode, emailContactFields } from "./profile.js";
+import { INTENTS, AGE_RANGE_FIELDS, profileIntents, ageOn, birthdayBounds, makeProfile, validateProfile, locationLabel, preferenceDetails, bookEditTime, currentReadEditTime, favoriteBooks, normalizeLinkedInURL, normalizeInstagramHandle, instagramProfileURL, matchRadiusLabel, emailContactMode, emailContactFields } from "./profile.js";
 import { attachAutocomplete } from "./autocomplete.js";
 import { createStaticCatalogSearch } from "./static-catalogs.js";
 import { attachAgeRange } from "./age-range.js";
@@ -38,7 +38,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   let bookTimer;
   let communityRequest = 0;
   const autocompletes = [];
-  const ageRange = attachAgeRange($(".age-range"));
+  const ageRanges = $$(".age-range").map(attachAgeRange);
   const mapZoom = attachMapZoom(document);
   const referralDraft = createReferralDraft(window);
   const invites = attachInvites(document, window, { getProfile: () => profile, draft: referralDraft, action,
@@ -221,7 +221,6 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     const values = profile || {
       intents: selectedIntents,
       display_name: user?.user_metadata?.given_name || user?.user_metadata?.full_name?.split(" ")[0] || "",
-      age_min: 18, age_max: 80,
     };
     for (const input of form.querySelectorAll("[name]")) {
       if (input.type === "checkbox") {
@@ -240,7 +239,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       : "You must be 18 or older. Only your age is shown to a match. Your birthday cannot be changed after signup.");
     $("#referral-field").hidden = Boolean(profile);
     field("referred_by_instagram").value = profile ? "" : referralDraft.handle;
-    ageRange.sync();
+    for (const range of ageRanges) range.restore(values);
     text("#form-eyebrow", profile ? "Edit your chapter" : "Your first chapter");
     showStep(0, false);
     showView("onboarding-view", "#onboarding-title");
@@ -251,7 +250,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
 
   function resetForm() {
     form.reset();
-    ageRange.sync();
+    for (const range of ageRanges) range.restore();
     // Hidden inputs reflect .value into their default value, unlike text inputs.
     // Clear catalog IDs explicitly so a later account never inherits old picks.
     form.querySelectorAll('input[type="hidden"]').forEach(input => { input.value = ""; });
@@ -301,8 +300,9 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
         values[input.name] = input.type === "checkbox" ? input.checked : input.value;
       }
     }
+    for (const range of ageRanges) Object.assign(values, range.bounds());
     if (profile) values.birth_date = profile.birth_date;
-    return makeProfile({ ...values, ...emailContactFields(values.email_contact_mode) }, { isActive: profile?.is_active ?? true });
+    return makeProfile({ ...values, ...emailContactFields(values.email_contact_mode) }, { isActive: profile?.is_active ?? true, exactAgeBounds: true });
   }
 
   function detail(container, title, value) {
@@ -526,6 +526,14 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       const table = client.from(PROFILE_TABLE);
       const changes = { ...values };
       delete changes.birth_date;
+      if (profile) {
+        for (const [min, max] of Object.values(AGE_RANGE_FIELDS)) {
+          if (changes[min] === profile[min] && changes[max] === profile[max]) {
+            delete changes[min];
+            delete changes[max];
+          }
+        }
+      }
       // An unrelated edit must preserve a newer answer saved on another device.
       const savedSources = profile?.book_sources ?? [];
       if (savedSources.length === values.book_sources.length && savedSources.every(source => values.book_sources.includes(source))) {
@@ -769,6 +777,6 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       }
     },
     async settled() { while (pending.size) await Promise.allSettled([...pending]); await invites.settled(); },
-    destroy() { subscription?.unsubscribe(); generation++; matches.destroy(); friendMatchmaking.destroy(); clearInstagramPrompt(); clearCountryMap(document); window.clearTimeout(bookTimer); ageRange.destroy(); mapZoom.destroy(); invites.destroy(); autocompletes.forEach(control => control.destroy()); },
+    destroy() { subscription?.unsubscribe(); generation++; matches.destroy(); friendMatchmaking.destroy(); clearInstagramPrompt(); clearCountryMap(document); window.clearTimeout(bookTimer); ageRanges.forEach(range => range.destroy()); mapZoom.destroy(); invites.destroy(); autocompletes.forEach(control => control.destroy()); },
   };
 }

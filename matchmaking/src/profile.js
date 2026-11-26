@@ -6,6 +6,12 @@ export const INTENTS = {
   business_partners: "Business partners",
 };
 
+export const AGE_RANGE_FIELDS = {
+  romance: ["age_min", "age_max"],
+  friends: ["friendship_age_min", "friendship_age_max"],
+  business_partners: ["business_age_min", "business_age_max"],
+};
+
 export const GENDERS = {
   woman: "Woman",
   man: "Man",
@@ -48,7 +54,8 @@ export function profileIntents(profile) {
 }
 
 export function ageRangeLabel(minimum, maximum) {
-  return minimum >= 80 ? "80+" : `${minimum}–${maximum >= 80 ? "80+" : maximum}`;
+  if (maximum === 120) return minimum >= 80 ? `${minimum}+` : `${minimum}–80+`;
+  return `${minimum}–${maximum}`;
 }
 
 // Store just the handle; every rendered link uses our fixed Instagram host.
@@ -117,12 +124,19 @@ export function birthdayBounds(today = new Date()) {
 
 // Build an explicit allowlist of writable fields. Irrelevant category answers are
 // cleared when someone deselects a type; timestamps and account IDs stay out.
-export function makeProfile(values, { isActive = true } = {}) {
+export function makeProfile(values, { isActive = true, exactAgeBounds = false } = {}) {
   const text = (key) => String(values[key] ?? "").trim();
   const bookID = title => text(`${title}_id`) || (text(title) ? "manual" : null);
   const intents = profileIntents(values);
   const romance = intents.includes("romance");
   const business = intents.includes("business_partners");
+  const ages = { age_min: null, age_max: null };
+  for (const [intent, [min, max]] of Object.entries(AGE_RANGE_FIELDS)) {
+    if (!intents.includes(intent) || (!Object.hasOwn(values, min) && !Object.hasOwn(values, max))) continue;
+    ages[min] = text(min) ? Number(values[min]) : null;
+    const upper = text(max) ? Number(values[max]) : null;
+    ages[max] = upper === 80 && !exactAgeBounds ? 120 : upper;
+  }
   return {
     display_name: text("display_name"),
     instagram_handle: normalizeInstagramHandle(text("instagram_handle")) || text("instagram_handle") || null,
@@ -145,9 +159,7 @@ export function makeProfile(values, { isActive = true } = {}) {
     match_radius_miles: text("location_preference") === "radius" && text("match_radius_miles") ? Number(text("match_radius_miles")) : null,
     gender: romance ? text("gender") || null : null,
     interested_in: romance && Array.isArray(values.interested_in) ? [...new Set(values.interested_in)] : [],
-    age_min: romance && text("age_min") ? Number(values.age_min) : null,
-    // The slider's 80+ endpoint includes every older member the platform allows.
-    age_max: romance && text("age_max") ? (Number(values.age_max) === 80 ? 120 : Number(values.age_max)) : null,
+    ...ages,
     romance_ideal_match: romance ? text("romance_ideal_match") : "",
     friendship_interests: intents.includes("friends") ? text("friendship_interests") : "",
     business_about: business ? text("business_about") : "",
@@ -215,11 +227,15 @@ export function validateProfile(profile, { consent, today = new Date() } = {}) {
     if (!Array.isArray(profile.interested_in) || !profile.interested_in.length || profile.interested_in.some((value) => !Object.hasOwn(GENDERS, value))) {
       error("interested_in", 2, "Choose at least one group of people you’d like to meet.");
     }
-    for (const field of ["age_min", "age_max"]) {
+    length("romance_ideal_match", 0, 600, 2, "Your ideal-match answer");
+  }
+  for (const [intent, fields] of Object.entries(AGE_RANGE_FIELDS)) {
+    if (!intents.includes(intent) || (intent !== "romance" && fields.every(key => !Object.hasOwn(profile, key)))) continue;
+    const [min, max] = fields;
+    for (const field of fields) {
       if (!Number.isInteger(profile[field]) || profile[field] < 18 || profile[field] > 120) error(field, 2, "Choose a whole-number age between 18 and 120.");
     }
-    if (profile.age_min > profile.age_max) error("age_max", 2, "The maximum age must be at least the minimum age.");
-    length("romance_ideal_match", 0, 600, 2, "Your ideal-match answer");
+    if (profile[min] > profile[max]) error(max, 2, "The maximum age must be at least the minimum age.");
   }
   if (intents.includes("friends")) length("friendship_interests", 5, 600, 2, "Your friendship answer");
   if (intents.includes("business_partners")) {
@@ -277,13 +293,15 @@ export function preferenceDetails(profile) {
   if (profile.reader_pick) details.push(["My pick for matches", [profile.reader_pick, profile.reader_pick_author].filter(Boolean).join(" · ")]);
   if (intents.includes("romance")) {
     details.push(["Who you’d like to meet", profile.interested_in.map((gender) => GENDERS[gender]).join(", ")]);
-    details.push(["Age range", ageRangeLabel(profile.age_min, profile.age_max)]);
+    details.push(["Romance age range", ageRangeLabel(profile.age_min, profile.age_max)]);
     if (profile.romance_ideal_match) details.push(["Your ideal match", profile.romance_ideal_match]);
   }
   if (intents.includes("friends")) {
+    details.push(["Friend age range", ageRangeLabel(profile.friendship_age_min ?? 18, profile.friendship_age_max ?? 120)]);
     details.push(["Time well spent", profile.friendship_interests]);
   }
   if (intents.includes("business_partners")) {
+    details.push(["Business partner age range", ageRangeLabel(profile.business_age_min ?? 18, profile.business_age_max ?? 120)]);
     details.push(["What you’re building", profile.business_about], ["What you bring", profile.business_skills], ["Your ideal partner", profile.business_seeking]);
   }
   return details;

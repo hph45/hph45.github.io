@@ -9,7 +9,7 @@ const B = "00000000-0000-4000-8000-000000000002";
 const C = "00000000-0000-4000-8000-000000000003";
 const MATCH = "00000000-0000-4000-8000-000000000010";
 
-test("shared distance preferences persist privately and constrain new releases", async t => {
+test("distance and category age preferences persist privately and constrain new releases", async t => {
   const db = new PGlite();
   t.after(() => db.close());
   await db.exec(`
@@ -115,5 +115,52 @@ test("shared distance preferences persist privately and constrain new releases",
     assert.equal(await pair(A, C), true, "300+ imposes no cap");
     await radius(C, 10);
     assert.equal(await pair(A, C), false, "300+ still respects the other person's radius");
+  });
+  await t.test("friends and business releases honor both private age ranges independently", async () => {
+    for (const id of [A, B, C]) {
+      await anywhere(id);
+      await asUser(id, () => db.query(`update public.matchmaking_profiles set intents=array['friends', 'business_partners'],
+        business_about='Book events', business_skills='Publishing', business_seeking='Local bookshops' where user_id=$1`, [id]));
+    }
+    const age = (await db.query(`select extract(year from age((now() at time zone 'America/Los_Angeles')::date, birth_date))::int as age
+      from public.matchmaking_profiles where user_id=$1`, [A])).rows[0].age;
+    const saveAges = (id, friendsMin, friendsMax, businessMin, businessMax) => asUser(id, () => db.query(`update public.matchmaking_profiles
+      set friendship_age_min=$2, friendship_age_max=$3, business_age_min=$4, business_age_max=$5 where user_id=$1 returning *`,
+      [id, friendsMin, friendsMax, businessMin, businessMax]));
+    for (const bad of [[17, 60, 18, 120], [18, 121, 18, 120], [30, 29, 18, 120], [18, 120, 50, 49], [18, 120, null, 120]]) {
+      await assert.rejects(saveAges(A, ...bad), error => ["23514", "23502"].includes(error.code));
+    }
+    const saved = (await saveAges(A, age, age, age + 1, 120)).rows[0];
+    assert.deepEqual([saved.friendship_age_min, saved.friendship_age_max, saved.business_age_min, saved.business_age_max], [age, age, age + 1, 120]);
+    await saveAges(B, 18, age - 1, age, age);
+    await saveAges(C, age + 1, 120, 18, 120);
+    await asUser(A, async () => {
+      const directory = (await db.query("select public.get_matchmaking_admin_profiles() as data")).rows[0].data.profiles;
+      assert.ok(directory.some(p => p.friendship_age_min === age && p.business_age_min === age + 1));
+    });
+    await asUser(B, async () => {
+      assert.equal((await db.query("select friendship_age_min from public.matchmaking_profiles where user_id=$1", [A])).rows.length, 0);
+      const feeds = (await db.query("select public.get_matchmaking_community() as community, public.get_my_matchmaking_introductions() as introductions")).rows[0];
+      assert.ok(feeds.introductions.items.length);
+      assert.doesNotMatch(JSON.stringify(feeds), /(?:friendship|business)_age_(?:min|max)/);
+    });
+    async function draft(intent, week) {
+      const { rows: [match] } = await db.query(`insert into public.matchmaking_matches(week_start,intent,reason,recommended_book_id,recommendation_reason)
+        values ($1,$2,'Shared interests','OL2W','Read together') returning id`, [week, intent]);
+      for (const id of [A, B]) await db.query("insert into public.matchmaking_match_members(match_id,week_start,user_id) values ($1,$2,$3)", [match.id, week, id]);
+      return match.id;
+    }
+    const publish = id => db.query("update public.matchmaking_matches set released_at=now() where id=$1", [id]);
+    const friends = await draft("friends", "2030-01-07");
+    const business = await draft("business_partners", "2030-01-14");
+    await assert.rejects(publish(friends), /MATCH_OUTSIDE_CONNECTION_AGE_RANGE/);
+    await assert.rejects(publish(business), /MATCH_OUTSIDE_CONNECTION_AGE_RANGE/);
+    await saveAges(B, age, age, age, age);
+    await publish(friends);
+    await assert.rejects(db.query("update public.matchmaking_matches set intent='business_partners' where id=$1", [friends]), /MATCH_OUTSIDE_CONNECTION_AGE_RANGE/);
+    await assert.rejects(db.query("update public.matchmaking_match_members set user_id=$1 where match_id=$2 and user_id=$3", [C, friends, B]), /MATCH_OUTSIDE_CONNECTION_AGE_RANGE/);
+    await saveAges(A, age + 1, 120, age, age);
+    await publish(business);
+    assert.ok((await db.query("select released_at from public.matchmaking_matches where id=$1", [friends])).rows[0].released_at);
   });
 });

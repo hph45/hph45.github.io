@@ -7,6 +7,10 @@ from ortools.sat.python import cp_model
 from prepare import key, digest, write
 
 KINDS=('romance','friends','business_partners')
+SOCIAL_AGE_FIELDS = {
+    'friends': ('friendship_age_min', 'friendship_age_max'),
+    'business_partners': ('business_age_min', 'business_age_max'),
+}
 ACTIVITIES={
  'coffee':r'\bcaf[eé]s?\b|\bcoffee\b', 'bookshops':r'book\s*shop|bookstore|book shopping|bookshopping',
  'walks':r'\bwalk|\bstroll|\bpark', 'hiking':r'\bhik|\btrek', 'museums and galleries':r'museum|galler',
@@ -188,7 +192,16 @@ def eligible(a,b,kind,policy,previous_pairs,blocked_pairs):
         if a['gender'] not in b['interested_in'] or b['gender'] not in a['interested_in']: return 'reciprocal_gender_preference'
         if any(p.get(k) is None for p in (a,b) for k in ('age_min','age_max')): return 'missing_romantic_age_range'
         if not a['age_min']<=b['age']<=a['age_max'] or not b['age_min']<=a['age']<=b['age_max']: return 'reciprocal_age_preference'
-    elif kind=='friends':
+    elif kind in SOCIAL_AGE_FIELDS:
+        lower, upper = SOCIAL_AGE_FIELDS[kind]
+        for member, partner in ((a, b), (b, a)):
+            # Earlier snapshots predate these preferences and have neither field.
+            minimum, maximum = (18, 120) if lower not in member and upper not in member else (member.get(lower), member.get(upper))
+            if type(minimum) is not int or type(maximum) is not int or not 18 <= minimum <= maximum <= 120:
+                return 'invalid_connection_age_range'
+            if not minimum <= partner['age'] <= maximum:
+                return 'reciprocal_age_preference'
+    if kind=='friends':
         limit=policy['friendship_age_gap_under_25'] if min(a['age'],b['age'])<25 else policy['friendship_age_gap_other']
         if abs(a['age']-b['age'])>limit: return 'friendship_age_gap_policy'
     return None

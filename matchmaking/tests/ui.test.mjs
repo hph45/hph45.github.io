@@ -573,6 +573,9 @@ test("signup stays three steps and requires the questions for every selected typ
   assert.equal(window.document.activeElement, $('[name="business_seeking"]'));
   assert.equal(state.calls.length, 0, "no partially completed multi-type profile is submitted");
   set("business_seeking", "An operations partner");
+  set("age_min", 21); await event("#age-min", "input");
+  set("friendship_age_min", 24); await event("#friendship-age-min", "input");
+  set("business_age_max", 62); await event("#business-age-max", "input");
   // Going back to adjust choices never clears in-progress answers.
   await event("#previous-step"); await event("#previous-step");
   set("intents", ["romance", "friends"]); await event('[name="intents"]', "change");
@@ -582,6 +585,8 @@ test("signup stays three steps and requires the questions for every selected typ
   await event("#profile-form", "submit");
   assert.equal(state.calls.length, 1);
   assert.deepEqual(state.profile.intents, types);
+  assert.deepEqual([state.profile.age_min, state.profile.age_max, state.profile.friendship_age_min,
+    state.profile.friendship_age_max, state.profile.business_age_min, state.profile.business_age_max], [21, 120, 24, 120, 18, 62]);
   assert.equal(state.profile.romance_ideal_match, "", "existing optional answers remain optional");
   assert.equal(state.profile.business_linkedin_url, "");
   assert.equal(state.profile.favorite_book_2_id, null, "shared books are only entered once");
@@ -675,6 +680,34 @@ test("editing intent clears old preferences, preserves a pause, and writes only 
   assert.equal(call.values.business_linkedin_url, "https://www.linkedin.com/in/reader");
   assert.equal($("#profile-preferences a").href, "https://www.linkedin.com/in/reader");
   assert.ok(!("user_id" in call.values), "ownership is immutable");
+});
+
+test("friends and business age selectors save independently and preserve exact native ages", async t => {
+  const { $, set, event, state } = await setup(t, { initialProfile: { ...profile, intents: ["friends", "business_partners"],
+    business_about: "A bookstore", business_skills: "Book buying", business_seeking: "Community events",
+    friendship_age_min: 23, friendship_age_max: 120, business_age_min: 78, business_age_max: 85 } });
+  await event("#edit-profile");
+  await event("#profile-form", "submit"); await event("#profile-form", "submit");
+  assert.equal($('[data-preferences="romance"]').hidden, true);
+  assert.equal($("#friendship-age-range-value").value, "23–80+");
+  assert.equal($("#business-age-range-value").value, "78–85");
+  assert.equal($("#business-age-max").max, "120");
+  set("friendship_age_min", 25); await event("#friendship-age-min", "input");
+  set("friendship_age_max", 20); await event("#friendship-age-max", "input");
+  assert.equal($("#friendship-age-max").value, "25");
+  set("friendship_age_max", 36); await event("#friendship-age-max", "input");
+  await event("#profile-form", "submit");
+  assert.deepEqual([state.profile.friendship_age_min, state.profile.friendship_age_max], [25, 36]);
+  assert.equal(state.profile.business_age_max, 85);
+  assert.equal(Object.hasOwn(state.calls.at(-1).values, "business_age_max"), false);
+  await event("#edit-profile");
+  await event("#profile-form", "submit"); await event("#profile-form", "submit");
+  assert.equal($("#friendship-age-range-value").value, "25–36");
+  set("business_age_max", 80); await event("#business-age-max", "input");
+  await event("#profile-form", "submit");
+  assert.equal(state.profile.business_age_max, 80, "an exact upper bound on the extended scale is preserved");
+  assert.match($("#profile-preferences").textContent, /Business partner age range78–80/);
+  assert.equal(state.calls.at(-1).values.friendship_age_max, undefined);
 });
 
 test("romance sliders restore saved ages, cannot cross, and save the private open answer", async t => {

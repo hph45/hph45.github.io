@@ -104,6 +104,14 @@ class Artifact:
 
 
 class AuditTests(unittest.TestCase):
+    def test_audit_rejects_out_of_range_nonromantic_matches_in_both_directions(self):
+        for kind, prefix in [('friends', 'friendship'), ('business_partners', 'business')]:
+            for index in (0, 1):
+                artifact = self.make(kind)
+                profile = artifact.snapshot['profiles'][index]
+                profile.update({prefix + '_age_min': 70, prefix + '_age_max': 90})
+                self.assertRejected(artifact, 'reciprocal_age')
+
     def test_radius_is_independently_checked_even_when_location_is_ignored(self):
         a=person('a',1,location_preference='radius',match_radius_miles=70)
         b=person('b',2,longitude=1.,location_preference='anywhere')
