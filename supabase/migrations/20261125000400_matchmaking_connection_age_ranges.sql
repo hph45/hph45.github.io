@@ -16,6 +16,11 @@ grant insert (friendship_age_min, friendship_age_max, business_age_min, business
       update (friendship_age_min, friendship_age_max, business_age_min, business_age_max)
   on public.matchmaking_profiles to authenticated;
 
+-- The service-only matching view expands its column list when it is defined.
+create or replace view public.matchmaking_nonreview_profiles with (security_invoker = true) as
+  select p.* from public.matchmaking_profiles p
+  where not exists (select 1 from public.matchmaking_review_accounts r where r.user_id = p.user_id);
+
 -- Check both directions after the new pair or category is in place. Later
 -- profile edits do not revisit introductions that have already been released.
 create function public.guard_matchmaking_connection_ages()

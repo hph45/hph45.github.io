@@ -132,6 +132,8 @@ test("distance and category age preferences persist privately and constrain new 
     }
     const saved = (await saveAges(A, age, age, age + 1, 120)).rows[0];
     assert.deepEqual([saved.friendship_age_min, saved.friendship_age_max, saved.business_age_min, saved.business_age_max], [age, age, age + 1, 120]);
+    const planner = (await db.query("select friendship_age_max, business_age_min from public.matchmaking_nonreview_profiles where user_id=$1", [A])).rows[0];
+    assert.deepEqual(planner, { friendship_age_max: age, business_age_min: age + 1 });
     await saveAges(B, 18, age - 1, age, age);
     await saveAges(C, age + 1, 120, 18, 120);
     await asUser(A, async () => {
