@@ -74,7 +74,7 @@ test("introduction history, recommendations, contact preferences, and private re
   });
 
   await t.test("members can change reading preferences and share a personal recommendation with released matches", async () => {
-    const prefs = ["library", "bookstore", "pre_loved", "new", "ebook", "audiobook"];
+    const prefs = ["library", "bookstore", "pre_loved", "new", "ebook", "audiobook", "comics", "short_stories"];
     const before = (await db.query("select * from public.matchmaking_profiles where user_id=$1", [B])).rows[0];
     assert.deepEqual(before.book_sources, []);
     assert.equal(before.reader_pick_id, null);

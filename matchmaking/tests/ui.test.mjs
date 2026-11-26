@@ -187,7 +187,7 @@ test("a new member can finish all three steps with one book and no Instagram", a
   assert.equal($('[name="favorite_book_3"]').required, false);
   assert.equal($('[name="current_book"]').required, false);
   assert.deepEqual([...$("#profile-form").querySelectorAll('[name="book_sources"]')].map(input => input.value),
-    ["library", "bookstore", "pre_loved", "new", "ebook", "audiobook"]);
+    ["library", "bookstore", "pre_loved", "new", "ebook", "audiobook", "comics", "short_stories"]);
   set("book_sources", ["library", "audiobook"]);
   set("reader_pick", "The Left Hand of Darkness");
   set("favorite_book_id", "OL1W"); set("favorite_book", "Parable of the Sower"); set("favorite_author", "Octavia Butler");
@@ -875,17 +875,17 @@ test("members can change and clear reading preferences while favorite books are 
   assert.equal($('[name="reader_pick"]').value, "A favorite");
   assert.equal($("#favorite-book-fields").disabled, true);
   assert.equal($('[name="reader_pick"]').closest("fieldset[disabled]"), null);
-  set("book_sources", ["pre_loved", "new", "audiobook"]);
+  set("book_sources", ["pre_loved", "new", "audiobook", "comics", "short_stories"]);
   set("reader_pick", "A new choice"); await event('[name="reader_pick"]', "input");
   await event("#profile-form", "submit"); await event("#profile-form", "submit");
-  assert.deepEqual(state.profile.book_sources, ["pre_loved", "new", "audiobook"]);
+  assert.deepEqual(state.profile.book_sources, ["pre_loved", "new", "audiobook", "comics", "short_stories"]);
   assert.equal(state.profile.reader_pick, "A new choice");
   await event("#edit-profile"); await event("#profile-form", "submit");
   set("book_sources", []); set("reader_pick", ""); await event('[name="reader_pick"]', "input");
   await event("#profile-form", "submit"); await event("#profile-form", "submit");
   assert.deepEqual(state.profile.book_sources, []);
   assert.equal(state.profile.reader_pick_id, null);
-  assert.doesNotMatch($("#profile-preferences").textContent, /My pick for matches|How I get my books/);
+  assert.doesNotMatch($("#profile-preferences").textContent, /My pick for matches|Reading preferences/);
   await event("#edit-profile");
   state.profile.book_sources = ["bookstore"];
   state.profile.reader_pick = "Saved on the app";

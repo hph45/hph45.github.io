@@ -12,18 +12,20 @@ export const GENDERS = {
   other: "Other",
 };
 
-const BOOK_SOURCES = {
+const READING_PREFERENCES = {
   library: "Libraries",
   bookstore: "Bookstores",
   pre_loved: "Pre-loved books",
   new: "New books",
   ebook: "E-books",
   audiobook: "Audiobooks",
+  comics: "Comics",
+  short_stories: "Short stories",
 };
 
 function bookSources(profile) {
   const selected = profile.book_sources;
-  return Array.isArray(selected) ? Object.keys(BOOK_SOURCES).filter(source => selected.includes(source)) : [];
+  return Array.isArray(selected) ? Object.keys(READING_PREFERENCES).filter(source => selected.includes(source)) : [];
 }
 
 export function emailContactMode(profile) {
@@ -271,7 +273,7 @@ export function preferenceDetails(profile) {
   const intents = profileIntents(profile);
   const details = [["Where", locationPreferenceLabel(profile)]];
   const sources = bookSources(profile);
-  if (sources.length) details.push(["How I get my books", sources.map(source => BOOK_SOURCES[source]).join(", ")]);
+  if (sources.length) details.push(["Reading preferences", sources.map(source => READING_PREFERENCES[source]).join(", ")]);
   if (profile.reader_pick) details.push(["My pick for matches", [profile.reader_pick, profile.reader_pick_author].filter(Boolean).join(" · ")]);
   if (intents.includes("romance")) {
     details.push(["Who you’d like to meet", profile.interested_in.map((gender) => GENDERS[gender]).join(", ")]);
