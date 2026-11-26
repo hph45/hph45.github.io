@@ -114,6 +114,30 @@ test("Our community appears for guests and hides during onboarding and on the me
   }
 });
 
+test("Edit profile saves, restores and clears an optional match email independently of sharing", async t => {
+  const { $, set, event, state } = await setup(t, { initialProfile: { ...profile, share_email_with_matches: false } });
+  await event("#edit-profile");
+  assert.equal($("#match-contact-email-field").hidden, false);
+  set("match_contact_email", "one@example.org?bcc=another@example.org");
+  await event("#profile-form", "submit");
+  assert.match($("#form-error").textContent, /valid contact email/);
+  set("match_contact_email", "reader+matches@post.example");
+  await event('[name="match_contact_email"]', "input");
+  for (let i = 0; i < 3; i++) await event("#profile-form", "submit");
+  assert.equal(state.profile.match_contact_email, "reader+matches@post.example");
+  assert.equal(state.profile.share_email_with_matches, false);
+  assert.equal($("#account-email").textContent, member.email);
+  await event("#edit-profile");
+  assert.equal($('[name="match_contact_email"]').value, "reader+matches@post.example");
+  for (let i = 0; i < 3; i++) await event("#profile-form", "submit");
+  assert.ok(!("match_contact_email" in state.calls.at(-1).values));
+  await event("#edit-profile"); set("match_contact_email", "");
+  for (let i = 0; i < 3; i++) await event("#profile-form", "submit");
+  assert.equal(state.profile.match_contact_email, null);
+  const signup = await setup(t);
+  assert.equal(signup.$("#match-contact-email-field").hidden, true);
+});
+
 test("the radius slider converts miles, preserves its value, and disappears for anywhere", async t => {
   const { $, event, state } = await setup(t, { initialProfile: { ...profile, location_preference: "radius", match_radius_miles: 50 } });
   await event("#edit-profile");

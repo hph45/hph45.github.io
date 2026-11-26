@@ -129,6 +129,37 @@ test("introduction history, recommendations, contact preferences, and private re
     assert.ok(!JSON.stringify(community).includes("reader1@example.invalid"));
   });
 
+  await t.test("an alternate contact address respects live consent, release eligibility and ownership", async () => {
+    const alternate = "reader+matches@post.example";
+    const address = value => asUser(B, () => db.query("update public.matchmaking_profiles set match_contact_email=$2 where user_id=$1", [B, value]));
+    for (const invalid of ["two addresses", "x@example.org?bcc=y", "a@-invalid.test", "a..b@host.test", "x@host.test\nBcc: a@example.org", "x".repeat(65) + "@host.test"]) {
+      await assert.rejects(address(invalid), err => err.code === "23514");
+    }
+    await db.exec("begin");
+    try {
+      await address(alternate);
+      assert.equal((await page(A)).items[0].contact_email, null, "saving an address cannot turn on sharing");
+      assert.equal((await db.query("select email from auth.users where id=$1", [B])).rows[0].email, "reader1@example.invalid");
+      assert.equal((await asUser(C, () => db.query("update public.matchmaking_profiles set match_contact_email=null where user_id=$1 returning user_id", [B]))).rows.length, 0);
+      await asUser(B, () => db.query("update public.matchmaking_profiles set share_email_with_matches=true,instagram_handle='reader.books' where user_id=$1", [B]));
+      assert.equal((await page(A)).items[0].contact_email, null);
+      await asUser(B, () => db.query("update public.matchmaking_profiles set share_email_alongside_instagram=true where user_id=$1", [B]));
+      const item = (await page(A)).items[0];
+      assert.equal(item.contact_email, alternate); assert.equal(item.instagram_handle, "reader.books");
+      assert.ok(!("match_contact_email" in item));
+      assert.equal((await page(C)).items.length, 0);
+      await address(null);
+      assert.equal((await page(A)).items[0].contact_email, "reader1@example.invalid");
+      await address(alternate);
+      await asUser(B, () => db.query("update public.matchmaking_profiles set instagram_handle=null,share_email_alongside_instagram=false where user_id=$1", [B]));
+      await db.query("update auth.users set email=null where id=$1", [B]);
+      const id = await draft();
+      await release(id);
+      assert.equal((await page(A)).items.find(book => book.id === id).contact_email, alternate);
+      assert.ok(!JSON.stringify((await asUser(A, () => db.query("select public.get_matchmaking_community() as data"))).rows).includes(alternate));
+    } finally { await db.exec("rollback"); }
+  });
+
   await t.test("new releases require a recommendation neither participant has already selected", async () => {
     // Restore the contact route after the preceding opt-out checks: a new
     // release now requires currently permitted contact as well as a new book.

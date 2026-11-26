@@ -16,13 +16,17 @@ test("reviewed friendship options and private notices preserve release security"
     grant execute on function auth.uid() to authenticated;
   `);
   const folder = new URL("../../supabase/migrations/", import.meta.url);
+  const reviewedVersion = "20261101000100_reviewed_introduction_options.sql";
+  const laterMigrations = [];
   let reviewedOptionsMigration;
   for (const file of (await readdir(folder)).filter(file => file.endsWith(".sql")).sort()) {
     const sql = await readFile(new URL(file, folder), "utf8");
-    if (file === "20261101000100_reviewed_introduction_options.sql") reviewedOptionsMigration = sql;
+    if (file === reviewedVersion) reviewedOptionsMigration = sql;
+    else if (file > reviewedVersion) laterMigrations.push(sql);
     else await db.exec(sql);
   }
   const [A, B, C, D, OUTSIDER] = [1, 2, 3, 4, 5].map(i => `31000000-0000-4000-8000-00000000000${i}`);
+  const legacyColumns = new Set((await db.query("select column_name from information_schema.columns where table_schema='public' and table_name='matchmaking_profiles'")).rows.map(row => row.column_name));
   await db.exec("insert into public.matchmaking_books(work_id,title,author) values ('OL3101W','Favorite','Author'),('OL3102W','Current','Author'),('OL3103W','Next read','Author')");
   for (const [i, id] of [A, B, C, D, OUTSIDER].entries()) {
     await db.query("insert into auth.users(id,email) values ($1,$2)", [id, `reader${i}@example.invalid`]);
@@ -34,7 +38,8 @@ test("reviewed friendship options and private notices preserve release security"
       business_about: "A bookshop", business_skills: "Design", business_seeking: "A partner",
       favorite_book_id: "OL3101W", current_book_id: "OL3102W", location_preference: "anywhere", instagram_handle: `reader${i}.books`,
     }) };
-    await db.query(`insert into public.matchmaking_profiles (${Object.keys(values).join(",")}) values (${Object.keys(values).map((_, j) => `$${j + 1}`).join(",")})`, Object.values(values));
+    const keys = Object.keys(values).filter(key => legacyColumns.has(key));
+    await db.query(`insert into public.matchmaking_profiles (${keys.join(",")}) values (${keys.map((_, j) => `$${j + 1}`).join(",")})`, keys.map(key => values[key]));
   }
   async function asUser(id, fn) {
     await db.exec("set role authenticated");
@@ -69,6 +74,7 @@ test("reviewed friendship options and private notices preserve release security"
   });
 
   const first = await draft();
+  for (const sql of laterMigrations) await db.exec(sql);
   await t.test("fallback is off by default, per participant, and restricted to optional friendship", async () => {
     const defaults = (await db.query("select optional_friendship,member_notice,contact_via_email from public.matchmaking_match_members where match_id=$1", [first])).rows;
     assert.deepEqual(defaults, Array(2).fill({ optional_friendship: false, member_notice: "", contact_via_email: false }));
