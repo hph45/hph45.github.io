@@ -12,6 +12,19 @@ export const GENDERS = {
   other: "Other",
 };
 
+const BOOK_SOURCES = {
+  library: "Libraries",
+  bookstore: "Bookstores",
+  pre_loved: "Pre-loved books",
+  new: "New books",
+  ebook: "E-books",
+};
+
+function bookSources(profile) {
+  const selected = profile.book_sources;
+  return Array.isArray(selected) ? Object.keys(BOOK_SOURCES).filter(source => selected.includes(source)) : [];
+}
+
 // The array is authoritative, including an empty selection. Accept the old
 // single choice when restoring a profile or a pre-sign-in preference.
 export function profileIntents(profile) {
@@ -101,6 +114,7 @@ export function makeProfile(values, { isActive = true } = {}) {
     birth_date: text("birth_date"),
     city_id: Number(values.city_id) || null,
     city: text("city"), region: text("region"), country: text("country"), intents,
+    book_sources: bookSources(values),
     favorite_book_id: bookID("favorite_book"),
     favorite_book: text("favorite_book"), favorite_author: text("favorite_author"),
     favorite_book_2_id: bookID("favorite_book_2"),
@@ -234,6 +248,8 @@ export function favoriteBooks(profile) {
 export function preferenceDetails(profile) {
   const intents = profileIntents(profile);
   const details = [["Where", locationPreferenceLabel(profile)]];
+  const sources = bookSources(profile);
+  if (sources.length) details.push(["How I get my books", sources.map(source => BOOK_SOURCES[source]).join(", ")]);
   if (intents.includes("romance")) {
     details.push(["Who you’d like to meet", profile.interested_in.map((gender) => GENDERS[gender]).join(", ")]);
     details.push(["Age range", ageRangeLabel(profile.age_min, profile.age_max)]);

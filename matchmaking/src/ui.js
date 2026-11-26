@@ -226,7 +226,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     for (const input of form.querySelectorAll("[name]")) {
       if (input.type === "checkbox") {
         input.checked = input.name === "intents" ? profileIntents(values).includes(input.value)
-          : input.name === "interested_in" ? (values.interested_in || []).includes(input.value)
+          : Array.isArray(values[input.name]) ? values[input.name].includes(input.value)
           : input.name === "profile_consent" ? Boolean(profile)
           : input.name === "share_email_with_matches" ? values[input.name] !== false : values[input.name] === true;
       } else if (values[input.name] !== undefined) input.value = values[input.name] ?? (input.type === "range" ? input.defaultValue : "");
@@ -291,13 +291,15 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   }
 
   function readProfile() {
-    const values = {};
+    const values = { intents: [], interested_in: [], book_sources: [] };
     // FormData omits disabled earlier steps, so collect the known controls directly.
     for (const input of form.querySelectorAll("[name]")) {
-      if (!["intents", "interested_in"].includes(input.name)) values[input.name] = input.type === "checkbox" ? input.checked : input.value;
+      if (Array.isArray(values[input.name])) {
+        if (input.checked) values[input.name].push(input.value);
+      } else {
+        values[input.name] = input.type === "checkbox" ? input.checked : input.value;
+      }
     }
-    values.intents = [...form.querySelectorAll('[name="intents"]:checked')].map(input => input.value);
-    values.interested_in = [...form.querySelectorAll('[name="interested_in"]:checked')].map((input) => input.value);
     if (profile) values.birth_date = profile.birth_date;
     return makeProfile(values, { isActive: profile?.is_active ?? true });
   }
@@ -523,6 +525,11 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       const table = client.from(PROFILE_TABLE);
       const changes = { ...values };
       delete changes.birth_date;
+      // An unrelated edit must preserve a newer answer saved on another device.
+      const savedSources = profile?.book_sources ?? [];
+      if (savedSources.length === values.book_sources.length && savedSources.every(source => values.book_sources.includes(source))) {
+        delete changes.book_sources;
+      }
       const query = profile ? table.update(changes).eq("user_id", user.id) : table.insert({ ...values, user_id: user.id,
         referred_by_instagram: referrer || null, merch_raffle_prize: referralDraft.prize || null });
       const { data, error } = await query.select("*").single();
