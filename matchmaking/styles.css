@@ -341,6 +341,10 @@ a.country-popup-book:hover .country-popup-title, a.country-popup-book:focus-visi
 .match-review-context{margin:0 0 27px;color:var(--muted);font-size:15px;overflow-wrap:anywhere}
 .match-review-dialog fieldset{padding:0 0 22px;margin:0 0 22px;border-bottom:1px solid var(--line)}
 .match-review-dialog legend{font:22px/1.25 var(--serif);padding:0;margin-bottom:10px}
+.review-response-help{display:block;margin-top:5px;font:15px/1.4 var(--serif);color:var(--muted)}
+.review-response-options{display:flex;flex-wrap:wrap;gap:0 18px}
+.review-response-options label{display:inline-flex;align-items:center;gap:7px;min-height:44px;margin:0;cursor:pointer}
+.review-response-options input[type=radio]{width:17px;height:17px;min-height:0;margin:0;padding:0;accent-color:var(--ink)}
 .match-review-book{font:15px/1.4 var(--serif);color:var(--muted);margin:-4px 0 10px;overflow-wrap:anywhere}
 .review-rating-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .review-stars{display:flex;gap:4px;flex-shrink:0}

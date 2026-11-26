@@ -13,7 +13,7 @@
   <meta property="og:url" content="https://zebrabookclub.com/matchmaking/">
   <meta property="og:image" content="https://zebrabookclub.com/logo.png">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <link rel="stylesheet" href="./styles.css?v=20261125.5">
+  <link rel="stylesheet" href="./styles.css?v=20261126.1">
   <link rel="stylesheet" href="/assets/match-countdown.css?v=20261024.1">
   <link rel="stylesheet" href="/assets/product-gallery.css?v=20261103.1">
 </head>
@@ -414,6 +414,14 @@
     <h2 id="match-review-title">Review this match</h2>
     <p id="match-review-context" class="match-review-context"></p>
     <form id="match-review-form" novalidate>
+      <fieldset id="match-review-response">
+        <legend>Did they respond? <span class="review-response-help">This information helps us matchmake active users with other active users.</span></legend>
+        <div class="review-response-options">
+          <label><input type="radio" name="response_status" value="yes">Yes</label>
+          <label><input type="radio" name="response_status" value="no">No</label>
+          <label><input type="radio" name="response_status" value="not_contacted">I haven’t reached out yet</label>
+        </div>
+      </fieldset>
       <fieldset data-rating="compatibility_rating"><legend>Compatibility</legend><div class="review-rating-row"><div class="review-stars"></div><output aria-live="polite">Not rated</output></div></fieldset>
       <fieldset data-rating="book_rating"><legend>Book recommendation</legend><p id="match-review-book" class="match-review-book"></p><div class="review-rating-row"><div class="review-stars"></div><output aria-live="polite">Not rated</output></div></fieldset>
       <p id="match-review-message" class="match-review-message" role="status"></p>
@@ -427,7 +435,7 @@
   <dialog id="delete-dialog" aria-labelledby="delete-title"><form id="delete-form"><p class="eyebrow">Close this chapter</p><h2 id="delete-title">Delete your account?</h2><p>This permanently removes your shared Zebra Book Club profile, preferences, library, ratings, and match memberships. Your Apple or Google account is unchanged.</p><label>Type DELETE to confirm<input id="delete-confirmation" autocomplete="off" required pattern="DELETE"></label><p id="delete-error" class="form-error" role="alert" hidden></p><div class="form-actions"><button id="cancel-delete" class="text-button" type="button">Keep my account</button><button id="confirm-delete" class="button" type="submit">Delete account</button></div></form></dialog>
   <footer class="site-footer"><span>© 2026 Zebra Book Club</span><nav class="legal-links" aria-label="Legal"><a href="/privacy/" target="_blank" rel="noopener">Privacy</a><a href="/terms/" target="_blank" rel="noopener">Terms</a></nav><span class="data-credits">Books: <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">Open Library</a> · Cities: <a href="https://www.geonames.org" target="_blank" rel="noopener noreferrer">GeoNames</a> · Map: <a href="https://naturalearthdata.com" target="_blank" rel="noopener noreferrer">Natural Earth</a></span></footer>
   <noscript><p class="notice">Please enable JavaScript to sign in and create your matchmaking profile.</p></noscript>
-  <script type="module" src="./app.js?v=20261125.5"></script>
+  <script type="module" src="./app.js?v=20261126.1"></script>
   <script type="module" src="/assets/match-countdown.js?v=20261116.1"></script>
 </body>
 </html>

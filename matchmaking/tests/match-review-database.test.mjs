@@ -25,6 +25,7 @@ test('private match reviews require membership and release, validate ratings, an
   }
   const get=(u,id)=>asUser(u,async()=> (await db.query('select public.get_my_matchmaking_match_review($1) data',[id])).rows[0].data);
   const save=(u,id,a=4,b=5,book='OL4202W')=>asUser(u,async()=> (await db.query('select public.save_matchmaking_match_review($1,$2,$3,$4) data',[id,a,b,book])).rows[0].data);
+  const answer=(u,id,status,stars=4)=>asUser(u,async()=> (await db.query('select public.save_matchmaking_match_review($1,$2,$3,$4,$5) data',[id,stars,5,'OL4202W',status])).rows[0].data);
   async function pair(at) {
     const id=(await db.query("insert into public.matchmaking_matches(week_start,intent,reason,recommended_book_id,recommendation_reason) values('2026-11-02','friends','Shared shelves','OL4202W','A new shared read') returning id")).rows[0].id;
     for(const u of [A,B])await db.query("insert into public.matchmaking_match_members(match_id,week_start,user_id) values($1,'2026-11-02',$2)",[id,u]);
@@ -34,6 +35,7 @@ test('private match reviews require membership and release, validate ratings, an
   await t.test('anonymous, outsiders, drafts, future and malformed pairs cannot read or write',async()=>{
     for(const [u,id] of [[null,released],[C,released],[A,draft],[A,future]]){
       await assert.rejects(get(u,id),e=>e.code==='42501');await assert.rejects(save(u,id),e=>e.code==='42501');
+      await assert.rejects(answer(u,id,'yes'),e=>e.code==='42501');
     }
     await db.exec('set role anon');try{await assert.rejects(db.query('select public.get_my_matchmaking_match_review($1)',[released]),e=>e.code==='42501')}finally{await db.exec('reset role')}
     const invalid=await pair('2000-01-01');await db.query('delete from public.matchmaking_match_members where match_id=$1 and user_id=$2',[invalid,B]);
@@ -47,6 +49,28 @@ test('private match reviews require membership and release, validate ratings, an
     assert.equal((await db.query('select count(*)::int n from public.matchmaking_match_reviews where match_id=$1',[released])).rows[0].n,2);
     const response=await asUser(B,async()=> (await db.query('select public.get_my_matchmaking_introductions() data')).rows[0].data);
     assert.ok(!JSON.stringify(response).includes('compatibility_rating'));assert.ok(!JSON.stringify(response).includes('book_rating'));
+  });
+  await t.test('response status belongs to each reviewer and legacy saves preserve it', async () => {
+    assert.equal((await get(A,released)).response_status,null);
+    for (const status of ['not_contacted','no','yes']) {
+      const result = await answer(A,released,status);
+      assert.equal(result.response_status,status);
+      assert.deepEqual(await answer(A,released,status),result,'identical retry preserves timestamp');
+      assert.equal((await get(B,released)).response_status,null);
+    }
+    assert.equal((await save(A,released,2,4)).response_status,'yes');
+    const before = await get(A,released);
+    await assert.rejects(answer(A,released,'maybe',1), e => e.code === '23514');
+    assert.deepEqual(await get(A,released),before,'an invalid answer rolls back the ratings too');
+    const introductions = await asUser(B,async()=> (await db.query('select public.get_my_matchmaking_introductions() data')).rows[0].data);
+    assert.ok(!JSON.stringify(introductions).includes('response_status'));
+    const operator = await db.query('select response_status from public.matchmaking_nonreview_reviews where match_id=$1 and user_id=$2',[released,A]);
+    assert.equal(operator.rows[0].response_status,'yes');
+    assert.equal((await answer(A,released,null)).response_status,null);
+    await asUser(B,()=>db.query('select public.block_matchmaking_member($1)',[released]));
+    await assert.rejects(get(A,released),/MATCH_REVIEW_NOT_AVAILABLE/);
+    await assert.rejects(answer(A,released,'no'),/MATCH_REVIEW_NOT_AVAILABLE/);
+    await asUser(B,()=>db.query('select public.unblock_matchmaking_member($1)',[released]));
   });
   await t.test('ratings reject invalid values and a stale or fabricated recommendation',async()=>{
     for(const [a,b]of [[0,3],[6,3],[null,3],[4,0],[4,6],[4,null]])await assert.rejects(save(A,released,a,b),/INVALID_MATCH_REVIEW_RATING/);

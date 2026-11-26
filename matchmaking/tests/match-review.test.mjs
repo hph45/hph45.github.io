@@ -16,7 +16,9 @@ function setup(t) {
     if (name === 'get_my_matchmaking_match_review') return state.load ? state.load() : { data: state.saved, error: state.failure };
     if (state.save) return state.save(args);
     if (state.failure) return { error: state.failure };
-    state.saved = { compatibility_rating: args.p_compatibility_rating, book_rating: args.p_book_rating, recommended_book_id: args.p_recommended_book_id };
+    state.saved = { compatibility_rating: args.p_compatibility_rating, book_rating: args.p_book_rating,
+      recommended_book_id: args.p_recommended_book_id,
+      response_status: 'p_response_status' in args ? args.p_response_status : state.saved?.response_status ?? null };
     return { data: state.saved, error: null };
   } };
   const parent = $('#match-reveal-dialog'); parent.showModal();
@@ -51,10 +53,33 @@ test('load failures cannot overwrite an existing review; retry recovers', async 
   assert.equal($('#match-review-error').hidden, true);
 });
 
+test('the first review question keeps the full wording and saves each response separately', async t => {
+  const { $, state, review, open, rate, save } = setup(t);
+  await open();
+  assert.equal($('#match-review-form fieldset:first-child legend').textContent,
+    'Did they respond? This information helps us matchmake active users with other active users.');
+  const selected = () => $('input[name="response_status"]:checked')?.value;
+  assert.equal(selected(), undefined);
+  rate('compatibility_rating', 4); rate('book_rating', 5);
+  for (const answer of ['not_contacted', 'no', 'yes']) {
+    rate('response_status', answer); await save();
+    assert.equal(state.calls.at(-1).args.p_response_status, answer);
+    review.reset(); await open();
+    assert.equal(selected(), answer, 'reopening reads the saved answer from the server');
+  }
+  state.saved.response_status = 'no'; // Another device edited the answer.
+  rate('compatibility_rating', 3); await save();
+  assert.ok(!('p_response_status' in state.calls.at(-1).args));
+  assert.equal(state.saved.response_status, 'no');
+  review.reset(); state.saved = null; await open();
+  assert.equal(selected(), undefined, 'an account switch clears the previous answer');
+});
+
 test('save failures retain choices and a double submit sends once', async t => {
-  const { $, state, open, rate, save } = setup(t); await open(); rate('compatibility_rating', 4); rate('book_rating', 3);
+  const { $, state, open, rate, save } = setup(t); await open(); rate('compatibility_rating', 4); rate('book_rating', 3); rate('response_status', 'no');
   state.failure = new Error('Offline'); await save(); assert.equal($('#match-review-dialog').open, true);
   assert.equal($('input[name="book_rating"]:checked').value, '3'); assert.equal(state.savedCount, 0);
+  assert.equal($('input[name="response_status"]:checked').value, 'no');
   let finish; state.failure = null; state.save = () => new Promise(resolve => { finish = resolve; });
   await save(); await save(); assert.equal(state.calls.filter(x => x.name === 'save_matchmaking_match_review').length, 2, 'one failed plus one pending');
   finish({ data: { compatibility_rating: 4, book_rating: 3, recommended_book_id: 'OL1W' } }); await tick(); assert.equal(state.savedCount, 1);

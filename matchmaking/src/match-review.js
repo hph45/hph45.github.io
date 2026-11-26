@@ -1,13 +1,16 @@
 export function createMatchReview({ client, document }) {
   const dialog = document.querySelector("#match-review-dialog");
   const form = document.querySelector("#match-review-form");
-  const fields = [...form.querySelectorAll("fieldset")];
+  const fields = [...form.querySelectorAll("fieldset[data-rating]")];
+  const responseField = form.querySelector("#match-review-response");
+  const responseInputs = [...responseField.querySelectorAll("input")];
   const submit = document.querySelector("#match-review-save");
   const message = document.querySelector("#match-review-message");
   const error = document.querySelector("#match-review-error");
   const retry = document.querySelector("#match-review-retry");
   const cache = new Map(), cleanups = [];
   let generation = 0, active = null, trigger = null, onSaved = null, ready = false, busy = false;
+  let savedResponse = null;
   const on = (node, event, handler) => {
     node.addEventListener(event, handler);
     cleanups.push(() => node.removeEventListener(event, handler));
@@ -29,6 +32,7 @@ export function createMatchReview({ client, document }) {
     }
   }
   function update() {
+    responseField.disabled = !ready || busy;
     for (const field of fields) {
       const selected = rating(field.dataset.rating);
       field.disabled = !ready || busy || field.hidden;
@@ -43,6 +47,8 @@ export function createMatchReview({ client, document }) {
     submit.textContent = busy ? "Saving…" : "Save review";
   }
   function fill(review) {
+    savedResponse = review?.response_status ?? null;
+    for (const input of responseInputs) input.checked = input.value === savedResponse;
     for (const name of ["compatibility_rating", "book_rating"]) {
       let value = review?.[name];
       if (name === "book_rating" && review?.recommended_book_id !== (active?.recommended_book?.work_id || null)) value = null;
@@ -50,7 +56,7 @@ export function createMatchReview({ client, document }) {
     }
   }
   function cleanup() {
-    generation++; active = null; ready = false; busy = false; onSaved = null;
+    generation++; active = null; ready = false; busy = false; onSaved = null; savedResponse = null;
     const previous = trigger; trigger = null;
     form.reset(); message.textContent = ""; error.hidden = true; error.textContent = ""; retry.hidden = true;
     document.querySelector("#match-review-context").textContent = "";
@@ -95,6 +101,8 @@ export function createMatchReview({ client, document }) {
     const values = { p_match_id: match.id, p_compatibility_rating: rating("compatibility_rating"),
       p_book_rating: match.recommended_book ? rating("book_rating") : null,
       p_recommended_book_id: match.recommended_book?.work_id || null };
+    const response = responseInputs.find(input => input.checked)?.value ?? null;
+    if (response !== savedResponse) values.p_response_status = response;
     busy = true; error.hidden = true; message.textContent = ""; update();
     try {
       const { data, error: failure } = await client.rpc("save_matchmaking_match_review", values);
@@ -103,7 +111,7 @@ export function createMatchReview({ client, document }) {
       cache.set(key(match), data); close(); saved?.();
     } catch {
       if (current !== generation || !dialog.open) return;
-      error.textContent = "We couldn’t save your review. Your ratings are still here—please try again."; error.hidden = false;
+      error.textContent = "We couldn’t save your review. Your answers are still here. Please try again."; error.hidden = false;
     } finally { if (current === generation) { busy = false; update(); } }
   }
   on(form, "change", update); on(form, "submit", save); on(retry, "click", load);
