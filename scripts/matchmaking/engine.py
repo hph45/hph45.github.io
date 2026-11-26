@@ -152,7 +152,7 @@ def exclusions(snapshot,policy):
         elif p['age']<18: excluded[p['user_id']]='Under 18'
         elif not p['has_contact'] and p['user_id'] not in contact_holds: excluded[p['user_id']]='No consented contact route'
         elif not p.get('favorites'): excluded[p['user_id']]='No favorite books'
-        if p['user_id'] in policy.get('email_only_user_ids',[]) and not(p.get('share_email_with_matches') and p.get('has_signup_email')):
+        if p['user_id'] in policy.get('email_only_user_ids',[]) and not(p.get('share_email_with_matches') and p.get('has_contact_email', p.get('has_signup_email'))):
             excluded[p['user_id']]='Owner-specified email contact route is unavailable'
     groups=collections.defaultdict(list); decisions=[]
     for p in snapshot['profiles']:

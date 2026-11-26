@@ -52,7 +52,7 @@ def independent_identities(snapshot,policy):
         handle=(p.get('instagram_handle') or '').strip().casefold()
         if handle in held or not p['is_active'] or p['age']<18 or (not p['has_contact'] and p['user_id'] not in contact_holds) or not p.get('favorites'):
             excluded.add(p['user_id'])
-        if p['user_id'] in policy.get('email_only_user_ids',[]) and not(p.get('share_email_with_matches') and p.get('has_signup_email')):
+        if p['user_id'] in policy.get('email_only_user_ids',[]) and not(p.get('share_email_with_matches') and p.get('has_contact_email', p.get('has_signup_email'))):
             excluded.add(p['user_id'])
     groups=collections.defaultdict(list);decisions={}
     for p in snapshot['profiles']:

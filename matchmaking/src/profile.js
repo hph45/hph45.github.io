@@ -140,6 +140,7 @@ export function makeProfile(values, { isActive = true, exactAgeBounds = false } 
   return {
     display_name: text("display_name"),
     instagram_handle: normalizeInstagramHandle(text("instagram_handle")) || text("instagram_handle") || null,
+    ...(Object.hasOwn(values, "match_contact_email") ? { match_contact_email: text("match_contact_email") || null } : {}),
     birth_date: text("birth_date"),
     city_id: Number(values.city_id) || null,
     city: text("city"), region: text("region"), country: text("country"), intents,
@@ -184,6 +185,11 @@ export function validateProfile(profile, { consent, today = new Date() } = {}) {
   length("display_name", 1, 60, 0, "Your name");
   const instagram = normalizeInstagramHandle(profile.instagram_handle);
   if (instagram === null) error("instagram_handle", 0, "Enter a valid Instagram username or profile link, or leave it blank.");
+  const email = profile.match_contact_email;
+  if (email && (email.length > 254 || email.split("@")[0].length > 64 ||
+      !/^[A-Za-z0-9!$'*+\/=^_~|-]+(?:\.[A-Za-z0-9!$'*+\/=^_~|-]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/.test(email))) {
+    error("match_contact_email", 0, "Enter a valid contact email, or leave it blank to use your sign-in email.");
+  }
   const age = ageOn(profile.birth_date, today);
   if (!Number.isInteger(age) || age < 18 || age > 120) error("birth_date", 0, "Enter a valid birthday. Matchmaking is for people 18 and over.");
   if (!Number.isInteger(profile.city_id) || profile.city_id <= 0) error("city", 0, "Choose your city or a nearby city from the suggestions.");

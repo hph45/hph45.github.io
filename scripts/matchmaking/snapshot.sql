@@ -18,8 +18,8 @@ select jsonb_build_object(
     'business_age_min', p.business_age_min, 'business_age_max', p.business_age_max,
     'instagram_handle', p.instagram_handle,
     'has_contact', (nullif(btrim(p.instagram_handle),'') is not null or
-      (p.share_email_with_matches and nullif(u.email,'') is not null)),
-    'has_signup_email', nullif(u.email,'') is not null,
+      (p.share_email_with_matches and coalesce(p.match_contact_email,nullif(btrim(u.email),'')) is not null)),
+    'has_contact_email', coalesce(p.match_contact_email,nullif(btrim(u.email),'')) is not null,
     'share_email_with_matches', p.share_email_with_matches, 'email_matches', p.email_matches,
     'favorites', (select jsonb_agg(b) from (values
       (jsonb_build_object('id',p.favorite_book_id,'title',p.favorite_book,'author',p.favorite_author)),

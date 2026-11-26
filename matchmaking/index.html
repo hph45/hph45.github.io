@@ -13,7 +13,7 @@
   <meta property="og:url" content="https://zebrabookclub.com/matchmaking/">
   <meta property="og:image" content="https://zebrabookclub.com/logo.png">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <link rel="stylesheet" href="./styles.css?v=20261125.4">
+  <link rel="stylesheet" href="./styles.css?v=20261125.5">
   <link rel="stylesheet" href="/assets/match-countdown.css?v=20261024.1">
   <link rel="stylesheet" href="/assets/product-gallery.css?v=20261103.1">
 </head>
@@ -116,6 +116,7 @@
             </div>
           </fieldset>
           <label>What should we call you?<input name="display_name" autocomplete="given-name" maxlength="60" required placeholder="Your first name"></label>
+          <label id="match-contact-email-field" hidden>Contact email for matches <span class="optional">(optional)</span><input name="match_contact_email" type="email" maxlength="254" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="match-contact-email-help"><span id="match-contact-email-help" class="field-help">When you share email with a match, we’ll show this address. Leave it blank to use your sign-in email.</span></label>
           <label>Instagram <span class="optional">(optional)</span><input name="instagram_handle" maxlength="300" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="@yourhandle or your profile link" aria-describedby="instagram-help"><span id="instagram-help" class="field-help">Shared with your matches and included in personal invite links you choose to share. Your matches can also email you if you choose to share your email.</span></label>
           <label id="referral-field">Who invited you? <span class="optional">(optional)</span><input name="referred_by_instagram" maxlength="300" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Your friend’s Instagram" aria-describedby="referral-help"><span id="referral-help" class="field-help">Credit their Instagram to give them an entry in our merch raffle when you finish your profile.</span></label>
           <label>Birthday<input name="birth_date" type="date" required aria-describedby="birthday-help"><span id="birthday-help" class="field-help">You must be 18 or older. Only your age is shown to a match. Your birthday cannot be changed after signup.</span></label>
@@ -277,12 +278,12 @@
         <section class="community-books" aria-labelledby="top-books-title"><div class="card-heading"><h2 id="top-books-title">Top Ten</h2></div><ol id="top-books-list" class="top-books-list" aria-label="Most selected favorite books"></ol><p id="top-books-status" class="small-copy" role="status">Loading favorite books…</p><p class="affiliate-note">Some book links may earn Zebra Book Club a commission.</p></section>
       </div>
       <article class="profile-card">
-          <div class="card-heading"><p class="eyebrow">Your profile</p><button id="edit-profile" class="text-button" type="button">Edit profile <svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="/assets/icons.svg#arrow-up-right"/></svg></button></div>
+          <div class="card-heading profile-heading"><p class="eyebrow">Your profile</p><div class="profile-actions"><button id="edit-profile" class="text-button" type="button">Edit profile</button><button id="edit-bookshelf" class="text-button" type="button">Edit bookshelf</button></div></div>
           <p id="profile-category" class="category-label"></p><h2 id="profile-name"></h2><p id="profile-location" class="muted"></p>
           <div id="profile-instagram" class="profile-instagram"></div>
           <details id="profile-more" class="profile-more">
             <summary><span id="profile-more-label">View more</span><svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-            <div class="favorite-book"><p class="eyebrow">Your bookshelf</p><h3 id="profile-book"></h3><p id="profile-author"></p><div id="profile-extra-books"></div><p id="book-edit-status" class="small-copy"></p></div>
+            <div class="favorite-book"><p class="eyebrow">Your favorite books</p><h3 id="profile-book"></h3><p id="profile-author"></p><div id="profile-extra-books"></div><p id="book-edit-status" class="small-copy"></p></div>
             <div id="profile-current-reading" class="current-reading" hidden></div>
             <p id="profile-current-reading-status" class="small-copy" hidden></p>
             <div id="profile-preferences" class="profile-preferences"></div>
@@ -311,8 +312,38 @@
       </section>
       <div class="account-footer"><p>Need a hand? <a href="mailto:zebrabookclub@proton.me">Get in touch.</a></p><button id="delete-account" class="text-button" type="button">Delete my account</button></div>
     </section>
+    <section id="bookshelf-view" class="bookshelf-view" aria-labelledby="bookshelf-title" hidden>
+      <button id="bookshelf-back" class="text-button" type="button">← Back to profile</button>
+      <div class="bookshelf-heading"><div><h1 id="bookshelf-title" tabindex="-1">Your bookshelf</h1><p>Your books and ratings are private.</p></div><button id="bookshelf-add" class="button" type="button">Add a book</button></div>
+      <p id="bookshelf-status" class="bookshelf-status" role="status"></p>
+      <ul id="bookshelf-list" class="bookshelf-list" aria-label="Your saved books"></ul>
+      <button id="bookshelf-more" class="text-button" type="button" hidden>Load more books</button>
+    </section>
   </main>
 
+  <dialog id="bookshelf-dialog" class="bookshelf-dialog" aria-labelledby="bookshelf-editor-title">
+    <h2 id="bookshelf-editor-title">Add a book</h2>
+    <form id="bookshelf-form">
+      <fieldset id="bookshelf-book-fields">
+        <label>Book title<input id="bookshelf-book" name="bookshelf_book" maxlength="300" required placeholder="Search or enter a title"></label>
+        <label>Author <span class="optional">(optional)</span><input id="bookshelf-author" maxlength="300" placeholder="Author’s name, if known"></label>
+      </fieldset>
+      <div id="bookshelf-rating-fields" hidden>
+        <h3 id="bookshelf-selected-title"></h3><p id="bookshelf-selected-author"></p>
+        <fieldset><legend>Your rating</legend><div id="bookshelf-stars" class="bookshelf-stars" aria-describedby="bookshelf-star-help"></div>
+          <div class="bookshelf-rating-line"><output id="bookshelf-rating" aria-live="polite">Unrated</output><button id="bookshelf-clear" class="text-button" type="button" hidden>Clear rating</button></div>
+          <p id="bookshelf-star-help" class="field-help">Tap a star to cycle through quarter stars.</p>
+        </fieldset>
+      </div>
+      <p id="bookshelf-error" class="form-error" role="alert" hidden></p>
+      <div class="form-actions"><button id="bookshelf-cancel" class="text-button" type="button">Cancel</button><button id="bookshelf-submit" class="button" type="submit">Continue</button></div>
+      <button id="bookshelf-remove" class="text-button bookshelf-remove" type="button" hidden>Remove from bookshelf</button>
+    </form>
+    <div id="bookshelf-removal" hidden><p id="bookshelf-remove-title"></p>
+      <p id="bookshelf-remove-error" class="form-error" role="alert" hidden></p>
+      <div class="form-actions"><button id="bookshelf-keep" class="text-button" type="button">Keep book</button><button id="bookshelf-confirm-remove" class="button" type="button">Remove book</button></div>
+    </div>
+  </dialog>
   <div id="invite-status" class="invite-status" role="status" hidden></div>
   <dialog id="friend-match-dialog" aria-labelledby="friend-match-title">
     <h2 id="friend-match-title">Matchmake friends</h2>
@@ -396,7 +427,7 @@
   <dialog id="delete-dialog" aria-labelledby="delete-title"><form id="delete-form"><p class="eyebrow">Close this chapter</p><h2 id="delete-title">Delete your account?</h2><p>This permanently removes your shared Zebra Book Club profile, preferences, library, ratings, and match memberships. Your Apple or Google account is unchanged.</p><label>Type DELETE to confirm<input id="delete-confirmation" autocomplete="off" required pattern="DELETE"></label><p id="delete-error" class="form-error" role="alert" hidden></p><div class="form-actions"><button id="cancel-delete" class="text-button" type="button">Keep my account</button><button id="confirm-delete" class="button" type="submit">Delete account</button></div></form></dialog>
   <footer class="site-footer"><span>© 2026 Zebra Book Club</span><nav class="legal-links" aria-label="Legal"><a href="/privacy/" target="_blank" rel="noopener">Privacy</a><a href="/terms/" target="_blank" rel="noopener">Terms</a></nav><span class="data-credits">Books: <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">Open Library</a> · Cities: <a href="https://www.geonames.org" target="_blank" rel="noopener noreferrer">GeoNames</a> · Map: <a href="https://naturalearthdata.com" target="_blank" rel="noopener noreferrer">Natural Earth</a></span></footer>
   <noscript><p class="notice">Please enable JavaScript to sign in and create your matchmaking profile.</p></noscript>
-  <script type="module" src="./app.js?v=20261125.4"></script>
+  <script type="module" src="./app.js?v=20261125.5"></script>
   <script type="module" src="/assets/match-countdown.js?v=20261116.1"></script>
 </body>
 </html>

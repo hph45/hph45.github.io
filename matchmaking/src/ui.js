@@ -3,6 +3,7 @@ import { INTENTS, AGE_RANGE_FIELDS, profileIntents, ageOn, birthdayBounds, makeP
 import { attachAutocomplete } from "./autocomplete.js";
 import { createStaticCatalogSearch } from "./static-catalogs.js";
 import { attachAgeRange } from "./age-range.js";
+import { createBookshelf } from "./bookshelf.js";
 import { renderCommunityMap } from "./map.js";
 import { renderCountryMap, clearCountryMap, cityCountrySummaries } from "./country-map.js";
 import { displayCountry } from "./country-names.js";
@@ -75,6 +76,9 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     getCatalog: () => reviewCatalog ||= loadReviewCatalog(fetch), getProfile: () => profile,
     getUserId: () => user?.id,
   });
+  const bookshelf = createBookshelf({ client, document, window, action, search: catalogSearch,
+    getCatalog: () => reviewCatalog ||= loadReviewCatalog(fetch), getUserId: () => profile && user?.id,
+  });
 
   try {
     const stored = window.localStorage.getItem("zebra-matchmaking-intents");
@@ -89,6 +93,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   }
 
   function showView(id, focus) {
+    if (id !== "bookshelf-view" && !$("#bookshelf-view").hidden) bookshelf.reset();
     views.forEach((view) => { view.hidden = view.id !== id; });
     if (focus) $(focus)?.focus();
   }
@@ -216,7 +221,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
 
   function openForm() {
     notice();
-    text("#contact-email-account", user?.email || "your Google account email");
+    text("#contact-email-account", profile?.match_contact_email || user?.email || "your sign-in email");
     resetForm();
     const values = profile || {
       intents: selectedIntents,
@@ -238,6 +243,9 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       ? "Your birthday is fixed after signup. Only your age is shown to a match. Contact us if it is incorrect."
       : "You must be 18 or older. Only your age is shown to a match. Your birthday cannot be changed after signup.");
     $("#referral-field").hidden = Boolean(profile);
+    $("#match-contact-email-field").hidden = !profile;
+    field("match_contact_email").disabled = !profile;
+    field("match_contact_email").placeholder = profile ? user?.email || "" : "";
     field("referred_by_instagram").value = profile ? "" : referralDraft.handle;
     for (const range of ageRanges) range.restore(values);
     text("#form-eyebrow", profile ? "Edit your chapter" : "Your first chapter");
@@ -250,6 +258,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
 
   function resetForm() {
     form.reset();
+    field("match_contact_email").placeholder = "";
     for (const range of ageRanges) range.restore();
     // Hidden inputs reflect .value into their default value, unlike text inputs.
     // Clear catalog IDs explicitly so a later account never inherits old picks.
@@ -302,6 +311,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     }
     for (const range of ageRanges) Object.assign(values, range.bounds());
     if (profile) values.birth_date = profile.birth_date;
+    else delete values.match_contact_email;
     return makeProfile({ ...values, ...emailContactFields(values.email_contact_mode) }, { isActive: profile?.is_active ?? true, exactAgeBounds: true });
   }
 
@@ -438,6 +448,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
     const version = ++generation;
     if (!session?.user || (user && user.id !== session.user.id)) community.invalidate();
     matches.reset();
+    bookshelf.reset();
     friendMatchmaking.reset();
     invites.reset();
     $("#profile-more").open = false;
@@ -469,7 +480,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
 
   function setMutationBusy(busy) {
     mutationPending = busy;
-    for (const selector of ["#pause-matching", "#email-preference", "#share-contact-email", "#edit-profile", "#delete-account"]) $(selector).disabled = busy;
+    for (const selector of ["#pause-matching", "#email-preference", "#share-contact-email", "#edit-profile", "#edit-bookshelf", "#delete-account"]) $(selector).disabled = busy;
   }
 
   async function saveSettings(patch) {
@@ -527,6 +538,7 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       const changes = { ...values };
       delete changes.birth_date;
       if (profile) {
+        if (changes.match_contact_email === (profile.match_contact_email ?? null)) delete changes.match_contact_email;
         for (const [min, max] of Object.values(AGE_RANGE_FIELDS)) {
           if (changes[min] === profile[min] && changes[max] === profile[max]) {
             delete changes[min];
@@ -590,8 +602,20 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
   $$('#profile-form [name="intents"]').forEach(input => action(input, "change", updatePreferenceFields));
   action($("#match-radius-slider"), "input", updateDistanceFields);
   action($("#match-anywhere"), "change", updateDistanceFields);
+  field("match_contact_email").addEventListener("input", () => {
+    text("#contact-email-account", field("match_contact_email").value.trim() || user?.email || "your sign-in email");
+  });
   action($("#previous-step"), "click", () => showStep(Math.max(0, currentStep - 1)));
   action($("#edit-profile"), "click", openForm);
+  action($("#edit-bookshelf"), "click", async () => {
+    if (!user || !profile || mutationPending) return;
+    notice(); showView("bookshelf-view", "#bookshelf-title"); window.scrollTo(0, 0);
+    await bookshelf.load();
+  });
+  action($("#bookshelf-back"), "click", () => {
+    if (!profile || !user) return;
+    renderDashboard(); $("#edit-bookshelf").focus();
+  });
   action($("#cancel-edit"), "click", () => { resetForm(); renderDashboard(true); });
   action($("#retry-profile"), "click", () => user ? loadProfile() : acceptSession(null));
   action($("#pause-matching"), "click", () => saveSettings({ is_active: !profile.is_active }));
@@ -777,6 +801,6 @@ export function createMatchmakingApp({ client, document, window, fetch = window.
       }
     },
     async settled() { while (pending.size) await Promise.allSettled([...pending]); await invites.settled(); },
-    destroy() { subscription?.unsubscribe(); generation++; matches.destroy(); friendMatchmaking.destroy(); clearInstagramPrompt(); clearCountryMap(document); window.clearTimeout(bookTimer); ageRanges.forEach(range => range.destroy()); mapZoom.destroy(); invites.destroy(); autocompletes.forEach(control => control.destroy()); },
+    destroy() { subscription?.unsubscribe(); generation++; matches.destroy(); bookshelf.destroy(); friendMatchmaking.destroy(); clearInstagramPrompt(); clearCountryMap(document); window.clearTimeout(bookTimer); ageRanges.forEach(range => range.destroy()); mapZoom.destroy(); invites.destroy(); autocompletes.forEach(control => control.destroy()); },
   };
 }

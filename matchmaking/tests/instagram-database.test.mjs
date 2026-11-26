@@ -45,7 +45,7 @@ test("optional Instagram preserves profiles, eligibility checks, and released-ma
 
   await db.exec("insert into public.matchmaking_books(work_id,title,author) values ('OL900W','A shared next read','A recommendation author')");
   await t.test("migration leaves all answers, timestamps, favorites, current reads, and totals intact", async () => {
-    assert.deepEqual(await profiles(), before.map(row => ({ ...row, instagram_handle: null, share_email_with_matches: true, referred_by_instagram: null, merch_raffle_prize: null, match_radius_miles: null, book_sources: [], reader_pick_id: null, reader_pick: "", reader_pick_author: "", share_email_alongside_instagram: false, friendship_age_min: 18, friendship_age_max: 120, business_age_min: 18, business_age_max: 120 })));
+    assert.deepEqual(await profiles(), before.map(row => ({ ...row, instagram_handle: null, share_email_with_matches: true, referred_by_instagram: null, merch_raffle_prize: null, match_radius_miles: null, book_sources: [], reader_pick_id: null, reader_pick: "", reader_pick_author: "", share_email_alongside_instagram: false, friendship_age_min: 18, friendship_age_max: 120, business_age_min: 18, business_age_max: 120, match_contact_email: null })));
     assert.deepEqual(await selections(), beforeSelections);
     const { countries, ...previousCommunityFields } = await community();
     assert.deepEqual(previousCommunityFields, beforeCommunity);
